@@ -38,7 +38,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assembly.cs" />
     <Compile Include="AssemblySource.cs" />
+    <Compile Include="DataStructures\UserSegment.cs" />
+    <Compile Include="Error.cs" />
+    <Compile Include="ErrorType.cs" />
     <Compile Include="LexicalAnalysis\Lexeme.cs" />
     <Compile Include="LexicalAnalysis\Token.cs" />
     <Compile Include="LexicalAnalysis\Tokenizer.cs" />

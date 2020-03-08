@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -8,12 +9,17 @@ namespace CourseWork.LexicalAnalysis
 {
     public class Token
     {
-        public TokenType Type { get; }
+        public Lexeme ParrentLexeme { get; }
+
+        public TokenType Type { get; internal set; }
         public string File { get; }
         public int Line { get; }
         public int CharIndex { get; }
 
         public string StringValue { get; }
+    
+        private string _shortName;
+
 
         private static readonly  Dictionary<string, TokenType> _dictionary = new Dictionary<string, TokenType>()
         {
@@ -48,6 +54,13 @@ namespace CourseWork.LexicalAnalysis
             { "dh",      TokenType.Register8 },
             { "bh",      TokenType.Register8 },
 
+            { "es",      TokenType.SegmentRegister },
+            { "cs",      TokenType.SegmentRegister },
+            { "ss",      TokenType.SegmentRegister },
+            { "ds",      TokenType.SegmentRegister },
+            { "fs",      TokenType.SegmentRegister },
+            { "gs",      TokenType.SegmentRegister },
+
             { "db",      TokenType.DbDirective },
             { "dw",      TokenType.DwDirective },
             { "dd",      TokenType.DdDirective },
@@ -76,12 +89,19 @@ namespace CourseWork.LexicalAnalysis
         private static readonly Regex _numberBinRegex = new Regex("^[01]+b$");
         private static readonly Regex _identifierRegex = new Regex(@"^[a-z]\w*$");
 
-        public Token(string stringValue, string file, int line, int charIndex)
+        public Token(string stringValue, string file, int line, int charIndex, Lexeme lexeme, out Error error)
         {
-            //Console.WriteLine("{0} {1} {2} {3}", stringValue, file, line, charIndex);
-            File = file;
+            error = null;
+            ParrentLexeme = lexeme;
+            StringValue = stringValue;
+
             Line = line;
             CharIndex = charIndex;
+            if (file != null && System.IO.File.Exists(file))
+            {
+                File = file;
+                _shortName = new FileInfo(File).Name;
+            }
 
             if (!_dictionary.TryGetValue(stringValue, out var type))
             {
@@ -107,7 +127,9 @@ namespace CourseWork.LexicalAnalysis
                 }
                 else
                 {
-                    throw new DataException($"Unknown token {stringValue}");
+                    Type = TokenType.Unknown;
+                    error = new Error(ErrorType.UnknownToken, this);
+                    return;
                 }
             }
             else
@@ -115,7 +137,8 @@ namespace CourseWork.LexicalAnalysis
                 Type = type;
             }
 
-            StringValue = Type == TokenType.Text ? stringValue.Trim(' ', '\t', '\"') : stringValue;
+            if(Type == TokenType.Text)
+                StringValue = stringValue.Trim(' ', '\t', '\"');
         }
 
         public bool HasValue()
@@ -170,7 +193,10 @@ namespace CourseWork.LexicalAnalysis
                     sb.AppendFormat("({0}) ", ToValue());
             }
 
-            sb.AppendFormat("at {0}:{1}", File, Line);
+            if (File != null)
+                sb.AppendFormat("in {0} at {1}:{2}", _shortName, Line, CharIndex);
+            else
+                sb.AppendFormat("at {0}:{1}", Line, CharIndex);
 
             return sb.ToString();
         }

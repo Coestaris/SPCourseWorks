@@ -9,6 +9,8 @@ namespace CourseWork
     {
         public string Source { get; }
 
+        internal string FileName;
+
         public AssemblySource(Stream stream)
         {
             if(stream == null)
@@ -16,6 +18,9 @@ namespace CourseWork
 
             if(stream.CanRead == false)
                 throw new ArgumentException("Passed stream doesn't support reading");
+
+            if(stream is FileStream)
+                FileName = (stream as FileStream).Name;
 
             long length = -1;
             try { length = stream.Length; }

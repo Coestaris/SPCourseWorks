@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CourseWork.LexicalAnalysis
 {
-    public class Tokenizer
+    internal class Tokenizer
     {
         public static List<char> tokenSplitCharacters = new List<char>()
         {
@@ -24,13 +24,38 @@ namespace CourseWork.LexicalAnalysis
             }
         }
 
-        public static List<Lexeme> Tokenize(string input)
+        private static void TokensToLexeme(List<RawToken> rawTokens, Assembly assembly, out Error error)
         {
-            return Tokenize(input, null);
+            error = null;
+            rawTokens.ForEach(p => p.Token = p.Token.Trim());
+
+            var tokens = new List<Token>();
+            var lexeme = new Lexeme(assembly);
+            foreach (var token in rawTokens.FindAll(p => !string.IsNullOrWhiteSpace(p.Token)))
+            {
+                tokens.Add(new Token(
+                    token.Token, 
+                    assembly.Source.FileName, 
+                    token.LineIndex, token.charIndex,
+                    lexeme,
+                    out error));
+                if (error != null) return;
+            }
+
+            if (tokens.Count != 0)
+            {
+                lexeme.SetTokens(tokens, out error);
+                if (error != null) return;
+
+                assembly.Lexemes.Add(lexeme);
+            }
+            rawTokens.Clear();
         }
 
-        public static List<Lexeme> Tokenize(string input, string fileName)
+        public static void Tokenize(Assembly assembly, out Error error)
         {
+            error = null;
+
             var rawTokens = new List<RawToken>();
             var currentToken = "";
             var lastContains = false;
@@ -38,9 +63,7 @@ namespace CourseWork.LexicalAnalysis
             var charCount = 0;
             var listeningString = false;
 
-            var lexemes = new List<Lexeme>();
-
-            foreach (var c in input)
+            foreach (var c in assembly.Source.Source)
             {
                 if (c == '\"')
                 {
@@ -80,23 +103,8 @@ namespace CourseWork.LexicalAnalysis
 
                     if (c == '\n')
                     {
-
-                        rawTokens.ForEach(p => p.Token = p.Token.Trim());
-                        rawTokens = rawTokens.FindAll(p => !string.IsNullOrWhiteSpace(p.Token));
-
-                        if (rawTokens.Count != 0)
-                        {
-                            var tokens = new List<Token>();
-                            foreach (var token in rawTokens)
-                            {
-                                tokens.Add(new Token(token.Token, fileName, token.LineIndex, token.charIndex));
-                            }
-
-                            lexemes.Add(new Lexeme(tokens));
-                        }
-
-                        rawTokens.Clear();
-
+                        TokensToLexeme(rawTokens, assembly, out error);
+                        if (error != null) return;
 
                         lineCount++;
                         charCount = 0;
@@ -111,24 +119,17 @@ namespace CourseWork.LexicalAnalysis
                 }
             }
 
+            if(listeningString)
+            {
+                error = new Error(ErrorType.UnclosedQuotes);
+                return;
+            }
+
             if (lastContains)
                 rawTokens.Add(new RawToken(currentToken, lineCount, charCount));
 
-            rawTokens.ForEach(p => p.Token = p.Token.Trim());
-            rawTokens = rawTokens.FindAll(p => !string.IsNullOrWhiteSpace(p.Token));
-
-            if (rawTokens.Count != 0)
-            {
-                var _tokens = new List<Token>();
-                foreach (var token in rawTokens)
-                {
-                    _tokens.Add(new Token(token.Token, fileName, token.LineIndex, token.charIndex));
-                }
-
-                lexemes.Add(new Lexeme(_tokens));
-            }
-
-            return lexemes;
+            TokensToLexeme(rawTokens, assembly, out error);
+            if (error != null) return;
         }
     }
 }

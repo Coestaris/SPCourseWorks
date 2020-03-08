@@ -31,5 +31,8 @@ namespace CourseWork.LexicalAnalysis
         UserSegment,
         SegmentRegister,
         Label,
+
+
+        Unknown,
     }
 }

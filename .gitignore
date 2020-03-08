@@ -3,3 +3,4 @@ bin/
 debug/
 obj/
 *.DotSettings
+.vs/
