@@ -8,6 +8,8 @@
         SameLabelAreadyExists,
         UserSegmentNamesMismatch,
         SpecifiedUserSegmentAlreadyClosed,
-        UserSegmentTypesMismatch
+        UnclosedSegment,
+        UnopenedSegment,
+        MissingEndKeyword
     }
 }

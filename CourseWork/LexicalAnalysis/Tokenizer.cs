@@ -125,8 +125,7 @@ namespace CourseWork.LexicalAnalysis
                 return;
             }
 
-            if (lastContains)
-                rawTokens.Add(new RawToken(currentToken, lineCount, charCount));
+            rawTokens.Add(new RawToken(currentToken, lineCount, charCount));
 
             TokensToLexeme(rawTokens, assembly, out error);
             if (error != null) return;

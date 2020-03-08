@@ -41,6 +41,11 @@ namespace CourseWork
             Console.WriteLine("TOKENS: ");
             foreach (var lexeme in assembly.Lexemes)
                 Console.WriteLine(lexeme.ToTable());
+
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("SENTENCE TABLE: ");
+            Console.WriteLine(assembly.ToSentenceTable());
         }
 
         public static void Main(string[] args)

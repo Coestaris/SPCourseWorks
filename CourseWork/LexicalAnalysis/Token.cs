@@ -159,6 +159,19 @@ namespace CourseWork.LexicalAnalysis
                 Type == TokenType.Label;
         }
 
+        public bool IsDirective()
+        {
+            return
+                Type == TokenType.DbDirective ||
+                Type == TokenType.DdDirective ||
+                Type == TokenType.DwDirective ||
+                Type == TokenType.DwDirective ||
+                Type == TokenType.EquDirective ||
+                Type == TokenType.ElseDirective ||
+                Type == TokenType.EndifDirective ||
+                Type == TokenType.IfDirective;
+        }
+
         public bool IsNumber()
         {
             return

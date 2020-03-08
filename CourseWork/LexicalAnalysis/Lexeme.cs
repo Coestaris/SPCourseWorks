@@ -7,6 +7,10 @@ namespace CourseWork.LexicalAnalysis
 {
     public class Lexeme
     {
+        public bool HasLabel =>
+            Tokens.Count >= 2 &&
+            Tokens[0].Type == TokenType.Label;
+
         public Assembly ParrentAssembly { get; }
         public List<Token> Tokens { get; private set; }
 
@@ -105,8 +109,78 @@ namespace CourseWork.LexicalAnalysis
             AssignUserSegmentsAndLabels(out error);
             if (error != null) return;
 
+            // Работает но судя по методе не нужно
             AssignInlineUserSegmentsAndLabels(out error);
             if (error != null) return;
+        }
+
+        public void ToSentenceTable(
+            out int labelInd, out int instIndex, 
+            out List<int> opIndices, out List<int> opLengths,
+            out bool hasNoOperands, out bool hasNoInstruction)
+        {
+            instIndex = 0;
+            hasNoInstruction = false;
+            hasNoOperands = false;
+            labelInd = -1;
+            var offset = 0;
+            if (HasLabel)
+            {
+                labelInd = 0;
+                offset += 2; // label : ':'
+            }
+
+            opIndices = new List<int>();
+            opLengths = new List<int>();
+
+            if(Tokens.Count <= offset)
+            {
+                // has only label
+                return;
+            }
+
+            hasNoInstruction = Tokens.Find(p =>
+                       p.Type == TokenType.Instruction || p.IsDirective()) == null;
+
+            if(hasNoInstruction)
+            {
+                // has no instructions
+                return;
+            }
+            
+            if (Tokens[offset].Type == TokenType.Identifier)
+                offset += 1; // has name
+
+            instIndex = offset;
+            if (!hasNoInstruction)
+                offset += 1;
+
+            if (Tokens.Count <= offset)
+            {
+                // has only instrction (or + name)
+                hasNoOperands = true;
+                return;
+            }
+
+            var operand = 0;
+            var i = 0;
+            opIndices.Add(offset);
+            opLengths.Add(0);
+            
+            foreach (var token in Tokens.Skip(offset))
+            {
+                if (token.Type == TokenType.Symbol && token.StringValue == ",")
+                {
+                    opIndices.Add(opLengths[operand]);
+                    opLengths.Add(0);
+                    operand++;
+                }
+                else
+                {
+                    opLengths[operand]++;
+                }
+                i++;
+            }
         }
 
         public override string ToString()
@@ -116,11 +190,7 @@ namespace CourseWork.LexicalAnalysis
 
         public string ToTable()
         {
-            var res = "[";
-            foreach(var token in Tokens)
-                res += string.Format("{0,-30}", token.ToSourceValue(true));
-            
-            return res.Trim() + "]";
+            return $"[{string.Join("", Tokens.Select(p => string.Format("{0,-30}", p.ToSourceValue(true)))).Trim()}]";
         }
     }
 }
