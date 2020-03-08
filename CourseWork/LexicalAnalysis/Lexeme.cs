@@ -1,4 +1,5 @@
 using CourseWork.DataStructures;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -70,6 +71,28 @@ namespace CourseWork.LexicalAnalysis
             }
         }
 
+        private void AssignInlineUserSegmentsAndLabels(out Error error)
+        {
+            error = null;
+            foreach(var token in Tokens)
+                if(token.Type == TokenType.Identifier)
+                {
+                    var segment = ParrentAssembly.UserSegments.Find(p => p.Name == token.StringValue);
+                    if (segment != null)
+                    {
+                        token.Type = TokenType.UserSegment;
+                        continue;
+                    }
+
+                    var label = ParrentAssembly.UserLabels.Find(p => p.StringValue == token.StringValue);
+                    if (label != null)
+                    {
+                        token.Type = TokenType.Label;
+                        continue;
+                    }
+                }
+        }
+
         public Lexeme(Assembly assembly) 
         {
             ParrentAssembly = assembly;
@@ -82,12 +105,22 @@ namespace CourseWork.LexicalAnalysis
             AssignUserSegmentsAndLabels(out error);
             if (error != null) return;
 
-            //todo?
+            AssignInlineUserSegmentsAndLabels(out error);
+            if (error != null) return;
         }
 
         public override string ToString()
         {
             return $"[{string.Join(", ", Tokens.Select(p => "\"" + p.ToString()+ "\""))}]";
+        }
+
+        public string ToTable()
+        {
+            var res = "[";
+            foreach(var token in Tokens)
+                res += string.Format("{0,-30}", token.ToSourceValue(true));
+            
+            return res.Trim() + "]";
         }
     }
 }

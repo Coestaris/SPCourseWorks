@@ -201,14 +201,21 @@ namespace CourseWork.LexicalAnalysis
             return sb.ToString();
         }
 
-        public string ToSourceValue()
+        public string ToSourceValue(bool dedStyle)
         {
-            if (HasValue())
+            if (dedStyle)
             {
-                return IsNumber() ? ToValue().ToString() : StringValue;
+                return $"({"\"" + StringValue + "\"", -5} : {Type} : {StringValue.Length})";
             }
+            else
+            {
+                if (HasValue())
+                {
+                    return IsNumber() ? ToValue().ToString() : StringValue;
+                }
 
-            return Type.ToString();
+                return Type.ToString();
+            }
         }
     }
 }

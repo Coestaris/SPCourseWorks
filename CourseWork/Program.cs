@@ -23,21 +23,24 @@ namespace CourseWork
                 Console.WriteLine(error);
                 return;
             }
+            Console.WriteLine();
+            Console.WriteLine();
 
-            Console.WriteLine("Labels: ");
+            Console.WriteLine("LABELS: ");
             foreach (var label in assembly.UserLabels)
                 Console.WriteLine(label);
-            Console.WriteLine("====");
+            Console.WriteLine();
+            Console.WriteLine();
 
-            Console.WriteLine("UserSegments: ");
+            Console.WriteLine("USER SEGMENTS: ");
             foreach (var userSegment in assembly.UserSegments)
                 Console.WriteLine(userSegment);
-            Console.WriteLine("====");
+            Console.WriteLine();
+            Console.WriteLine();
 
-            Console.WriteLine("Tokens: ");
+            Console.WriteLine("TOKENS: ");
             foreach (var lexeme in assembly.Lexemes)
-                Console.WriteLine(lexeme);
-            Console.WriteLine("====");
+                Console.WriteLine(lexeme.ToTable());
         }
 
         public static void Main(string[] args)
