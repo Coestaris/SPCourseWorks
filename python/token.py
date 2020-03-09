@@ -55,9 +55,9 @@ class Token:
         pass
 
     @staticmethod
-    def create(self, stringValue, file, line, char):
+    def create(stringValue, file, line, char):
         type = tokenTypeByValue(stringValue)
-        token = Token(stringValue, file, line, char)
+        token = Token(stringValue, type, file, line, char)
         if type == -1:
             return (Error("Unknown token type", token), None)
 
