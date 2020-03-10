@@ -55,6 +55,7 @@ public class Token {
     private static Pattern _numberBinRegex = Pattern.compile("^[01]+B$");
     private static Pattern _identifierRegex = Pattern.compile("^[A-Z]\\w*$");
 
+
     public TokenType Type;
     public String stringToken;
 
@@ -78,7 +79,16 @@ public class Token {
 
         if(_identifierRegex.matcher(string).matches()){
             Type = TokenType.Identifier;
+        } else
+
+        if (string.trim().startsWith("\"") && string.trim().endsWith("\"")){
+             Type = TokenType.Text;
         }
+
+        if(Type == TokenType.Text)
+           stringToken = string.substring(1, string.length() - 1);
+
+
     }
 
 

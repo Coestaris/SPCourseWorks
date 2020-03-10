@@ -31,7 +31,8 @@ public class FileParser {
                 }
             }
             createToken(arrayToken, token);
-            System.out.println(arrayToken);
+            System.out.println();
+            print(arrayToken, line);
             arrayToken.clear();
         }
     }
@@ -39,6 +40,19 @@ public class FileParser {
     public static boolean contains(char ch){
         return ch == ' ' || ch == '[' || ch == ']' || ch == '+' || ch == ',' || ch == ':';
     }
+
+    public static void print(ArrayList<Token> arrayToken, String string){
+        if(!arrayToken.isEmpty()) {
+            System.out.println(string);
+            System.out.print("[");
+            for (Token tokenArrayList : arrayToken) {
+                System.out.print("(\"" + tokenArrayList.stringToken + "\"" + ":" + tokenArrayList.Type + ":" + tokenArrayList.stringToken.length() + ") ");
+            }
+            System.out.print("]");
+        }
+
+    }
+
 
 
 }
