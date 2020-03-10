@@ -15,6 +15,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tr>
     <td align="center"><a href="https://github.com/Coestaris"><img src="https://avatars1.githubusercontent.com/u/19210828?v=4" width="100px;" alt=""/><br /><sub><b>Coestaris</b></sub></a><br /><a href="https://github.com/Coestaris/sp_kurs/commits?author=Coestaris" title="Code">💻</a> <a href="#ideas-Coestaris" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/h0tw4t3r"><img src="https://avatars0.githubusercontent.com/u/35642018?v=4" width="100px;" alt=""/><br /><sub><b>Vladyslav Dalechyn</b></sub></a><br /><a href="https://github.com/Coestaris/sp_kurs/commits?author=h0tw4t3r" title="Code">💻</a> <a href="#platform-h0tw4t3r" title="Packaging/porting to new platform">📦</a> <a href="#blog-h0tw4t3r" title="Blogposts">📝</a> <a href="#design-h0tw4t3r" title="Design">🎨</a></td>
+    <td align="center"><a href="https://github.com/leshik"><img src="https://avatars1.githubusercontent.com/u/443678?v=4" width="100px;" alt=""/><br /><sub><b>Alexey Zagarin</b></sub></a><br /><a href="https://github.com/Coestaris/sp_kurs/commits?author=leshik" title="Code">💻</a> <a href="#platform-leshik" title="Packaging/porting to new platform">📦</a> <a href="#eventOrganizing-leshik" title="Event Organizing">📋</a></td>
   </tr>
 </table>
 
