@@ -49,7 +49,7 @@ def tokenTypeByValue(value):
 
 class ASMToken:
     def __init__(self, string_value, file, type, line, char):
-        self.stringValue = string_value
+        self.string_value = string_value
         self.type = type
         self.file = file
         self.line = line
@@ -68,7 +68,7 @@ class ASMToken:
     def __str__(self):
         return "{} ({}) in {} at {}:{}".format(
             TokenType.toStringValue(self.type),
-            self.stringValue,
+            self.string_value,
             self.file,
             self.line,
             self.char
