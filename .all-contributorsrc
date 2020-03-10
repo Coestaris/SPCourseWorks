@@ -1,0 +1,48 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "Coestaris",
+      "name": "Coestaris",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/19210828?v=4",
+      "profile": "https://github.com/Coestaris",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "h0tw4t3r",
+      "name": "Vladyslav Dalechyn",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/35642018?v=4",
+      "profile": "https://github.com/h0tw4t3r",
+      "contributions": [
+        "code",
+        "platform",
+        "blog",
+        "design"
+      ]
+    },
+    {
+      "login": "leshik-xxl",
+      "name": "leshik_xxl",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/47663634?v=4",
+      "profile": "https://github.com/leshik-xxl",
+      "contributions": [
+        "code",
+        "platform",
+        "eventOrganizing"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "SPCourseWorks",
+  "projectOwner": "Coestaris",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
