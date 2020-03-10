@@ -3,7 +3,7 @@ from asmlexeme import ASMLexeme
 from error import Error
 from ttype import TokenType
 
-SPLIT_CHARS = ['\t', ' ', '\n', '[', ']', '.', ',', '_', '+', '-', ':']
+SPLIT_CHARS = ['\t', ' ', '\n', '[', ']', '.', ',', '*', '+', '-', ':']
 
 
 class ASMParser:
@@ -97,51 +97,3 @@ class ASMProgram:
 
         pass
 
-    def to_indexed_table(self):
-        res = ""
-        i = 0
-        for lexeme_index, lexeme in enumerate(self.lexemes):
-            res += "{:2} | ".format(lexeme_index)
-            for token_index, token in enumerate(lexeme.tokens):
-                res += "{1}({0}) ".format(token_index + i, token.string_value)
-            res += "\n"
-            i += len(lexeme.tokens)
-        return res
-
-    def to_sentence_table(self):
-        res = ""
-        i = 0
-
-        res += "=" * 50 + "\n"
-        res += " {:2}| {:5}| {:9}| {:9}| {:9}| ...\n".format(
-              "#", "Label", "Memonic", "Operand1", "Operand2")
-        res += "=" * 50 + "\n"
-
-        for index, lexeme in enumerate(self.lexemes):
-            # res += str(lexeme) + "\n"
-
-            label_index, inst_index, op_indices, op_length, has_no_operands, has_no_instruction \
-                = lexeme.to_sentence_table()
-
-            res += "{:-2} |".format(index)
-
-            if label_index != -1:
-                res += "{:5} |".format(label_index + i)
-            else:
-                res += "{:5} |".format(" none")
-                label_index = 0
-
-            if not has_no_instruction:
-                res += "{:4} {:4} |".format(i + inst_index, 1)
-
-            if not has_no_instruction and not has_no_operands:
-                for j in range(0, len(op_indices)):
-                    res += "{:4} {:4}{}".format(i + label_index + op_indices[j], op_length[j],
-                                                "" if j == len(op_indices) - 1 else " |")
-
-            res += "\n"
-
-            i += len(lexeme.tokens)
-
-        res += "=" * 50 + "\n"
-        return res

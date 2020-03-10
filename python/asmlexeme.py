@@ -2,10 +2,46 @@ from asmusersegment import ASMUserSegment
 from ttype import TokenType
 from error import Error
 
+INSTRUCTION_TYPES = [
+    TokenType.INSTRUCTION,
+    TokenType.DIRECTIVE,
+    TokenType.KEYWORD_ENDS,
+    TokenType.KEYWORD_END,
+    TokenType.KEYWORD_SEGMENT
+]
+
+
+class ASMLexemeStructure:
+    def __init__(self):
+        self.has_name = 0
+        self.has_instruction = 0
+        self.has_operands = 0
+        self.instruction_index = 0
+        self.operand_indices = []
+        self.operand_lengths = []
+
+    def __str__(self, i=0):
+        res = ""
+        if self.has_name:
+            res += "{:3} |".format(i)
+        else:
+            res += "{:3} |".format("--")
+
+        if self.has_instruction:
+            res += "{:3} {:3} |".format(i + self.instruction_index, 1)
+
+        if self.has_operands and self.has_instruction:
+            for j, index in enumerate(self.operand_indices):
+                res += "{:3} {:3}{}".format(i + index, self.operand_lengths[j],
+                                            " |" if j != len(self.operand_lengths) else "")
+        return res
+
 
 class ASMLexeme:
     def __init__(self, program):
         self.program = program
+        self.tokens = []
+        self.structure = None
 
     def set_tokens(self, tokens):
         self.tokens = tokens
@@ -14,6 +50,7 @@ class ASMLexeme:
         if error is not None:
             return error
 
+        self.structure = self.to_structure()
         return None
 
     def __str__(self):
@@ -90,51 +127,52 @@ class ASMLexeme:
     def has_label(self):
         return len(self.tokens) >= 2 and self.tokens[0].type == TokenType.LABEL
 
-    def to_sentence_table(self):
-        label_index = -1
-        inst_index = 0
-        op_indices = []
-        op_length = []
-        has_no_operands = False
-        has_no_instruction = False
+    def to_structure(self):
+        structure = ASMLexemeStructure()
+        structure.instruction_index = 0
+        structure.has_instruction = True
+        structure.has_operands = True
+        structure.has_name = False
 
         offset = 0
-
         if self.has_label():
-            label_index = 0
-            offset += 2  # label + ":"
-
-        if len(self.tokens) <= offset:  # has only label
-            has_no_instruction = True
-            return (label_index, inst_index, op_indices, op_length, has_no_operands, has_no_instruction)
-
-        has_no_instruction = next((x for x in self.tokens
-                                   if x.type == TokenType.INSTRUCTION or x.type == TokenType.DIRECTIVE), None) \
-                             is None
-        if has_no_instruction:
-            return (label_index, inst_index, op_indices, op_length, has_no_operands, has_no_instruction)
-
-        if self.tokens[offset].type == TokenType.IDENTIFIER:
-            offset += 1  # has name
-
-        inst_index = offset
-        if not has_no_instruction:
-            offset += 1
+            structure.has_name = True
+            offset += 2
 
         if len(self.tokens) <= offset:
-            has_no_operands = True
-            return (label_index, inst_index, op_indices, op_length, has_no_operands, has_no_instruction)
+            # Has only label
+            structure.has_instruction = False
+            return structure
+
+        if self.tokens[0].type == TokenType.IDENTIFIER or self.tokens[0].type == TokenType.USER_SEGMENT:
+            # Has name
+            structure.has_name = True
+            offset += 1
+
+        structure.has_instruction = next((x for x in self.tokens if x.type in INSTRUCTION_TYPES), None) \
+            is not None
+
+        if not structure.has_instruction:
+            # We dont need it anymore
+            return structure
+
+        structure.instruction_index = offset
+        offset += 1  # Instruction offset
+
+        if len(self.tokens) <= offset:
+            # Has only instruction (or + name)
+            structure.has_operands = False
+            return structure
 
         operand = 0
-        op_indices.append(offset)
-        op_length.append(0)
-
+        structure.operand_indices.append(offset)
+        structure.operand_lengths.append(0)
         for token in self.tokens[offset:]:
             if token.type == TokenType.SYM and token.string_value == ",":
-                op_indices.append(op_length[operand])
-                op_length.append(0)
+                structure.operand_indices.append(structure.operand_lengths[operand] + operand + 1 + offset)
+                structure.operand_lengths.append(0)
                 operand += 1
             else:
-                op_length[operand] += 1
+                structure.operand_lengths[operand] += 1
 
-        return (label_index, inst_index, op_indices, op_length, has_no_operands, has_no_instruction)
+        return structure
