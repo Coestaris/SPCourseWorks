@@ -1,5 +1,4 @@
 <p align="center">
-  <h1 align="center">SPCourseWorks</h1>
   <div align="center"><a href="https://github.com/Coestaris/SPCourseWorks"><img src="https://github.com/Coestaris/SPCourseWorks/blob/master/logo.png?raw=true" /></a></div>
   <h4 align="center">Made by Max and couple of indian Java porters</h4>
 </p>
@@ -7,7 +6,6 @@
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
-Ебашу тут это мать его курсач
 
 ## Contributors ✨
 
