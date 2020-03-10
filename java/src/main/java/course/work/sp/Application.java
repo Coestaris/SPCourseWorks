@@ -8,6 +8,6 @@ public class Application {
         //System.out.println(DownloadFile.downloadFile("D:\\javaProject\\course-workSP\\src\\main\\resources\\testFile.asm"));
 //        String s = DownloadFile.downloadFile("D:\\javaProject\\course-workSP\\src\\\\main\\resources\\testFile.asm");
 //        System.out.println(s);
-        Token token1 = new Token();
+          FileParser.fileParser();
     }
 }
