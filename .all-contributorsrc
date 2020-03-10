@@ -26,10 +26,21 @@
         "blog",
         "design"
       ]
+    },
+    {
+      "login": "leshik-xxl",
+      "name": "leshik_xxl",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/47663634?v=4",
+      "profile": "https://github.com/leshik-xxl",
+      "contributions": [
+        "code",
+        "platform",
+        "eventOrganizing"
+      ]
     }
   ],
   "contributorsPerLine": 7,
-  "projectName": "sp_kurs",
+  "projectName": "SPCourseWorks",
   "projectOwner": "Coestaris",
   "repoType": "github",
   "repoHost": "https://github.com",
