@@ -7,12 +7,12 @@ namespace CourseWork.LexicalAnalysis
 {
     public class Lexeme
     {
-        public bool HasLabel =>
-            Tokens.Count >= 2 &&
-            Tokens[0].Type == TokenType.Label;
 
-        public Assembly ParrentAssembly { get; }
+
+        public bool HasLabel => Tokens.Count >= 2 && Tokens[0].Type == TokenType.Label;
+        public Assembly ParentAssembly { get; }
         public List<Token> Tokens { get; private set; }
+        public LexemeStructure Structure { get; private set; }
 
         private void AssignUserSegmentsAndLabels(out Error error)
         {
@@ -24,13 +24,13 @@ namespace CourseWork.LexicalAnalysis
                 Tokens[1].Type == TokenType.SegmentKeyword)
             {
                 Tokens[0].Type = TokenType.UserSegment;
-                if (ParrentAssembly.UserSegments.FindIndex(p => p.Name == Tokens[0].StringValue) != -1)
+                if (ParentAssembly.UserSegments.FindIndex(p => p.Name == Tokens[0].StringValue) != -1)
                 {
                     error = new Error(ErrorType.SameUserSegmentAlreadyExists, Tokens[0]);
                     return;
                 }
 
-                ParrentAssembly.UserSegments.Add(new UserSegment() { 
+                ParentAssembly.UserSegments.Add(new UserSegment() {
                     OpenToken = Tokens[0], 
                 });
             }
@@ -41,16 +41,14 @@ namespace CourseWork.LexicalAnalysis
                 Tokens[1].Type == TokenType.EndsKeyword)
             {
                 Tokens[0].Type = TokenType.UserSegment;
-                var structure = ParrentAssembly.UserSegments.Find(p => p.Name == Tokens[0].StringValue);
+                var structure = ParentAssembly.UserSegments.Find(p => p.Name == Tokens[0].StringValue);
 
-                // ���� �� ������� ��������� ������� �� ��������� ���������
                 if(structure == null)
                 {
                     error = new Error(ErrorType.UserSegmentNamesMismatch, Tokens[0]);
                     return;
                 }
                 
-                // ���� ��������� ������� �� ��������� ��������� ��� �������
                 if (structure.Closed)
                 {
                     error = new Error(ErrorType.SpecifiedUserSegmentAlreadyClosed, Tokens[0]);
@@ -66,29 +64,29 @@ namespace CourseWork.LexicalAnalysis
                 Tokens[1].StringValue == ":")
             {
                 Tokens[0].Type = TokenType.Label;
-                if (ParrentAssembly.UserLabels.FindIndex(p => p.StringValue == Tokens[0].StringValue) != -1)
+                if (ParentAssembly.UserLabels.FindIndex(p => p.StringValue == Tokens[0].StringValue) != -1)
                 {
                     error = new Error(ErrorType.SameLabelAreadyExists, Tokens[0]);
                     return;
                 }
-                ParrentAssembly.UserLabels.Add(Tokens[0]);
+                ParentAssembly.UserLabels.Add(Tokens[0]);
             }
         }
 
-        private void AssignInlineUserSegmentsAndLabels(out Error error)
+        internal void AssignInlineUserSegmentsAndLabels(out Error error)
         {
             error = null;
             foreach(var token in Tokens)
                 if(token.Type == TokenType.Identifier)
                 {
-                    var segment = ParrentAssembly.UserSegments.Find(p => p.Name == token.StringValue);
+                    var segment = ParentAssembly.UserSegments.Find(p => p.Name == token.StringValue);
                     if (segment != null)
                     {
                         token.Type = TokenType.UserSegment;
                         continue;
                     }
 
-                    var label = ParrentAssembly.UserLabels.Find(p => p.StringValue == token.StringValue);
+                    var label = ParentAssembly.UserLabels.Find(p => p.StringValue == token.StringValue);
                     if (label != null)
                     {
                         token.Type = TokenType.Label;
@@ -99,7 +97,7 @@ namespace CourseWork.LexicalAnalysis
 
         public Lexeme(Assembly assembly) 
         {
-            ParrentAssembly = assembly;
+            ParentAssembly = assembly;
         }
 
         public void SetTokens(List<Token> tokens, out Error error)
@@ -109,83 +107,82 @@ namespace CourseWork.LexicalAnalysis
             AssignUserSegmentsAndLabels(out error);
             if (error != null) return;
 
-            // �������� �� ���� �� ������ �� �����
-            AssignInlineUserSegmentsAndLabels(out error);
-            if (error != null) return;
+            Structure = ToSentenceTable();
         }
 
-        public void ToSentenceTable(
-            out int labelInd, out int instIndex, 
-            out List<int> opIndices, out List<int> opLengths,
-            out bool hasNoOperands, out bool hasNoInstruction)
+        private LexemeStructure ToSentenceTable()
         {
-            instIndex = 0;
-            hasNoInstruction = false;
-            hasNoOperands = false;
-            labelInd = -1;
+            var structure = new LexemeStructure
+            {
+                InstructionIndex = 0,
+                HasInstruction = true,
+                HasOperands = true
+            };
+
             var offset = 0;
             if (HasLabel)
             {
-                labelInd = 0;
+                structure.HasName = true;
                 offset += 2; // label : ':'
             }
 
-            opIndices = new List<int>();
-            opLengths = new List<int>();
+            structure.OperandIndices = new List<int>();
+            structure.OperandLengths = new List<int>();
 
             if(Tokens.Count <= offset)
             {
-                hasNoInstruction = true;
                 // has only label
-                return;
+                structure.HasInstruction = false;
+                return structure;
             }
 
             if (Tokens[offset].Type == TokenType.Identifier || Tokens[offset].Type == TokenType.UserSegment)
             {
-                offset += 1; // has name
-                labelInd = 0;
+                // has name
+                structure.HasName = true;
+                offset += 1;
             }
 
-            hasNoInstruction = Tokens.Find(p =>
+            structure.HasInstruction = Tokens.Find(p =>
                        p.Type == TokenType.Instruction || p.IsDirective() ||
                        p.Type == TokenType.SegmentKeyword ||
                        p.Type == TokenType.EndsKeyword ||
-                       p.Type == TokenType.EndKeyword) == null;
+                       p.Type == TokenType.EndKeyword) != null;
 
-            if(hasNoInstruction)
+            if(!structure.HasInstruction)
             {
                 // has no instructions
-                return;
+                return structure;
             }
 
-            instIndex = offset;
-            if (!hasNoInstruction)
-                offset += 1;
+            structure.InstructionIndex = offset;
+            offset += 1;
 
             if (Tokens.Count <= offset)
             {
-                // has only instrction (or + name)
-                hasNoOperands = true;
-                return;
+                // has only instruction (or + name)
+                structure.HasOperands = false;
+                return structure;
             }
 
             var operand = 0;
-            opIndices.Add(offset);
-            opLengths.Add(0);
-
+            structure.OperandIndices.Add(offset);
+            structure.OperandLengths.Add(0);
             foreach (var token in Tokens.Skip(offset))
             {
                 if (token.Type == TokenType.Symbol && token.StringValue == ",")
                 {
-                    opIndices.Add(opLengths[operand] + operand + 1 + offset);
-                    opLengths.Add(0);
+                     structure.OperandIndices.Add(structure.OperandLengths[operand] + operand + 1 + offset);
+                     structure.OperandLengths.Add(0);
                     operand++;
                 }
                 else
                 {
-                    opLengths[operand]++;
+                    structure.OperandLengths[operand]++;
                 }
             }
+
+            return structure;
         }
 
         public override string ToString()
@@ -198,33 +195,6 @@ namespace CourseWork.LexicalAnalysis
             if (ded)
                 return string.Join(" ", Tokens.Select(p => p.StringValue));
             return $"[{string.Join("", Tokens.Select(p => string.Format("{0,-30}", p.ToSourceValue(true)))).Trim()}]";
-        }
-
-        public string ToSentenceTableString(int i = 0)
-        {
-            ToSentenceTable(
-                out int labelInd, out var instIndex,
-                out var opIndices, out var opLength,
-                out var hasNoOperands, out var hasNoInstruction);
-
-            var res = "";
-            if (labelInd != -1)
-                res += $"{labelInd + i,4} |";
-            else
-            {
-                res += $"{"--",4} |";
-                labelInd = 0;
-            }
-
-            if (!hasNoInstruction)
-                res += $"{i + instIndex,4} {1,4} |";
-
-            if(!hasNoOperands && !hasNoInstruction)
-                for (var j = 0; j < opIndices.Count; j++)
-                    res += $"{i + labelInd + opIndices[j],4} {opLength[j],4}{(j == opIndices.Count - 1 ? "" : " |")}";
-
-            res += "\n";
-            return res;
         }
     }
 }

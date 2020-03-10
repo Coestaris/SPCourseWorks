@@ -44,6 +44,7 @@
     <Compile Include="Error.cs" />
     <Compile Include="ErrorType.cs" />
     <Compile Include="LexicalAnalysis\Lexeme.cs" />
+    <Compile Include="LexicalAnalysis\LexemeStructure.cs" />
     <Compile Include="LexicalAnalysis\Token.cs" />
     <Compile Include="LexicalAnalysis\Tokenizer.cs" />
     <Compile Include="LexicalAnalysis\TokenType.cs" />

@@ -9,17 +9,14 @@ namespace CourseWork.LexicalAnalysis
 {
     public class Token
     {
-        public Lexeme ParrentLexeme { get; }
-
+        public Lexeme ParentLexeme { get; }
         public TokenType Type { get; internal set; }
         public string File { get; }
         public int Line { get; }
         public int CharIndex { get; }
-
         public string StringValue { get; }
     
         private string _shortName;
-
 
         private static readonly  Dictionary<string, TokenType> _dictionary = new Dictionary<string, TokenType>()
         {
@@ -92,7 +89,7 @@ namespace CourseWork.LexicalAnalysis
         public Token(string stringValue, string file, int line, int charIndex, Lexeme lexeme, out Error error)
         {
             error = null;
-            ParrentLexeme = lexeme;
+            ParentLexeme = lexeme;
             StringValue = stringValue;
 
             Line = line;

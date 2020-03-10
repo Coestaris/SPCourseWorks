@@ -38,6 +38,12 @@ namespace CourseWork
                     return new Error(ErrorType.UnopenedSegment, us.CloseToken);
             }
 
+            foreach(var lexeme in Lexemes)
+            {
+                lexeme.AssignInlineUserSegmentsAndLabels(out error);
+                if (error != null) return error;
+            }
+
             var lastLexeme = Lexemes.Last();
             if(lastLexeme.Tokens.Count != 1 ||
                 lastLexeme.Tokens[0].Type != TokenType.EndKeyword)
@@ -46,33 +52,6 @@ namespace CourseWork
             }
 
             return null;
-        }
-
-        public string ToSentenceTable()
-        {
-            var res = "";
-            var i = 0;
-            var flattenedTokens = Lexemes.SelectMany(x => x.Tokens).ToList();
-
-            for (var l = 0; l < Lexemes.Count; l++)
-            {
-                var lexeme = Lexemes[l];
-                res += string.Format("{0,-2} | {1,-40}\n", l, string.Join(" ", lexeme.Tokens.Select(p => $"{p.ToSourceValue(false)}({flattenedTokens.IndexOf(p)})")));
-            }
-
-            res += new string('=', 50) + "\n";
-            res += string.Format("{0,-2} |{1,4} |{2,9} |{3,9} |{4,9} | {5,9}\n", 
-                "#", "Lbl", "Mnemonic", "Op. 1", "Op. 2", "...");
-            res += new string('=', 50) + "\n";
-
-            for (var l = 0; l < Lexemes.Count; l++)
-            {
-                res += $"{l,-2} |";
-                res += Lexemes[l].ToSentenceTableString(i);
-                i += Lexemes[i].Tokens.Count;
-            }
-
-            return res;
         }
     }
 }

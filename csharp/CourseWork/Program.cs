@@ -47,7 +47,7 @@ namespace CourseWork
             {
                 Console.WriteLine("Source   | {0}", lexeme.ToTable(true));
                 Console.WriteLine("Tokens   | {0}", lexeme.ToTable(false));
-                Console.WriteLine("Sentence |{0}", lexeme.ToSentenceTableString());
+                Console.WriteLine("Sentence |{0}", lexeme.Structure.ToTable());
                 Console.WriteLine();
             }
 
