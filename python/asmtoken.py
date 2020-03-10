@@ -3,7 +3,7 @@ from error import Error
 import re
 
 TOKEN_SYMBOLS = ['[', ']', '.', ',', '+', '-', ':', '*']
-TOKEN_REGISTER32 = ['eax', 'ebx', 'ecx', 'edx']
+TOKEN_REGISTER32 = ['eax', 'ebx', 'ecx', 'edx', 'esi', 'edi']
 TOKEN_REGISTER16 = ['ax', 'bx', 'cx', 'dx', 'sp', 'bp', 'si', 'di']
 TOKEN_REGISTER8 = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh']
 TOKEN_SEGREG = ['es', 'cs', 'ss', 'ds', 'fs', 'gs']
