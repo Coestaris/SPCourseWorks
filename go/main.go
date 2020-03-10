@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 )
 
 var compileFiles []string
@@ -38,16 +39,14 @@ func main() {
 
 		fmt.Println("Tokens: ")
 		for _, l := range *program.GetLexemes() {
-			fmt.Println(l.ToString())
+			sources := make([]string, len(l.GetTokens()))
+			for i, t := range l.GetTokens() {
+				sources[i] = t.GetValue()
+			}
+			fmt.Printf("Source    : %s\n", strings.Join(sources, " "))
+			fmt.Printf("Lexemes   : %s\n", l.ToString())
+			fmt.Printf("Structure : %s\n", l.ToSentenceTableString(0))
+			fmt.Println()
 		}
-
-		fmt.Println()
-		fmt.Println()
-		fmt.Println("Indexed tokens: ")
-		fmt.Println(program.ToIndexedTable())
-
-		fmt.Println()
-		fmt.Println("Sentence table: ")
-		fmt.Println(program.ToSentenceTable())
 	}
 }

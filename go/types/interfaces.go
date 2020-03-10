@@ -5,9 +5,9 @@ type ASM interface {
 	GetLabels() *[]string
 	GetSource() string
 
-	Parse() error
 	ToIndexedTable() string
-	ToSentenceTable() string
+
+	Parse() error
 }
 
 type Lexeme interface {
@@ -16,7 +16,7 @@ type Lexeme interface {
 	GetParentProgram() ASM
 
 	ToString() string
-	ToSentenceTable() (int, int, []int, []int, bool, bool)
+ 	ToSentenceTableString(level int) string
 }
 
 type Token interface {

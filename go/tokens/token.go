@@ -34,5 +34,5 @@ func (t *token) ChangeType(tokenType int) {
 }
 
 func (t *token) ToDedStyle() string {
-	return fmt.Sprintf("(%5s : %s : %d)", t.Value, ToStringValue(t.TokenType), len(t.Value))
+	return fmt.Sprintf(`("%s" : %s : %d)`, t.Value, ToStringValue(t.TokenType), len(t.Value))
 }

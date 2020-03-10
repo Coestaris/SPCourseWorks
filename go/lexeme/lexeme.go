@@ -8,13 +8,25 @@ import (
 	"strings"
 )
 
+type operand struct {
+	index int
+	length int
+}
+
 type lexeme struct {
 	Program types.ASM
 	Tokens  []types.Token
+
+	instructionIndex int
+	labelIndex int
+	hasName bool
+	hasInstruction bool
+	hasOperands bool
+	operands []*operand
 }
 
 func NewLexeme(program types.ASM, tokens []types.Token) types.Lexeme {
-	return &lexeme{program, tokens}
+	return &lexeme{Program: program, Tokens: tokens}
 }
 
 func (l *lexeme) GetParentProgram() types.ASM {
@@ -77,7 +89,7 @@ func (l *lexeme) ToString() string {
 	str := ""
 	i := 0
 	for _, t := range l.Tokens {
-		str += fmt.Sprintf("%30s", t.ToDedStyle())
+		str += fmt.Sprintf("%-30s", t.ToDedStyle())
 		if i != 0 && i % 4 == 0 {
 			str += "\n"
 		}
@@ -87,62 +99,86 @@ func (l *lexeme) ToString() string {
 	return fmt.Sprintf("[%s]", strings.TrimSpace(str))
 }
 
-func (l *lexeme) ToSentenceTable() (int, int, []int, []int, bool, bool){
-	labInd := -1
-	instInd := 0
-	var opIndexes []int
-	var opLength []int
-	hasNoOperands := false
-	hasNoInstruction := false
+func (l *lexeme) ToSentenceTableString(level int) string {
+	l.toSentenceTable()
+	res := ""
+
+	if l.hasName {
+		res += fmt.Sprintf("%3d |", level)
+	} else {
+		res += fmt.Sprintf("%3s |", "--")
+	}
+
+	if l.hasInstruction {
+		res += fmt.Sprintf("%3d %3d |", level + l.instructionIndex, 1)
+	}
+
+	if l.hasOperands && l.hasInstruction {
+		for j, op := range l.operands {
+			s := ""
+			if j == len(l.operands) {
+				s = " |"
+			}
+			res += fmt.Sprintf("%3d %3d%s", level + op.index, op.length, s)
+		}
+	}
+
+	return res
+}
+
+func (l *lexeme) toSentenceTable() {
+	l.labelIndex = -1
+	l.instructionIndex = 0
+	l.operands = []*operand{}
+	l.hasOperands = true
+	l.hasInstruction = true
 
 	offset := 0
 
 	if l.hasLabel() {
-		labInd = 0
+		l.labelIndex = 0
 		offset += 2
 	}
 
 	if len(l.Tokens) <= offset {
-		hasNoInstruction = true
-		return labInd, instInd, opIndexes, opLength, false, hasNoInstruction
+		l.hasInstruction = false
+		return
 	}
 
 	for _, x := range l.Tokens {
 		if tokenType := *x.GetTokenType(); tokenType == ptokens.INSTRUCTION || tokenType == ptokens.DIRECTIVE {
-			hasNoInstruction = true
+			l.hasInstruction = false
 		}
 	}
 
-	if hasNoInstruction {
-		return labInd, instInd, opIndexes, opLength, false, hasNoInstruction
+	if !l.hasInstruction {
+		return
 	}
 
 	if *l.Tokens[offset].GetTokenType() == ptokens.IDENTIFIER {
 		offset++
 	}
 
-	instInd = offset
-	if !hasNoInstruction {
+	l.instructionIndex = offset
+	if !l.hasInstruction {
 		offset++
 	}
 
 	if len(l.Tokens) <= offset {
-		hasNoOperands = true
-		return labInd, instInd, opIndexes, opLength, hasNoOperands, hasNoInstruction
+		l.hasOperands = false
+		return
 	}
 
-	operand := 0
-	opIndexes = append(opIndexes, offset)
-	opLength = append(opLength, 0)
+	operandInd := 0
+	l.operands = append(l.operands, &operand{offset, 0})
 
 	for _, t := range l.Tokens[offset:] {
 		if *t.GetTokenType() == ptokens.SYM && t.GetValue() == "," {
-			opIndexes = append(opIndexes, opLength[operand])
-			opLength = append(opLength, 0)
-			operand++
+			l.operands = append(l.operands, &operand{l.operands[operandInd].index, 0})
+			operandInd++
 		} else {
-			opLength[operand]++
+			l.operands[operandInd].length++
 		}
 	}
-	return labInd, instInd, opIndexes, opLength, hasNoOperands, hasNoInstruction
+	return
 }
