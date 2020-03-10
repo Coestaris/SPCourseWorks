@@ -97,9 +97,26 @@ class ASMProgram:
 
         pass
 
+    def to_indexed_table(self):
+        res = ""
+        i = 0
+        for lexeme_index, lexeme in enumerate(self.lexemes):
+            res += "{:2} | ".format(lexeme_index)
+            for token_index, token in enumerate(lexeme.tokens):
+                res += "{1}({0}) ".format(token_index + i, token.string_value)
+            res += "\n"
+            i += len(lexeme.tokens)
+        return res
+
     def to_sentence_table(self):
         res = ""
         i = 0
+
+        res += "=" * 50 + "\n"
+        res += " {:2}| {:5}| {:9}| {:9}| {:9}| ...\n".format(
+              "#", "Label", "Memonic", "Operand1", "Operand2")
+        res += "=" * 50 + "\n"
+
         for index, lexeme in enumerate(self.lexemes):
             # res += str(lexeme) + "\n"
 
@@ -109,9 +126,9 @@ class ASMProgram:
             res += "{:-2} |".format(index)
 
             if label_index != -1:
-                res += "{:4} |".format(label_index + i)
+                res += "{:5} |".format(label_index + i)
             else:
-                res += "{:4} |".format("none")
+                res += "{:5} |".format(" none")
                 label_index = 0
 
             if not has_no_instruction:
@@ -122,9 +139,9 @@ class ASMProgram:
                     res += "{:4} {:4}{}".format(i + label_index + op_indices[j], op_length[j],
                                                 "" if j == len(op_indices) - 1 else " |")
 
-            if index != len(self.lexemes) - 1:
-                res += "\n"
+            res += "\n"
 
             i += len(lexeme.tokens)
 
+        res += "=" * 50 + "\n"
         return res
