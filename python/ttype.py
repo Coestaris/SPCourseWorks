@@ -1,4 +1,4 @@
-tokenMap = [
+TOKEN_MAP = [
     "SYM",
     "REG8",
     "REG16",
@@ -15,6 +15,7 @@ tokenMap = [
     "IDENTIFIER"
 ]
 
+
 class TokenType:
     SYM = 0
     REG8 = 1
@@ -26,15 +27,15 @@ class TokenType:
 
     KEYWORD_SEGMENT = 7
     KEYWORD_END = 8
-    KEYWORD_ENDS = 9,
+    KEYWORD_ENDS = 9
 
-    NUMBER_HEX = 10,
-    NUMBER_BIN = 11,
-    NUMBER_DEC = 12,
-    IDENTIFIER = 13,
-    
+    NUMBER_HEX = 10
+    NUMBER_BIN = 11
+    NUMBER_DEC = 12
+    IDENTIFIER = 13
+
     @staticmethod
-    def toStringValue(tokenType):
-        if tokenType < 0 || tokenType > len(tokenMap):
+    def toStringValue(token_type):
+        if token_type < 0 or token_type > len(TOKEN_MAP):
             return "unknown"
-        return tokenMap[tokenType]
+        return TOKEN_MAP[token_type]

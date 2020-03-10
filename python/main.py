@@ -2,11 +2,13 @@ from asmparser import get_tokens
 TEST_FILE = "test.asm"
 
 if __name__ == "__main__":
-    source = ""
     with open(TEST_FILE, "r") as file:
-        source = file.read()
+        source = file.read().lower()
 
-    tokens = get_tokens(TEST_FILE, source)
+    error, tokens = get_tokens(TEST_FILE, source)
+    if error != None:
+        print(error)
+        exit(1)
 
     for token in tokens:
-        print(token)
+        print(str(token))
