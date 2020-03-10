@@ -10,6 +10,12 @@ namespace CourseWork
 
         private static void DoTest(string fileName)
         {
+            if (!File.Exists(fileName))
+            {
+                Console.WriteLine("Unable to find file {0}", fileName);
+                return;
+            }
+
             AssemblySource source = null;
             using (var stream = File.OpenRead(fileName))
                 source = new AssemblySource(stream);

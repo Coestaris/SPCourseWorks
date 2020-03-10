@@ -36,7 +36,7 @@ namespace CourseWork.LexicalAnalysis
             }
 
             // *something* ENDS
-            if (Tokens.Count == 2 &&
+            if (Tokens.Count >= 2 &&
                 Tokens[0].Type == TokenType.Identifier &&
                 Tokens[1].Type == TokenType.EndsKeyword)
             {
