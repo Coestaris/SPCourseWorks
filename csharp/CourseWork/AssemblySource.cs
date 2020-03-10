@@ -50,8 +50,6 @@ namespace CourseWork
 
                 Source = new string(chars.Select(p => (char)p).ToArray());
             }
-
-            Source = Source.ToLower();
         }
     }
 }

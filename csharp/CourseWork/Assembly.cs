@@ -67,33 +67,9 @@ namespace CourseWork
 
             for (var l = 0; l < Lexemes.Count; l++)
             {
-                var lexeme = Lexemes[l];
-                lexeme.ToSentenceTable(
-                    out int labelInd, out var instIndex, 
-                    out var opIndices, out var opLength,
-                    out var hasNoOperands, out var hasNoInstruction);
-
-                res += string.Format("{0, -2} |", l);
-
-                if (labelInd != -1)
-                    res += string.Format("{0,4} |", labelInd + i);
-                else
-                {
-                    res += string.Format("{0,4} |", "--");
-                    labelInd = 0;
-                }
-                
-                if (!hasNoInstruction)
-                    res += string.Format("{0,4} {1,4} |", i + instIndex, 1);
-
-                if(!hasNoOperands && !hasNoInstruction)
-                    for (var j = 0; j < opIndices.Count; j++)
-                        res += string.Format("{0,4} {1,4}{2}", i + labelInd + opIndices[j], opLength[j],
-                            j == opIndices.Count - 1 ? "" : " |");
-                
-                res += "\n";
-
-                i += lexeme.Tokens.Count;
+                res += $"{l,-2} |";
+                res += Lexemes[l].ToSentenceTableString(i);
+                i += Lexemes[i].Tokens.Count;
             }
 
             return res;

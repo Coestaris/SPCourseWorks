@@ -43,14 +43,14 @@ namespace CourseWork.LexicalAnalysis
                 Tokens[0].Type = TokenType.UserSegment;
                 var structure = ParrentAssembly.UserSegments.Find(p => p.Name == Tokens[0].StringValue);
 
-                // Если не найдена структура которую мы собрались закрывать
+                // пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 if(structure == null)
                 {
                     error = new Error(ErrorType.UserSegmentNamesMismatch, Tokens[0]);
                     return;
                 }
                 
-                // Если структура которую мы собрались закрывать уже закрыта
+                // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 if (structure.Closed)
                 {
                     error = new Error(ErrorType.SpecifiedUserSegmentAlreadyClosed, Tokens[0]);
@@ -109,7 +109,7 @@ namespace CourseWork.LexicalAnalysis
             AssignUserSegmentsAndLabels(out error);
             if (error != null) return;
 
-            // Работает но судя по методе не нужно
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
             AssignInlineUserSegmentsAndLabels(out error);
             if (error != null) return;
         }
@@ -135,21 +135,28 @@ namespace CourseWork.LexicalAnalysis
 
             if(Tokens.Count <= offset)
             {
+                hasNoInstruction = true;
                 // has only label
                 return;
             }
 
+            if (Tokens[offset].Type == TokenType.Identifier || Tokens[offset].Type == TokenType.UserSegment)
+            {
+                offset += 1; // has name
+                labelInd = 0;
+            }
+
             hasNoInstruction = Tokens.Find(p =>
-                       p.Type == TokenType.Instruction || p.IsDirective()) == null;
+                       p.Type == TokenType.Instruction || p.IsDirective() ||
+                       p.Type == TokenType.SegmentKeyword ||
+                       p.Type == TokenType.EndsKeyword ||
+                       p.Type == TokenType.EndKeyword) == null;
 
             if(hasNoInstruction)
             {
                 // has no instructions
                 return;
             }
-            
-            if (Tokens[offset].Type == TokenType.Identifier)
-                offset += 1; // has name
 
             instIndex = offset;
             if (!hasNoInstruction)
@@ -163,15 +170,14 @@ namespace CourseWork.LexicalAnalysis
             }
 
             var operand = 0;
-            var i = 0;
             opIndices.Add(offset);
             opLengths.Add(0);
-            
+
             foreach (var token in Tokens.Skip(offset))
             {
                 if (token.Type == TokenType.Symbol && token.StringValue == ",")
                 {
-                    opIndices.Add(opLengths[operand]);
+                    opIndices.Add(opLengths[operand] + operand + 1 + offset);
                     opLengths.Add(0);
                     operand++;
                 }
@@ -179,7 +185,6 @@ namespace CourseWork.LexicalAnalysis
                 {
                     opLengths[operand]++;
                 }
-                i++;
             }
         }
 
@@ -188,9 +193,38 @@ namespace CourseWork.LexicalAnalysis
             return $"[{string.Join(", ", Tokens.Select(p => "\"" + p.ToString()+ "\""))}]";
         }
 
-        public string ToTable()
+        public string ToTable(bool ded)
         {
+            if (ded)
+                return string.Join(" ", Tokens.Select(p => p.StringValue));
             return $"[{string.Join("", Tokens.Select(p => string.Format("{0,-30}", p.ToSourceValue(true)))).Trim()}]";
+        }
+
+        public string ToSentenceTableString(int i = 0)
+        {
+            ToSentenceTable(
+                out int labelInd, out var instIndex,
+                out var opIndices, out var opLength,
+                out var hasNoOperands, out var hasNoInstruction);
+
+            var res = "";
+            if (labelInd != -1)
+                res += $"{labelInd + i,4} |";
+            else
+            {
+                res += $"{"--",4} |";
+                labelInd = 0;
+            }
+
+            if (!hasNoInstruction)
+                res += $"{i + instIndex,4} {1,4} |";
+
+            if(!hasNoOperands && !hasNoInstruction)
+                for (var j = 0; j < opIndices.Count; j++)
+                    res += $"{i + labelInd + opIndices[j],4} {opLength[j],4}{(j == opIndices.Count - 1 ? "" : " |")}";
+
+            res += "\n";
+            return res;
         }
     }
 }

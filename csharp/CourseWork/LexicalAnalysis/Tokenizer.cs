@@ -86,7 +86,7 @@ namespace CourseWork.LexicalAnalysis
                     if (tokenSplitCharacters.Contains(c))
                     {
                         rawTokens.Add(new RawToken(currentToken, lineCount, charCount));
-                        currentToken = c.ToString();
+                        currentToken = char.ToLower(c).ToString();
                         lastContains = true;
                     }
                     else
@@ -98,7 +98,7 @@ namespace CourseWork.LexicalAnalysis
                         }
 
                         lastContains = false;
-                        currentToken += c;
+                        currentToken += char.ToLower(c);
                     }
 
                     if (c == '\n')

@@ -29,8 +29,6 @@ namespace CourseWork
                 Console.WriteLine(error);
                 return;
             }
-            Console.WriteLine();
-            Console.WriteLine();
 
             Console.WriteLine("LABELS: ");
             foreach (var label in assembly.UserLabels)
@@ -46,12 +44,13 @@ namespace CourseWork
 
             Console.WriteLine("TOKENS: ");
             foreach (var lexeme in assembly.Lexemes)
-                Console.WriteLine(lexeme.ToTable());
+            {
+                Console.WriteLine("Source   | {0}", lexeme.ToTable(true));
+                Console.WriteLine("Tokens   | {0}", lexeme.ToTable(false));
+                Console.WriteLine("Sentence |{0}", lexeme.ToSentenceTableString());
+                Console.WriteLine();
+            }
 
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine("SENTENCE TABLE: ");
-            Console.WriteLine(assembly.ToSentenceTable());
         }
 
         public static void Main(string[] args)
