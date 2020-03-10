@@ -1,4 +1,9 @@
-# sp_kurs
+<p align="center">
+  ![https://github.com/Coestaris/SPCourseWorks](https://github.com/Coestaris/SPCourseWorks/blob/master/logo.png?raw=true)
+  <h1 align="center">SPCourseWorks</h1>
+  <h4 align="center">Made by Max and couple of indian Java porters</h4>
+</p>
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
