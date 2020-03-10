@@ -48,18 +48,19 @@ def tokenTypeByValue(value):
 
 
 class ASMToken:
-    def __init__(self, string_value, file, type, line, char):
+    def __init__(self, string_value, lexeme, type, line, char):
         self.string_value = string_value
         self.type = type
-        self.file = file
+        self.file = lexeme.program.file_name
+        self.lexeme = lexeme
         self.line = line
         self.char = char
         pass
 
     @staticmethod
-    def create(string_value, file, line, char):
+    def create(string_value, lexeme, line, char):
         type = tokenTypeByValue(string_value)
-        token = ASMToken(string_value, file, type, line, char)
+        token = ASMToken(string_value, lexeme, type, line, char)
         if type == -1:
             return (Error("Unknown token type", token), None)
 
@@ -67,9 +68,17 @@ class ASMToken:
 
     def __str__(self):
         return "{} ({}) in {} at {}:{}".format(
-            TokenType.toStringValue(self.type),
+            TokenType.to_string_value(self.type),
             self.string_value,
             self.file,
             self.line,
             self.char
         )
+
+    def to_ded_style(self):
+        return "({:5} : {} : {})".format(
+            "\"{}\"".format(self.string_value),
+            TokenType.to_string_value(self.type),
+            len(self.string_value)
+        )
+        pass

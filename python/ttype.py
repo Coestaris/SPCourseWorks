@@ -12,7 +12,9 @@ TOKEN_MAP = [
     "NUMBER_HEX",
     "NUMBER_BIN",
     "NUMBER_DEC",
-    "IDENTIFIER"
+    "IDENTIFIER",
+    "USER_SEGMENT",
+    "LABEL"
 ]
 
 
@@ -34,8 +36,11 @@ class TokenType:
     NUMBER_DEC = 12
     IDENTIFIER = 13
 
+    USER_SEGMENT = 14
+    LABEL = 15
+
     @staticmethod
-    def toStringValue(token_type):
+    def to_string_value(token_type):
         if token_type < 0 or token_type > len(TOKEN_MAP):
             return "unknown"
         return TOKEN_MAP[token_type]
