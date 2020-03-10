@@ -4,4 +4,7 @@ class Error:
         self.token = token
 
     def __str__(self):
+        if self.token is None:
+            return "Error message \"{}\"".format(self.message)
+
         return "Error message \"{}\" near {}".format(self.message, self.token)

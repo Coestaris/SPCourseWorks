@@ -26,16 +26,13 @@ class TokenType:
     SEGREG = 4
     DIRECTIVE = 5
     INSTRUCTION = 6
-
     KEYWORD_SEGMENT = 7
     KEYWORD_END = 8
     KEYWORD_ENDS = 9
-
     NUMBER_HEX = 10
     NUMBER_BIN = 11
     NUMBER_DEC = 12
     IDENTIFIER = 13
-
     USER_SEGMENT = 14
     LABEL = 15
 

@@ -8,9 +8,11 @@ if __name__ == "__main__":
     program = ASMProgram(source, TEST_FILE)
 
     error = program.parse()
-    if error != None:
+    if error is not None:
         print(error)
         exit(1)
 
     for lexeme in program.lexemes:
         print(str(lexeme))
+
+    print(program.to_sentence_table())

@@ -14,10 +14,6 @@ class ASMLexeme:
         if error is not None:
             return error
 
-        error = self.append_inline_user_type_and_labels()
-        if error is not None:
-            return error
-
         return None
 
     def __str__(self):
@@ -38,7 +34,7 @@ class ASMLexeme:
                 token.type = TokenType.USER_SEGMENT
                 continue
 
-            label = next((x for x in self.program.labels if x == token.string_value), None)
+            label = next((x for x in self.program.labels if x.string_value == token.string_value), None)
             if label is not None:
                 token.type = TokenType.LABEL
                 continue
@@ -78,7 +74,7 @@ class ASMLexeme:
             user_segment.close = self.tokens[0]
 
         # **something**:
-        if len(self.tokens) == 2 and \
+        if len(self.tokens) >= 2 and \
                 self.tokens[0].type == TokenType.IDENTIFIER and \
                 self.tokens[1].type == TokenType.SYM and self.tokens[1].string_value == ":":
 
@@ -87,5 +83,58 @@ class ASMLexeme:
                 return Error("SameLabelAreadyExists", self.tokens[0])
 
             self.tokens[0].type = TokenType.LABEL
+            self.program.labels.append(self.tokens[0])
 
         return None
+
+    def has_label(self):
+        return len(self.tokens) >= 2 and self.tokens[0].type == TokenType.LABEL
+
+    def to_sentence_table(self):
+        label_index = -1
+        inst_index = 0
+        op_indices = []
+        op_length = []
+        has_no_operands = False
+        has_no_instruction = False
+
+        offset = 0
+
+        if self.has_label():
+            label_index = 0
+            offset += 2  # label + ":"
+
+        if len(self.tokens) <= offset:  # has only label
+            has_no_instruction = True
+            return (label_index, inst_index, op_indices, op_length, has_no_operands, has_no_instruction)
+
+        has_no_instruction = next((x for x in self.tokens
+                                   if x.type == TokenType.INSTRUCTION or x.type == TokenType.DIRECTIVE), None) \
+                             is None
+        if has_no_instruction:
+            return (label_index, inst_index, op_indices, op_length, has_no_operands, has_no_instruction)
+
+        if self.tokens[offset].type == TokenType.IDENTIFIER:
+            offset += 1  # has name
+
+        inst_index = offset
+        if not has_no_instruction:
+            offset += 1
+
+        if len(self.tokens) <= offset:
+            has_no_operands = True
+            return (label_index, inst_index, op_indices, op_length, has_no_operands, has_no_instruction)
+
+        operand = 0
+        op_indices.append(offset)
+        op_length.append(0)
+
+        for token in self.tokens[offset:]:
+            if token.type == TokenType.SYM and token.string_value == ",":
+                op_indices.append(op_length[operand])
+                op_length.append(0)
+                operand += 1
+            else:
+                op_length[operand] += 1
+
+        return (label_index, inst_index, op_indices, op_length, has_no_operands, has_no_instruction)
