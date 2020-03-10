@@ -1,6 +1,6 @@
 <p align="center">
-  ![https://github.com/Coestaris/SPCourseWorks](https://github.com/Coestaris/SPCourseWorks/blob/master/logo.png?raw=true)
   <h1 align="center">SPCourseWorks</h1>
+  <div align="center"><a href="https://github.com/Coestaris/SPCourseWorks"><img src="https://github.com/Coestaris/SPCourseWorks/blob/master/logo.png?raw=true" /></a></div>
   <h4 align="center">Made by Max and couple of indian Java porters</h4>
 </p>
 
