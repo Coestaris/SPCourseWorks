@@ -6,3 +6,7 @@ obj/
 .vs/
 __pycache__
 target/
+.user
+*.user
+
+*.filters
