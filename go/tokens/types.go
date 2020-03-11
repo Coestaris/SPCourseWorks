@@ -12,6 +12,7 @@ const (
 	DIRECTIVE
 	INSTRUCTION
 
+	MODEL
 	DATA
 	CODE
 	END
@@ -38,6 +39,7 @@ var tokenMap = []string{
 	"DIRECTIVE",
 	"INSTRUCTION",
 
+	"MODEL",
 	"DATA",
 	"CODE",
 	"END",
@@ -78,6 +80,9 @@ var TokenDict = []tokenRule{
 	{TokenSegregs, SEGREG},
 	{TokenDirectives, DIRECTIVE},
 	{TokenInstructions, INSTRUCTION},
+	{[]string{"model"}, MODEL},
+	{[]string{"data"}, DATA},
+	{[]string{"code"}, CODE},
 	{[]string{"end"}, END},
 }
 
