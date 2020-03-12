@@ -2,6 +2,7 @@
 
 #include"TokenType.h"
 #include"Delimeter.h"
+#include <cassert>
 
 struct end_token //keep information about tokens 
 {
@@ -175,26 +176,20 @@ string TokenTypeToString(TokenType tochange)
 	}
 }
 
-
-
-
 //DELIMETER
-
 string trimString(string t)
 {
 	if (t.length() == 0) return"";
 
 	int start = 0, end = t.length() - 1;
-	while (t[start] == ' ' || t[start] == '\n' || t[start] == '\t')
+	while (isEmptySpace(t[start]))
 	{
 		start++;
-		if (start > t.length())
-			return "";
+		if (start > t.length()) return ""; 
 	}
-	while (t[end] == ' ' || t[end] == '\n' || t[end] == '\t') {
+	while (isEmptySpace(t[end])) {
 		end--;
-		if (end <= 0)
-			return "";
+		if (end <= 0) return "";
 	}
 
 	return t.substr(start, end - start + 1);
@@ -240,11 +235,15 @@ void delimeter()
 	int line = 0;
 
 	FILE* f = fopen("test.txt", "rb");
+	assert(f); // check if f is NULL
+
 	fseek(f, 0, SEEK_END);
 	size = ftell(f);
 	fseek(f, 0, SEEK_SET);
+
 	char* buffer = new char[size + 1];
-	//buffer[size] = '\0';
+	memset(buffer, 0, size + 1);
+
 	fread(buffer, size, 1, f);
 	buffer[size] = '\0';
 	vector_of_token.push_back(vector<end_token>());// creating new 0 string for vector (gorizontal)
@@ -263,7 +262,7 @@ void delimeter()
 
 		if (!textflag) //default token delimeter if !text const
 		{
-			if (contains(buffer[i]))
+			if (isDelimeter(buffer[i]))
 			{
 				vectorfill(token, line);
 				string temp;
@@ -291,7 +290,12 @@ void delimeter()
 	fclose(f);
 }
 
-bool contains(char s) //delimeter symbols
+bool isEmptySpace(int c)
 {
-	return s == '\n' || s == '\t' || s == '*' || s == ',' || s == '[' || s == ']' || s == '-' || s == '+' || s == '=' || s == ':' || s == ' ';
+	return c == '\r' || c == ' ' || c == '\n' || c == '\t' || c == '\0';
+}
+
+bool isDelimeter(char s) //delimeter symbols
+{
+	return isEmptySpace(s) || s == '*' || s == ',' || s == '[' || s == ']' || s == '-' || s == '+' || s == '=' || s == ':';
 }
