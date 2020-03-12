@@ -33,6 +33,6 @@ func (t *token) ChangeType(tokenType int) {
 	t.TokenType = tokenType
 }
 
-func (t *token) ToDedStyle() string {
+func (t *token) ToString() string {
 	return fmt.Sprintf(`("%s" : %s : %d)`, t.Value, ToStringValue(t.TokenType), len(t.Value))
 }

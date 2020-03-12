@@ -89,7 +89,7 @@ func (l *lexeme) ToString() string {
 	str := ""
 	i := 0
 	for _, t := range l.Tokens {
-		str += fmt.Sprintf("%-30s", t.ToDedStyle())
+		str += fmt.Sprintf("%-30s", t.ToString())
 		if i != 0 && i % 4 == 0 {
 			str += "\n"
 		}

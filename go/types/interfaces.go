@@ -23,5 +23,5 @@ type Token interface {
 	GetTokenType() *int
 	GetValue() string
 
-	ToDedStyle() string
+	ToString() string
 }
