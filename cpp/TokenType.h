@@ -57,3 +57,4 @@ string TokenTypeToString(TokenType tochange);
 void input();
 void output();
 TokenType numcheck(string number);
+void emptyCheck();
