@@ -306,16 +306,9 @@ bool isDelimeter(char s) //delimeter symbols
 
 void emptyCheck() //delete empty strings
 {
-	for (int i = vector_of_token.size(); i > 0; i--)
-	{
-		
-		
-		for (int i = vector_of_token.size() - 1; i > 0; i--)
+		for (int i = vector_of_token.size() - 1; i >= 0; i--)
 		{
 			if (vector_of_token[i].size() == 0)
 				vector_of_token.erase(vector_of_token.begin() + i);
 		}
-		
-	
-	}
 }
