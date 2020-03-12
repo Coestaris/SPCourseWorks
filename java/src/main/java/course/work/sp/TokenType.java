@@ -17,6 +17,7 @@ public enum TokenType {
     Imm8,
 
     Symbol,
+    Koma,
 
     Identifier,
 
