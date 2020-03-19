@@ -8,7 +8,7 @@ struct end_token //keep information about tokens
 {
 	string token;
 	TokenType type;
-
+	int token_len;
 };
 vector<vector<end_token>> vector_of_token; // two-dimensional vector of vectors to sort tokens by the lines of the input file
 
@@ -207,6 +207,7 @@ void vectorfill(string t, int line)
 			end_token topush;
 			topush.token = trimmed;
 			topush.type = itr->second;
+			topush.token_len = 1;
 			vector_of_token[line].push_back(topush);
 
 		}
@@ -221,6 +222,7 @@ void vectorfill(string t, int line)
 			}
 			topush.token = trimmed;
 			topush.type = check;
+			topush.token_len = 1;
 			vector_of_token[line].push_back(topush);
 
 		}
