@@ -1,13 +1,11 @@
-
 #pragma once
-
+#define _CRT_SECURE_NO_WARNINGS
 #include<iostream>
 #include<string.h>
 #include<string>
-#include <map>
-using namespace std;
-
-
+#include <unordered_map>
+#include<regex>
+#include<vector>
 
 namespace KeyWord
 {
@@ -53,11 +51,10 @@ namespace KeyWord
     };
 }
 
-
+using namespace std;
 using namespace KeyWord;
-string TokenTypeToString(TokenType sex);
+string TokenTypeToString(TokenType tochange);
 void input();
 void output();
-bool contains(char s);
-void delimeter();
 TokenType numcheck(string number);
+void emptyCheck();

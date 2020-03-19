@@ -6,6 +6,7 @@ public enum TokenType {
     DdDir,
 
     Instruction,
+    JmpWord,
     SegmentWord,
     EndWord,
     EndsWord,
@@ -14,9 +15,8 @@ public enum TokenType {
     Reg16,
     Reg32,
 
-    Imm8,
-
     Symbol,
+    Comma,
 
     Identifier,
 
@@ -28,10 +28,7 @@ public enum TokenType {
     ByteWord,
     DwordWord,
 
-
-    UserSegment,
     SegmentRegister,
-    Label,
     KeyWord,
 
     Unknown,

@@ -10,11 +10,10 @@ DATA1 ends
 NOPAR MACRO
 	mov si,10
 endm
-WITHPAR MACRO VARIABLE
 
+WITHPAR MACRO VARIABLE
 and dx,[bx+di]
- inc dx
-	
+ inc dx	
 endm
 
 CODE SEGMENT

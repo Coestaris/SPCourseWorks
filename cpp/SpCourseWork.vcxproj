@@ -139,9 +139,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Token.cpp" />
+    <ClCompile Include="Lexem.cpp" />
+    <ClCompile Include="Token_and_Delimeter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Delimeter.h" />
+    <ClInclude Include="Lexem.h" />
     <ClInclude Include="TokenType.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
