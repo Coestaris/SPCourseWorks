@@ -11,13 +11,14 @@ jmp label1
 label2:
 	lahf
 	inc ax
-	dec Dec1[eax+edi*4]
+	dec Dec1
+	dec word ptr [eax + edi*4]
 	add eax, ebx
 	jng label1
-	lea ebx, ES:Bin1[eax+edi]
-	and Dec1[ebx+edi*2], 02h
+	lea ebx, ES:Bin1
+	and Dec1, 02h
 	mov eax, 0001b
 label1:
-    test ES:Hex1[edx+edi*4], bh
+    test ES:Hex1, bh
 	jng label2
 END
