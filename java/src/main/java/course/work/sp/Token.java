@@ -17,8 +17,8 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("ASSUME", TokenType.KeyWord);
         NAME_TO_TOKEN_TYPE_MAP.put("STC", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("PUSH", TokenType.Instruction);
-        NAME_TO_TOKEN_TYPE_MAP.put("JMP", TokenType.Instruction);
-        NAME_TO_TOKEN_TYPE_MAP.put("JNC", TokenType.Instruction);
+        NAME_TO_TOKEN_TYPE_MAP.put("JMP", TokenType.JmpWord);
+        NAME_TO_TOKEN_TYPE_MAP.put("JNC", TokenType.JmpWord);
         NAME_TO_TOKEN_TYPE_MAP.put("MOV", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("MUL", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("XOR", TokenType.Instruction);
@@ -31,7 +31,7 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("]", TokenType.Symbol);
         NAME_TO_TOKEN_TYPE_MAP.put("+", TokenType.Symbol);
         NAME_TO_TOKEN_TYPE_MAP.put(":", TokenType.Symbol);
-        NAME_TO_TOKEN_TYPE_MAP.put(",", TokenType.Koma);
+        NAME_TO_TOKEN_TYPE_MAP.put(",", TokenType.Comma);
         NAME_TO_TOKEN_TYPE_MAP.put("DWORD", TokenType.DwordWord);
         NAME_TO_TOKEN_TYPE_MAP.put("PTR", TokenType.PtrWord);
         NAME_TO_TOKEN_TYPE_MAP.put("BYTE", TokenType.ByteWord);
@@ -41,6 +41,7 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("SI", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("ECX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("BX", TokenType.Reg16);
+        NAME_TO_TOKEN_TYPE_MAP.put("AX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("DI", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("BP", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("ES", TokenType.SegmentRegister);
@@ -71,6 +72,8 @@ public class Token {
             type = TokenType.Identifier;
         } else if (string.trim().startsWith("\"") && string.trim().endsWith("\"")) {
             type = TokenType.Text;
+        }else {
+            type = TokenType.Unknown;
         }
 
         if (type == TokenType.Text)
