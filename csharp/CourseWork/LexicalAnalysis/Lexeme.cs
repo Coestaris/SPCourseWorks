@@ -107,12 +107,12 @@ namespace CourseWork.LexicalAnalysis
             AssignUserSegmentsAndLabels(out error);
             if (error != null) return;
 
-            Structure = ToSentenceTable();
+            Structure = GetStructure();
         }
 
-        private LexemeStructure ToSentenceTable()
+        private LexemeStructure GetStructure()
         {
-            var structure = new LexemeStructure
+            var structure = new LexemeStructure(this)
             {
                 InstructionIndex = 0,
                 HasInstruction = true,
@@ -125,9 +125,6 @@ namespace CourseWork.LexicalAnalysis
                 structure.HasName = true;
                 offset += 2; // label : ':'
             }
-
-            structure.OperandIndices = new List<int>();
-            structure.OperandLengths = new List<int>();
 
             if(Tokens.Count <= offset)
             {
@@ -166,19 +163,21 @@ namespace CourseWork.LexicalAnalysis
             }
 
             var operand = 0;
-            structure.OperandIndices.Add(offset);
-            structure.OperandLengths.Add(0);
+            structure.OperandInfos.Add(new OperandInfo() {Index = offset});
             foreach (var token in Tokens.Skip(offset))
             {
                 if (token.Type == TokenType.Symbol && token.StringValue == ",")
                 {
-                     structure.OperandIndices.Add(structure.OperandLengths[operand] + operand + 1 + offset);
-                     structure.OperandLengths.Add(0);
+                    structure.OperandInfos.Add(new OperandInfo()
+                    {
+                        Index = structure.OperandInfos[operand].Length + operand + 1 + offset,
+                        Length = 0
+                    });
                     operand++;
                 }
                 else
                 {
-                    structure.OperandLengths[operand]++;
+                    structure.OperandInfos[operand].Length++;
                 }
             }
 

@@ -10,6 +10,8 @@
         SpecifiedUserSegmentAlreadyClosed,
         UnclosedSegment,
         UnopenedSegment,
-        MissingEndKeyword
+        MissingEndKeyword,
+        NotSupportedExpressionType,
+        WrongTokenAsOperand
     }
 }

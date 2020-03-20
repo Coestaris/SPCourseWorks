@@ -30,7 +30,13 @@ namespace CourseWork
                 return;
             }
 
-            Console.WriteLine("LABELS: ");
+            if ((error = assembly.FirstPass()) != null)
+            {
+                Console.WriteLine(error);
+                return;
+            }
+
+            /*Console.WriteLine("LABELS: ");
             foreach (var label in assembly.UserLabels)
                 Console.WriteLine(label);
             Console.WriteLine();
@@ -49,7 +55,7 @@ namespace CourseWork
                 Console.WriteLine("Tokens   | {0}", lexeme.ToTable(false));
                 Console.WriteLine("Sentence |{0}", lexeme.Structure.ToTable());
                 Console.WriteLine();
-            }
+            }*/
 
         }
 

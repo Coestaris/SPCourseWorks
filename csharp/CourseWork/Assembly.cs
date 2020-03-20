@@ -15,6 +15,9 @@ namespace CourseWork
         public List<Lexeme> Lexemes { get; }
         public List<UserSegment> UserSegments { get; }
         public List<Token> UserLabels { get; }
+        public List<Token> UserVariables { get; }
+
+        public Dictionary<string, Token> Equs{ get; }
 
         public Assembly(AssemblySource source)
         {
@@ -50,6 +53,16 @@ namespace CourseWork
             {
                 return new Error(ErrorType.MissingEndKeyword);
             }
+
+            return null;
+        }
+
+        public Error FirstPass()
+        {
+            Error error;
+            foreach(var lexeme in Lexemes)
+                if((error = lexeme.Structure.AnalyzeOperands()) != null)
+                    return error;
 
             return null;
         }

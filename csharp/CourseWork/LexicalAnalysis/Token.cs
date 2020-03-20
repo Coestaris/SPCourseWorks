@@ -32,6 +32,8 @@ namespace CourseWork.LexicalAnalysis
             { "ebx",     TokenType.Register32 },
             { "ecx",     TokenType.Register32 },
             { "edx",     TokenType.Register32 },
+            { "edi",     TokenType.Register32 },
+            { "esi",     TokenType.Register32 },
 
             { "ax",      TokenType.Register16 },
             { "bx",      TokenType.Register16 },
