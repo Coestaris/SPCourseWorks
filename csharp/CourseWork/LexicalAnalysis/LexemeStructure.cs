@@ -3,32 +3,6 @@ using System.Linq;
 
 namespace CourseWork.LexicalAnalysis
 {
-    public enum OperandType
-    {
-        Register,
-        Constant,
-        IndexedName,
-        Label,
-    }
-
-    public class OperandInfo
-    {
-        public List<Token> OperandTokens;
-
-        public int Length;
-        public int Index;
-
-        public OperandType Type;
-
-        // Register/Constant/Label fields
-        public Token Token;
-
-        // Indexed name fields
-        public Token SegmentPrefix;
-        public Token SumOperand1;
-        public Token SumOperand2;
-    }
-
     public class LexemeStructure
     {
         public Lexeme ParentLexeme { get; private set; }
@@ -99,6 +73,11 @@ namespace CourseWork.LexicalAnalysis
             }
 
             return null;
+        }
+
+        public int SumByteCount()
+        {
+            return OperandInfos.Sum(p => p.GetByteCount())
         }
 
         public string ToTable(int i = 0)

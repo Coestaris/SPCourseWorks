@@ -40,7 +40,11 @@
   <ItemGroup>
     <Compile Include="Assembly.cs" />
     <Compile Include="AssemblySource.cs" />
+    <Compile Include="DataStructures\InstructionInfo.cs" />
+    <Compile Include="DataStructures\OperandInfo.cs" />
+    <Compile Include="DataStructures\OperandType.cs" />
     <Compile Include="DataStructures\UserSegment.cs" />
+    <Compile Include="DataStructures\Variable.cs" />
     <Compile Include="Error.cs" />
     <Compile Include="ErrorType.cs" />
     <Compile Include="LexicalAnalysis\Lexeme.cs" />

@@ -13,6 +13,7 @@ namespace CourseWork.LexicalAnalysis
         public Assembly ParentAssembly { get; }
         public List<Token> Tokens { get; private set; }
         public LexemeStructure Structure { get; private set; }
+        public UserSegment Segment { get; internal set; }
 
         private void AssignUserSegmentsAndLabels(out Error error)
         {
@@ -31,7 +32,8 @@ namespace CourseWork.LexicalAnalysis
                 }
 
                 ParentAssembly.UserSegments.Add(new UserSegment() {
-                    OpenToken = Tokens[0], 
+                    OpenToken = Tokens[0],
+                    Index = ParentAssembly.UserSegments.Count
                 });
             }
 
@@ -59,17 +61,48 @@ namespace CourseWork.LexicalAnalysis
             }
 
             // *something*:
-            if (Tokens[0].Type == TokenType.Identifier &&
+            if (Tokens.Count >= 2 &&
+                Tokens[0].Type == TokenType.Identifier &&
                 Tokens[1].Type == TokenType.Symbol && 
                 Tokens[1].StringValue == ":")
             {
                 Tokens[0].Type = TokenType.Label;
                 if (ParentAssembly.UserLabels.FindIndex(p => p.StringValue == Tokens[0].StringValue) != -1)
                 {
-                    error = new Error(ErrorType.SameLabelAreadyExists, Tokens[0]);
+                    error = new Error(ErrorType.SameLabelAlreadyExists, Tokens[0]);
                     return;
                 }
                 ParentAssembly.UserLabels.Add(Tokens[0]);
+            }
+
+            // *something* equ *something*
+            if (Tokens.Count == 3 &&
+                Tokens[0].Type == TokenType.Identifier &&
+                Tokens[1].Type == TokenType.EquDirective)
+            {
+                if (ParentAssembly.Equs.ContainsKey(Tokens[0].StringValue))
+                {
+                    error = new Error(ErrorType.SameEquAlreadyExists, Tokens[0]);
+                    return;
+                }
+
+                ParentAssembly.Equs.Add(Tokens[0].StringValue, Tokens[2]);
+            }
+
+            // *something* db/dw/dd *something*
+            if (Tokens.Count == 3 &&
+                Tokens[0].Type == TokenType.Identifier &&
+                (Tokens[1].Type == TokenType.DbDirective ||
+                 Tokens[1].Type == TokenType.DwDirective ||
+                 Tokens[1].Type == TokenType.DdDirective))
+            {
+                if (ParentAssembly.UserVariables.Find(p => p.Name.StringValue == Tokens[2].StringValue) != null)
+                {
+                    error = new Error(ErrorType.SameVarAlreadyExists, Tokens[0]);
+                    return;
+                }
+
+                ParentAssembly.UserVariables.Add(new Variable(Tokens[0], Tokens[1], Tokens[2]));
             }
         }
 
@@ -192,8 +225,20 @@ namespace CourseWork.LexicalAnalysis
         public string ToTable(bool ded)
         {
             if (ded)
-                return string.Join(" ", Tokens.Select(p => p.StringValue));
+                return string.Join(" ", Tokens.Select(p => p.Type == TokenType.Text ? "\"" + p.StringValue + "\"" :  p.StringValue));
             return $"[{string.Join("", Tokens.Select(p => string.Format("{0,-30}", p.ToSourceValue(true)))).Trim()}]";
+        }
+
+        public void ProceedEqu()
+        {
+            for (var i = 0; i < Tokens.Count; i++)
+                if (ParentAssembly.Equs.ContainsKey(Tokens[i].StringValue))
+                {
+                    if(Tokens.Count == 3 && Tokens[1].Type == TokenType.EquDirective)
+                        continue;
+
+                    Tokens[i] = ParentAssembly.Equs[Tokens[i].StringValue];
+                }
         }
     }
 }

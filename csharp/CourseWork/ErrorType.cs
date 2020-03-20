@@ -5,13 +5,18 @@
         SameUserSegmentAlreadyExists,
         UnclosedQuotes,
         UnknownToken,
-        SameLabelAreadyExists,
+        SameLabelAlreadyExists,
         UserSegmentNamesMismatch,
         SpecifiedUserSegmentAlreadyClosed,
         UnclosedSegment,
         UnopenedSegment,
         MissingEndKeyword,
         NotSupportedExpressionType,
-        WrongTokenAsOperand
+        WrongTokenAsOperand,
+        WrongDirectiveFormat,
+        ConstantExpected,
+        UnexpectedDirective,
+        SameEquAlreadyExists,
+        SameVarAlreadyExists
     }
 }

@@ -179,6 +179,16 @@ namespace CourseWork.LexicalAnalysis
                 Type == TokenType.BinNumber;
         }
 
+        public int ByteCount()
+        {
+            if (!IsNumber()) return 0;
+            var v = ToValue();
+            if (v < 255) return 1;
+            if (v < 65536) return 2;
+
+            return 4;
+        }
+
         public int ToValue()
         {
             switch (Type)
