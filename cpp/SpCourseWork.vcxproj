@@ -139,7 +139,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Lexem.cpp" />
     <ClCompile Include="Token_and_Delimeter.cpp" />
   </ItemGroup>
   <ItemGroup>
