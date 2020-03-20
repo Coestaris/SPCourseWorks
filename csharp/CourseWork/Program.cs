@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Xml.Schema;
+using CourseWork.DataStructures;
 using CourseWork.LexicalAnalysis;
 
 namespace CourseWork
@@ -12,10 +13,21 @@ namespace CourseWork
         private static void WriteAsm(Assembly assembly)
         {
             foreach (var lexeme in assembly.Lexemes)
+            {
                 Console.WriteLine("{0}{1}{2}",
-                    lexeme.Segment == null   ? "" : "   ",
+                    lexeme.Segment == null ? "" : "   ",
                     lexeme.Structure.HasName ? "" : "   ",
                     lexeme.ToTable(true));
+
+                if (InstructionInfo.Match(lexeme, out var info))
+                {
+                    Console.WriteLine(info.Name);
+                }
+                else
+                {
+                    Console.WriteLine("!!!!!!!!");
+                }
+            }
         }
 
         private static void WriteSegmentsTable(Assembly assembly)
