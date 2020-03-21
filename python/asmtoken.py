@@ -76,9 +76,16 @@ class ASMToken:
         )
 
     def to_ded_style(self):
-        return "({:5} : {} : {})".format(
+        string_type = TokenType.to_string_value(self.type)
+        # We need just identifier for the first time
+        if self.type == TokenType.USER_SEGMENT:
+            string_type = TokenType.to_string_value(TokenType.IDENTIFIER)
+        elif self.type == TokenType.LABEL:
+            string_type = TokenType.to_string_value(TokenType.IDENTIFIER)
+
+        return "({:9} : {:11} : {})".format(
             "\"{}\"".format(self.string_value),
-            TokenType.to_string_value(self.type),
+            string_type,
             len(self.string_value)
         )
         pass
