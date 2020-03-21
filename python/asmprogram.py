@@ -74,6 +74,25 @@ class ASMParser:
 
         return (None, real_tokens)
 
+    @staticmethod
+    def proceed_segments(program):
+        current_segment = None
+        for lexeme in program.lexemes:
+            if len(lexeme.tokens) == 2 and lexeme.tokens[1].type == TokenType.KEYWORD_SEGMENT:
+                # find segment by its name
+                current_segment = [x for x in program.user_segments if x.open.string_value == lexeme.tokens[0].string_value][0]
+
+            elif len(lexeme.tokens) == 2 and lexeme.tokens[1].type == TokenType.KEYWORD_ENDS:
+                current_segment = None
+
+            else:
+                lexeme.segment = current_segment
+                if current_segment is None and \
+                        not (len(lexeme.tokens) == 1 and lexeme.tokens[0].type == TokenType.KEYWORD_END):
+                    return Error("OnlyEndCouldBeWithoutSegment", lexeme.tokens[0])
+
+        return None
+
 
 class ASMProgram:
     def __init__(self, source, file_name):
@@ -82,6 +101,7 @@ class ASMProgram:
         self.lexemes = []
         self.user_segments = []
         self.labels = []
+        self.variables = []
 
     def parse(self):
         error, self.lexemes = ASMParser.get_lexemes(self)
@@ -97,3 +117,17 @@ class ASMProgram:
 
         pass
 
+    def first_pass(self):
+        # Assign segments and check lines that out of segments
+        error = ASMParser.proceed_segments(self)
+        if error is not None: return error
+
+        # Fetch information about operands in lexemes with instructions
+        for lexeme in self.lexemes:
+            error = lexeme.structure.get_operands_info(lexeme)
+            if error is not None: return error
+
+        # Find matching instruction for our lexemes:
+        
+
+        return None

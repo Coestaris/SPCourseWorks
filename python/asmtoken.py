@@ -75,6 +75,14 @@ class ASMToken:
             self.char
         )
 
+    def get_num_value(self):
+        if self.type == TokenType.NUMBER_HEX:
+            return int(self.string_value[:-1], base=16)
+        elif self.type == TokenType.NUMBER_DEC:
+            return int(self.string_value)
+        else:
+            return int(self.string_value[:-1], base=2)
+
     def to_ded_style(self):
         string_type = TokenType.to_string_value(self.type)
         # We need just identifier for the first time

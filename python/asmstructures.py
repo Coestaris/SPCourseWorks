@@ -15,3 +15,9 @@ class ASMUserSegment:
         elif self.closed():
             return self.close.string_value
         return "---"
+
+class ASMVariable:
+    def __init__(self, directive, name, value):
+        self.directive = directive
+        self.name = name
+        self.value = value

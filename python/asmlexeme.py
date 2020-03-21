@@ -1,4 +1,4 @@
-from asmusersegment import ASMUserSegment
+from asmstructures import ASMUserSegment, ASMVariable
 from ttype import TokenType
 from error import Error
 
@@ -10,6 +10,25 @@ INSTRUCTION_TYPES = [
     TokenType.KEYWORD_SEGMENT
 ]
 
+class ASMOperandType:
+    Register8 = 1
+    Register32 = 2
+    Constant8 = 3
+    Constant32 = 4
+    Label = 5
+    Mem = 6
+
+
+class ASMOperandInfo:
+    def __init__(self):
+        self.type = 0
+        self.length = 0
+        self.index = 0
+        self.operand_tokens = []
+        self.token = None
+        self.segment_prefix = None
+        self.sum_tk1 = None
+        self.sum_tk2 = None
 
 class ASMLexemeStructure:
     def __init__(self):
@@ -17,8 +36,63 @@ class ASMLexemeStructure:
         self.has_instruction = 0
         self.has_operands = 0
         self.instruction_index = 0
-        self.operand_indices = []
-        self.operand_lengths = []
+        self.operands = []
+
+    def get_operands_info(self, parent):
+        if not self.has_instruction or not self.has_operands:
+            return None
+
+        for operand in self.operands:
+            operand.operand_tokens = parent.tokens[operand.index : operand.index + operand.length]
+
+            if len(operand.operand_tokens) == 1:
+                # reg or constant
+                token = operand.operand_tokens[0]
+                operand.token = token
+
+                if token.type == TokenType.REG8:
+                    operand.type = ASMOperandType.Register8
+                elif token.type == TokenType.REG16 or token.type == TokenType.REG32:
+                    operand.type = ASMOperandType.Register32
+                elif token.type == TokenType.NUMBER_DEC or \
+                        token.type == TokenType.NUMBER_BIN or \
+                        token.type == TokenType.NUMBER_HEX:
+                    value = token.get_num_value()
+                    if value < 255:
+                        operand.type = ASMOperandType.Constant8
+                    else:
+                        operand.type = ASMOperandType.Constant32
+                elif token.type == TokenType.LABEL:
+                    operand.type = ASMOperandType.Label
+                else:
+                    return Error("WrongTokenInOperand", operand.token)
+            else:
+                # mem
+                # VAR [ AAA + BBB ]    = 6 tokens
+                if len(operand.operand_tokens) < 6:
+                    return Error("WrongInstructionFormat", operand.token)
+
+                offset = 0
+                operand.type = ASMOperandType.Mem
+                if operand.operand_tokens[0].type == TokenType.SEGREG:
+                    offset += 2
+                    operand.segment_prefix = operand.operand_tokens[0]
+
+                    # ES : VAR [ AAA + BBB ]    = 8 tokens
+                    if len(operand.operand_tokens) != 8:
+                        return Error("WrongInstructionFormat", operand.token)
+
+                operand.token = operand.operand_tokens[offset]
+                operand.sum_tk1 = operand.operand_tokens[offset + 2]
+                operand.sum_tk2 = operand.operand_tokens[offset + 4]
+
+        return None
+
+    def get_instruction(self, parent):
+        return parent.tokens[self.instruction_index]
+
+    def get_name(self, parent):
+        return parent.tokens[0]
 
     def __str__(self, i=0):
         res = ""
@@ -31,9 +105,9 @@ class ASMLexemeStructure:
             res += "{:3} {:3} |".format(i + self.instruction_index, 1)
 
         if self.has_operands and self.has_instruction:
-            for j, index in enumerate(self.operand_indices):
-                res += "{:3} {:3}{}".format(i + index, self.operand_lengths[j],
-                                            " |" if j != len(self.operand_lengths) else "")
+            for j, operand in enumerate(self.operands):
+                res += "{:3} {:3}{}".format(i + operand.index, operand.length,
+                                            " |" if j != len(self.operands) else "")
         return res
 
 
@@ -42,6 +116,8 @@ class ASMLexeme:
         self.program = program
         self.tokens = []
         self.structure = None
+        self.offset = 0
+        self.segment = None
 
     def set_tokens(self, tokens):
         self.tokens = tokens
@@ -79,7 +155,7 @@ class ASMLexeme:
         return None
 
     def append_user_type_and_labels(self):
-        # **something** SEGMENT
+        # Segment declaration
         if len(self.tokens) == 2 and \
                 self.tokens[0].type == TokenType.IDENTIFIER and \
                 self.tokens[1].type == TokenType.KEYWORD_SEGMENT:
@@ -94,7 +170,7 @@ class ASMLexeme:
             user_segment.open = self.tokens[0]
             self.program.user_segments.append(user_segment)
 
-        # **something** ENDS
+        # Segment ending
         if len(self.tokens) == 2 and \
                 self.tokens[0].type == TokenType.IDENTIFIER and \
                 self.tokens[1].type == TokenType.KEYWORD_ENDS:
@@ -110,17 +186,29 @@ class ASMLexeme:
             self.tokens[0].type = TokenType.USER_SEGMENT
             user_segment.close = self.tokens[0]
 
-        # **something**:
+        # Labels
         if len(self.tokens) >= 2 and \
                 self.tokens[0].type == TokenType.IDENTIFIER and \
                 self.tokens[1].type == TokenType.SYM and self.tokens[1].string_value == ":":
 
             label = next((x for x in self.program.labels if x == self.tokens[0].string_value), None)
             if label is not None:
-                return Error("SameLabelAreadyExists", self.tokens[0])
+                return Error("SameLabelAlreadyExists", self.tokens[0])
 
             self.tokens[0].type = TokenType.LABEL
             self.program.labels.append(self.tokens[0])
+
+        # Variable
+        if len(self.tokens) == 3 and \
+                self.tokens[0].type == TokenType.IDENTIFIER and \
+                self.tokens[1].type == TokenType.DIRECTIVE:
+
+            var = next((x for x in self.program.variables if x == self.tokens[0].string_value), None)
+
+            if var is not None:
+                return Error("SameVariableAlreadyExists", self.tokens[0])
+
+            self.program.variables.append(ASMVariable(self.tokens[1], self.tokens[0], self.tokens[2]))
 
         return None
 
@@ -165,14 +253,17 @@ class ASMLexeme:
             return structure
 
         operand = 0
-        structure.operand_indices.append(offset)
-        structure.operand_lengths.append(0)
+        structure.operands.append(ASMOperandInfo())
+        structure.operands[-1].index = offset
+        structure.operands[-1].length = 0
         for token in self.tokens[offset:]:
             if token.type == TokenType.SYM and token.string_value == ",":
-                structure.operand_indices.append(structure.operand_lengths[operand] + operand + 1 + offset)
-                structure.operand_lengths.append(0)
+                structure.operands.append(ASMOperandInfo())
+                structure.operands[-1].index = structure.operands[operand].length + operand + 1 + offset
+                structure.operands[-1].length = 0
+
                 operand += 1
             else:
-                structure.operand_lengths[operand] += 1
+                structure.operands[operand].length += 1
 
         return structure
