@@ -13,15 +13,21 @@ namespace CourseWork
         private static void WriteAsm(Assembly assembly)
         {
             var i = 0;
+            Console.WriteLine(new string('=', 68));
+            Console.WriteLine(" #|  Cnt  | Offset |                      Souce                    |");
+            Console.WriteLine(new string('=', 68));
+
             foreach (var lexeme in assembly.Lexemes)
             {
-                Console.WriteLine("{4,2}|: {3}:  {0}{1}{2}",
+                var s = string.Format("{4,2}|  {5,3}  |  {3} |  {0}{1}{2}",
                     lexeme.Segment == null ? "" : "   ",
                     lexeme.Structure.HasName ? "" : "   ",
                     lexeme.ToTable(true),
                     lexeme.HasOffset ? lexeme.Offset.ToString("X").PadLeft(5, '0') : "-----",
-                    i++);
+                    i++, lexeme.GetSize());
+                Console.WriteLine(s.PadRight(67,' ') + "|");
             }
+            Console.WriteLine(new string('=', 68));
         }
 
         private static void WriteSegmentsTable(Assembly assembly)

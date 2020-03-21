@@ -286,6 +286,29 @@ namespace CourseWork.LexicalAnalysis
                         }
                     }
 
+                    // Size and Opcode of OR depends on size of constant
+                    if (instruction.StringValue == "or")
+                    {
+                        var operand = Structure.OperandInfos[1].Token;
+
+                        size -= InstructionInfo.ConstantIMM;
+                        size += operand.ByteCount();
+                    }
+
+                    // If jump goes forward we reserve 4 bytes instead of 1
+                    //+ 1 for another opcode
+                    if (instruction.StringValue == "jbe")
+                    {
+                        var operand = Structure.OperandInfos[0].Token;
+                        var label = ParentAssembly.UserLabels.Find(p => p.StringValue == operand.StringValue);
+
+                        if (label.Line > operand.Line) // jmp forward
+                        {
+                            size += 3; // + 3 reversing bytes
+                            size += 1; // for opcode
+                        }
+                    }
+
                     return size;
                 }
                 else

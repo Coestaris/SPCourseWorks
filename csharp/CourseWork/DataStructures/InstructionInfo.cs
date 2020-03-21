@@ -87,8 +87,7 @@ namespace CourseWork.DataStructures
             new InstructionInfo
             {
                 OpCode1 = 0x76,
-                HasModRM = true,
-                ConstantIMM = 4,
+                ConstantIMM = 1,
                 Name = "jbe", AllowedTypes = new List<OperandType> {OperandType.Label}
             },
         };
