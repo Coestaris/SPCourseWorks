@@ -153,6 +153,34 @@ namespace CourseWork
             return null;
         }
 
+        private Error AssignInfos()
+        {
+            var offset = 0;
+            foreach (var lexeme in Lexemes)
+            {
+                if (lexeme.Structure.HasInstruction)
+                {
+                    var instruction = lexeme.Tokens[lexeme.Structure.InstructionIndex];
+                    if (instruction.Type == TokenType.Instruction)
+                    {
+
+                        if (!InstructionInfo.Match(lexeme, out var info))
+                            return new Error(ErrorType.InstructionFormat, lexeme.Tokens[0]);
+                        lexeme.InstructionInfo = info;
+                    }
+                }
+
+                lexeme.Offset = offset;
+                offset += lexeme.GetSize();
+
+                // segment declaration or closing
+                if (lexeme.Segment == null)
+                    offset = 0;
+            }
+
+            return null;
+        }
+
         public Error FirstPass()
         {
             Error error;
@@ -173,6 +201,10 @@ namespace CourseWork
             foreach(var lexeme in Lexemes)
                 if((error = lexeme.Structure.AnalyzeOperands()) != null)
                     return error;
+
+            // Assign instruction infos to lexemes
+            if ((error = AssignInfos()) != null)
+                return error;
 
             return null;
         }

@@ -12,21 +12,15 @@ namespace CourseWork
 
         private static void WriteAsm(Assembly assembly)
         {
+            var i = 0;
             foreach (var lexeme in assembly.Lexemes)
             {
-                Console.WriteLine("{0}{1}{2}",
+                Console.WriteLine("{4,2}|: {3}:  {0}{1}{2}",
                     lexeme.Segment == null ? "" : "   ",
                     lexeme.Structure.HasName ? "" : "   ",
-                    lexeme.ToTable(true));
-
-                if (InstructionInfo.Match(lexeme, out var info))
-                {
-                    Console.WriteLine(info.Name);
-                }
-                else
-                {
-                    Console.WriteLine("!!!!!!!!");
-                }
+                    lexeme.ToTable(true),
+                    lexeme.HasOffset ? lexeme.Offset.ToString("X").PadLeft(5, '0') : "-----",
+                    i++);
             }
         }
 
@@ -70,20 +64,25 @@ namespace CourseWork
 
         private static void WriteUserNamesTable(Assembly assembly)
         {
-            Console.WriteLine(new string('=', 40));
-            Console.WriteLine("# |    Name     |     Type    | Offset |");
-            Console.WriteLine(new string('=', 40));
+            Console.WriteLine(new string('=', 46));
+            Console.WriteLine("# |    Name     |     Type         | Mem off |");
+            Console.WriteLine(new string('=', 46));
             var i = 0;
+
             foreach (var segment in assembly.UserSegments)
-                Console.WriteLine("{0} | {1,9}   | {2,9}   | {3,2}     |", i++,
-                    segment.Name, "SEGMENT", segment.OpenToken.Line);
+                Console.WriteLine("{0} | {1,9}   |     {2,9}    |  {3,2}     |", i++,
+                    segment.Name, "SEGMENT", "--");
+
             foreach (var variable in assembly.UserVariables)
-                Console.WriteLine("{0} | {1,9}   | {2,9}   | {3,2}     |", i++,
-                    variable.Name.StringValue, "DATA_" + variable.Type.StringValue.ToUpper(), variable.Name.Line);
+                Console.WriteLine("{0} | {1,9}   |  {2,15} |  {3,2}     |", i++,
+                    variable.Name.StringValue, "DATA " + variable.Type.StringValue.ToUpper() + " at " +
+                                               variable.Name.ParentLexeme.Segment.Name.ToUpper(),
+                    variable.Name.ParentLexeme.Offset);
+
             foreach (var label in assembly.UserLabels)
-                Console.WriteLine("{0} | {1,9}   | {2,9}   | {3,2}     |", i++,
-                    label.StringValue, "LABEL", label.Line);
-            Console.WriteLine(new string('=', 40));
+                Console.WriteLine("{0} | {1,9}   |     {2,9}    |  {3,2}     |", i++,
+                    label.StringValue, "LABEL", "--");
+            Console.WriteLine(new string('=', 46));
         }
 
         private static void DoTest(string fileName)
