@@ -1,3 +1,5 @@
+from typing import Optional
+
 from ttype import TokenType
 from error import Error
 import re
@@ -29,7 +31,7 @@ numberBinRegex = re.compile(r"^[01]+b$")
 identifierRegex = re.compile(r"^[a-z]\w*$")
 
 
-def tokenTypeByValue(value):
+def tokenTypeByValue(value: str) -> int:
     for d in TOKEN_DICT:
         for entry in d[0]:
             if entry == value:
@@ -48,17 +50,16 @@ def tokenTypeByValue(value):
 
 
 class ASMToken:
-    def __init__(self, string_value, lexeme, type, line, char):
-        self.string_value = string_value
-        self.type = type
-        self.file = lexeme.program.file_name
-        self.lexeme = lexeme
-        self.line = line
-        self.char = char
-        pass
+    def __init__(self, string_value: str, lexeme: 'ASMLexeme', type: int, line: int, char: int):
+        self.string_value: str = string_value
+        self.type: int = type
+        self.file: str = lexeme.program.file_name
+        self.lexeme: 'ASMLexeme' = lexeme
+        self.line: int = line
+        self.char: int = char
 
     @staticmethod
-    def create(string_value, lexeme, line, char):
+    def create(string_value: str, lexeme: 'ASMLexeme', line: int, char: int) -> (Optional[Error], 'ASMToken'):
         type = tokenTypeByValue(string_value)
         token = ASMToken(string_value, lexeme, type, line, char)
         if type == -1:
@@ -75,7 +76,7 @@ class ASMToken:
             self.char
         )
 
-    def get_num_value(self):
+    def get_num_value(self) -> int:
         if self.type == TokenType.NUMBER_HEX:
             return int(self.string_value[:-1], base=16)
         elif self.type == TokenType.NUMBER_DEC:
@@ -83,7 +84,7 @@ class ASMToken:
         else:
             return int(self.string_value[:-1], base=2)
 
-    def to_ded_style(self):
+    def to_ded_style(self) -> str:
         string_type = TokenType.to_string_value(self.type)
         # We need just identifier for the first time
         if self.type == TokenType.USER_SEGMENT:

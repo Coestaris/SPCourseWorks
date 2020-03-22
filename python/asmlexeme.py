@@ -1,4 +1,7 @@
+from typing import Optional, List
+
 from asmstructures import ASMUserSegment, ASMVariable
+from asmtoken import ASMToken
 from ttype import TokenType
 from error import Error
 
@@ -10,40 +13,43 @@ INSTRUCTION_TYPES = [
     TokenType.KEYWORD_SEGMENT
 ]
 
+
 class ASMOperandType:
     Register8 = 1
     Register32 = 2
     Constant8 = 3
     Constant32 = 4
-    Label = 5
+    LabelForward = 5
+    LabelBackward = 5
     Mem = 6
 
 
 class ASMOperandInfo:
     def __init__(self):
-        self.type = 0
-        self.length = 0
-        self.index = 0
-        self.operand_tokens = []
-        self.token = None
-        self.segment_prefix = None
-        self.sum_tk1 = None
-        self.sum_tk2 = None
+        self.type: int = 0
+        self.length: int = 0
+        self.index: int = 0
+        self.operand_tokens: List[ASMToken] = []
+        self.token: ASMToken = None
+        self.segment_prefix: Optional[ASMToken] = None
+        self.sum_tk1: Optional[ASMToken] = None
+        self.sum_tk2: Optional[ASMToken] = None
+
 
 class ASMLexemeStructure:
     def __init__(self):
-        self.has_name = 0
-        self.has_instruction = 0
-        self.has_operands = 0
-        self.instruction_index = 0
-        self.operands = []
+        self.has_name: bool = False
+        self.has_instruction: bool = False
+        self.has_operands: bool = False
+        self.instruction_index: int = True
+        self.operands: List[ASMOperandInfo] = []
 
-    def get_operands_info(self, parent):
+    def get_operands_info(self, parent: 'ASMLexeme') -> Optional[Error]:
         if not self.has_instruction or not self.has_operands:
             return None
 
         for operand in self.operands:
-            operand.operand_tokens = parent.tokens[operand.index : operand.index + operand.length]
+            operand.operand_tokens = parent.tokens[operand.index: operand.index + operand.length]
 
             if len(operand.operand_tokens) == 1:
                 # reg or constant
@@ -63,7 +69,16 @@ class ASMLexemeStructure:
                     else:
                         operand.type = ASMOperandType.Constant32
                 elif token.type == TokenType.LABEL:
-                    operand.type = ASMOperandType.Label
+
+                    # here we must determine labeling type: forward or backward
+                    # it will be useful for future
+                    label = [x for x in parent.program.labels if x.string_value == token.string_value][0]
+                    if label.line > token.line:
+                        # declared after current line
+                        token.type = ASMOperandType.LabelForward
+                    else:
+                        token.type = ASMOperandType.LabelBackward
+
                 else:
                     return Error("WrongTokenInOperand", operand.token)
             else:
@@ -88,13 +103,13 @@ class ASMLexemeStructure:
 
         return None
 
-    def get_instruction(self, parent):
+    def get_instruction(self, parent: 'ASMLexeme') -> ASMToken:
         return parent.tokens[self.instruction_index]
 
-    def get_name(self, parent):
+    def get_name(self, parent: 'ASMLexeme') -> ASMToken:
         return parent.tokens[0]
 
-    def __str__(self, i=0):
+    def __str__(self, i: int = 0):
         res = ""
         if self.has_name:
             res += "{:3} |".format(i)
@@ -112,14 +127,15 @@ class ASMLexemeStructure:
 
 
 class ASMLexeme:
-    def __init__(self, program):
-        self.program = program
-        self.tokens = []
-        self.structure = None
-        self.offset = 0
-        self.segment = None
+    def __init__(self, program: 'ASMProgram'):
+        self.program: 'ASMProgram' = program
+        self.tokens: List[ASMToken] = []
+        self.structure: ASMLexemeStructure = None
+        self.offset: int = 0
+        self.instruction : Optional['ASMInstruction'] = None
+        self.segment: Optional[ASMUserSegment] = None
 
-    def set_tokens(self, tokens):
+    def set_tokens(self, tokens: List[ASMToken]) -> Optional[Error]:
         self.tokens = tokens
 
         error = self.append_user_type_and_labels()
@@ -140,7 +156,7 @@ class ASMLexeme:
 
         return "[{}]".format(str.strip())
 
-    def append_inline_user_type_and_labels(self):
+    def append_inline_user_type_and_labels(self) -> Optional[Error]:
         for token in self.tokens:
             user_segment = next((x for x in self.program.user_segments if x.name() == token.string_value), None)
             if user_segment is not None:
@@ -154,7 +170,7 @@ class ASMLexeme:
 
         return None
 
-    def append_user_type_and_labels(self):
+    def append_user_type_and_labels(self) -> Optional[Error]:
         # Segment declaration
         if len(self.tokens) == 2 and \
                 self.tokens[0].type == TokenType.IDENTIFIER and \
@@ -212,10 +228,10 @@ class ASMLexeme:
 
         return None
 
-    def has_label(self):
+    def has_label(self) -> bool:
         return len(self.tokens) >= 2 and self.tokens[0].type == TokenType.LABEL
 
-    def to_structure(self):
+    def to_structure(self) -> ASMLexemeStructure:
         structure = ASMLexemeStructure()
         structure.instruction_index = 0
         structure.has_instruction = True
@@ -238,7 +254,7 @@ class ASMLexeme:
             offset += 1
 
         structure.has_instruction = next((x for x in self.tokens if x.type in INSTRUCTION_TYPES), None) \
-            is not None
+                                    is not None
 
         if not structure.has_instruction:
             # We dont need it anymore

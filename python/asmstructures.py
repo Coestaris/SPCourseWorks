@@ -1,23 +1,27 @@
+from asmtoken import ASMToken
+
+
 class ASMUserSegment:
     def __init__(self):
-        self.close = None
-        self.open = None
+        self.close: ASMToken = None
+        self.open: ASMToken = None
 
-    def opened(self):
+    def opened(self) -> bool:
         return self.open is not None
 
-    def closed(self):
+    def closed(self) -> bool:
         return self.close is not None
 
-    def name(self):
+    def name(self) -> str:
         if self.opened():
             return self.open.string_value
         elif self.closed():
             return self.close.string_value
         return "---"
 
+
 class ASMVariable:
-    def __init__(self, directive, name, value):
-        self.directive = directive
-        self.name = name
-        self.value = value
+    def __init__(self, directive: ASMToken, name: ASMToken, value: ASMToken):
+        self.directive: ASMToken = directive
+        self.name: ASMToken = name
+        self.value: ASMToken = value

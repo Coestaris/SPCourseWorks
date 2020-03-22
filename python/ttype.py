@@ -37,7 +37,8 @@ class TokenType:
     LABEL = 15
 
     @staticmethod
-    def to_string_value(token_type):
+    def to_string_value(token_type: int) -> str:
+
         if token_type < 0 or token_type > len(TOKEN_MAP):
             return "unknown"
         return TOKEN_MAP[token_type]
