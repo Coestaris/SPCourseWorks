@@ -15,7 +15,7 @@ lab1:
 
     test ebx, [ecx+edi*8+1]
     and [ebx+eax*2+2], ecx
-    mov eax, ebx
+    mov al, bl
     cmp dword ptr [edx+esi*4+3], 5
     jnbe lab2
 
