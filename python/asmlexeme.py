@@ -20,8 +20,8 @@ class ASMOperandType:
     Constant8 = 3
     Constant32 = 4
     LabelForward = 5
-    LabelBackward = 5
-    Mem = 6
+    LabelBackward = 6
+    Mem = 7
 
 
 class ASMOperandInfo:
@@ -58,8 +58,10 @@ class ASMLexemeStructure:
 
                 if token.type == TokenType.REG8:
                     operand.type = ASMOperandType.Register8
+
                 elif token.type == TokenType.REG16 or token.type == TokenType.REG32:
                     operand.type = ASMOperandType.Register32
+
                 elif token.type == TokenType.NUMBER_DEC or \
                         token.type == TokenType.NUMBER_BIN or \
                         token.type == TokenType.NUMBER_HEX:
@@ -68,6 +70,7 @@ class ASMLexemeStructure:
                         operand.type = ASMOperandType.Constant8
                     else:
                         operand.type = ASMOperandType.Constant32
+
                 elif token.type == TokenType.LABEL:
 
                     # here we must determine labeling type: forward or backward
@@ -75,9 +78,9 @@ class ASMLexemeStructure:
                     label = [x for x in parent.program.labels if x.string_value == token.string_value][0]
                     if label.line > token.line:
                         # declared after current line
-                        token.type = ASMOperandType.LabelForward
+                        operand.type = ASMOperandType.LabelForward
                     else:
-                        token.type = ASMOperandType.LabelBackward
+                        operand.type = ASMOperandType.LabelBackward
 
                 else:
                     return Error("WrongTokenInOperand", operand.token)
@@ -131,8 +134,8 @@ class ASMLexeme:
         self.program: 'ASMProgram' = program
         self.tokens: List[ASMToken] = []
         self.structure: ASMLexemeStructure = None
-        self.offset: int = 0
-        self.instruction : Optional['ASMInstruction'] = None
+        self.offset: int = -1
+        self.instruction: Optional['ASMInstruction'] = None
         self.segment: Optional[ASMUserSegment] = None
 
     def set_tokens(self, tokens: List[ASMToken]) -> Optional[Error]:
@@ -283,3 +286,42 @@ class ASMLexeme:
                 structure.operands[operand].length += 1
 
         return structure
+
+    def to_pretty_source(self, has_indentation: bool) -> str:
+        str = ""
+        for token in self.tokens:
+            has_space_before = False
+            has_space_after  = False
+            value = token.string_value
+
+            if token.type == TokenType.SYM and token.string_value == ",":
+                has_space_after = True
+            elif token.type == TokenType.INSTRUCTION or token.type == TokenType.DIRECTIVE or \
+                    token.type == TokenType.USER_SEGMENT:
+                has_space_after = True
+
+            if token.type == TokenType.DIRECTIVE and (token.string_value == "db" or token.string_value == "dd" or token.string_value == "dw"):
+                has_space_before = True
+
+            if token.type == TokenType.DIRECTIVE or token.type == TokenType.KEYWORD_END \
+                    or token.type == TokenType.KEYWORD_ENDS \
+                    or token.type == TokenType.KEYWORD_SEGMENT:
+                value = value.upper()
+
+            str += (" " if has_space_before else "") + \
+                    value + \
+                   (" " if has_space_after else "")
+
+
+        identation = ""
+        if has_indentation:
+            directive = self.structure.get_instruction(self)
+            if (directive.string_value == "db" or directive.string_value == "dd" or directive.string_value == "dw"):
+                identation = "   "
+            else:
+                if self.segment is not None:
+                    identation = "   "
+                if not self.structure.has_name and directive.type != TokenType.KEYWORD_END:
+                    identation += "   "
+
+        return identation + str

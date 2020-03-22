@@ -141,22 +141,39 @@ class ASMProgram:
 
             # We cant caluclate size of directive without instruction
             if not lexeme.structure.has_instruction:
+                lexeme.offset = -offset
                 continue
 
-            # We cant calculate size of SEGMNET, ENDS and END directives
+            # We cant calculate size of SEGMNET, ENDS and END but it resets offset counter
             directive = lexeme.structure.get_instruction(lexeme)
             if directive.type == TokenType.KEYWORD_SEGMENT or \
                     directive.type == TokenType.KEYWORD_ENDS or \
                     directive.type == TokenType.KEYWORD_END:
+                # We assign negative values for lexemes that dont actually
+                # have offset but we need it to know their position in file for creating
+                # those useless tables
+                lexeme.offset = -offset
+
+                offset = 0
                 continue
 
-            # Try to find mathing instruction
-            inst = ASMInstruction.find_info(lexeme)
-            if inst is not None:
+            if directive.type == TokenType.INSTRUCTION:
+                # Try to find mathing instruction
+                inst = ASMInstruction.find_info(lexeme)
+                if inst is None:
+                    return Error("WrongInstructionFormat", lexeme.tokens[0])
+
                 lexeme.instruction = inst
-                offset += inst.get_size(lexeme)
-                lexeme.offset = offset
-            else:
-                return Error("WrongInstructionFormat", lexeme.tokens[0])
+
+                error = inst.check_op_restrictions(lexeme)
+                if error is not None:
+                    return error
+
+            lexeme.offset = offset
+            size = ASMInstruction.get_size(lexeme)
+
+            offset += size
+            if lexeme.segment is not None:
+                lexeme.segment.size = offset
 
         return None

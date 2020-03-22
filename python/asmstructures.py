@@ -1,10 +1,13 @@
+from typing import Optional
+
 from asmtoken import ASMToken
 
 
 class ASMUserSegment:
     def __init__(self):
-        self.close: ASMToken = None
-        self.open: ASMToken = None
+        self.close: Optional[ASMToken] = None
+        self.open: Optional[ASMToken] = None
+        self.size: int = 0
 
     def opened(self) -> bool:
         return self.open is not None
