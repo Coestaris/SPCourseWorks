@@ -296,6 +296,11 @@ class ASMLexeme:
 
             if token.type == TokenType.SYM and token.string_value == ",":
                 has_space_after = True
+
+            elif token.type == TokenType.SYM and token.string_value == "+":
+                has_space_after = True
+                has_space_before = True
+
             elif token.type == TokenType.INSTRUCTION or token.type == TokenType.DIRECTIVE or \
                     token.type == TokenType.USER_SEGMENT:
                 has_space_after = True
