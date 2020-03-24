@@ -3,45 +3,36 @@ from typing import Optional, List
 from asmlexeme import ASMOperandType as ot
 from asmlexeme import ASMLexeme
 
-#       Cld
-# CLD               FC
-#
-#       Dec reg
-# DEC r/m8          FE      /1
-# DEC r32           48      +rd
-#
-#       Inc mem
-# [NOT USED]  INC r/m8          FE      /0
-# INC r/m32         FF      /0
-#
-#       Or reg,reg
-# OR r/m8, r8       08      /r
-# OR r/m32, r32     09      /r
-#
-#       Cmp reg,mem
-# CMP r8, r/m8      3A      /r
-# CMP r32, r/m32    3B      /r
-#
-#       Shl mem,reg
-# [NOT USED] SHL r/m8, CL      D2      /4
-# SHL r/m32, CL     D3      /4
-#
-#       In reg,imm
-# IN AL, imm8       E4      ib
-# IN EAX, imm8      E5      ib
-#
-#       Add mem,imm
-# [NOT USED] ADD r/m8, imm8    80      /0 ib
-# ADD r/m32, imm32  81      /0 id
-# ADD r/m32, imm8   83      /0 ib
-#
-#       jnz label
-# JNZ rel8          75      cb
-# JNZ rel32         OF 85   cw
-#
-#       jmp label
-# JMP rel8          EB      cb
-# JMP rel32         E9      cw
+# cld
+#               CLD                FC
+# dec reg
+#               DEC r8             FE      /1
+#               DEC r32            48      +rd
+# inc mem
+#   [NOT USED]  INC r/m8           FE      /0
+#               INC r/m32          FF      /0
+# or reg,reg
+#               OR r/m8,   r8      08      /r
+#               OR r/m32,  r32     09      /r
+# cmp reg,mem
+#               CMP r8,    r/m8    3A      /r
+#               CMP r32,   r/m32   3B      /r
+# shl mem,reg
+#   [NOT USED]  SHL r/m8,  CL      D2      /4
+#               SHL r/m32, CL      D3      /4
+# in reg,imm
+#               IN AL,     imm8    E4      ib
+#               IN EAX,    imm8    E5      ib
+# add mem,imm
+#   [NOT USED]  ADD r/m8,  imm8    80      /0 ib
+#               ADD r/m32, imm32   81      /0 id
+#               ADD r/m32, imm8    83      /0 ib
+# jnz label
+#               JNZ rel8           75      cb
+#               JNZ rel32          OF 85   cw
+# jmp label
+#               JMP rel8           EB      cb
+#               JMP rel32          E9      cw
 from error import Error
 
 instructions = []
