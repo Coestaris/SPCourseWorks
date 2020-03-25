@@ -419,13 +419,21 @@ void has_(int line)
 			lexems[line].has_instruction = true;
 			lexems[line].instr_index = 1;
 			lexems[line].has_operands = true;
-			lexems[line].operand_indexes[1] = 1;
+			lexems[line].operand_indexes[1] = 2;
 			lexems[line].operand_length[1] = 1;
 			return;
 		 }
 
 	int flag = 0;
 	//has name
+	if (vector_of_token[line][0].type == UserSegment && vector_of_token[line][1].type == EndsKeyword)
+	{
+		lexems[line].has_instruction = true;
+		lexems[line].instr_index = 1;
+		lexems[line].has_operands = false;
+		return;
+
+	}
 	if (vector_of_token[line][0].type == Identifier || vector_of_token[line][0].type == UserSegment)
 	{
 		lexems[line].has_name = true;
@@ -475,7 +483,7 @@ void has_(int line)
 					{
 						if (vector_of_token[line][j].type == Symbol && vector_of_token[line][j].token == ",")
 						{
-							lexems[line].operand_indexes[2] = lexems[line].operand_length[lexems[line].number_of_operands] + lexems[line].number_of_operands + 2 + i;
+							lexems[line].operand_indexes[2] = lexems[line].operand_length[lexems[line].number_of_operands+1] + lexems[line].number_of_operands + 1 + i;
 							lexems[line].number_of_operands += 1;
 						}
 						else
