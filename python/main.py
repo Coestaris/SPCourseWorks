@@ -1,8 +1,24 @@
 from asmlexeme import ASMLexeme
 from asmprogram import ASMProgram
 from ttype import TokenType
+import sys
 
 TEST_FILE = "test.asm"
+LOG_FILE = "log.dat"
+
+
+class Logger(object):
+    def __init__(self):
+        self.terminal = sys.stdout
+        self.log = open(LOG_FILE, "w")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        self.terminal.flush()
+        self.log.flush()
 
 
 def print_lexeme(lexeme: ASMLexeme):
@@ -32,25 +48,28 @@ def print_et3_tables(program: ASMProgram):
     print("| #  || Offset ||        Source")
     print("+=============================================+")
     for i, lexeme in enumerate(program.lexemes):
-        hex_offset = to_hex(lexeme.offset)
-        if lexeme.offset <= -1 or lexeme.segment is None or not lexeme.structure.has_instruction:
+        hex_offset = to_hex(abs(lexeme.offset))
+
+        instruction = lexeme.structure.get_instruction(lexeme)
+        if instruction.type == TokenType.KEYWORD_END:
             hex_offset = "----"
 
         print("| {} ||  {:4}  ||  {}".format(str(i).rjust(2, "0"), hex_offset, lexeme.to_pretty_source(True)))
+
     print("+=============================================+")
     print()
 
     print("Segments table:")
-    print("+=====================================================+")
-    print("| # | Segment Name  | Bit depth |   Size   |   Line   |")
-    print("+=====================================================+")
+    print("+==========================================+")
+    print("| # | Segment Name  | Bit depth |   Size   |")
+    print("+==========================================+")
     for i, segment in enumerate(program.user_segments):
-        print("|{:2} |     {:5}     |    32     |   {:5}  |   {:5}  |"
+        print("|{:2} |     {:5}     |    32     |   {:5}  |"
               .format(i,
                       segment.open.string_value,
                       to_hex(segment.size),
                       to_hex(segment.open.line)))
-    print("+=====================================================+")
+    print("+==========================================+")
     print()
 
     print("Segment register destinations:")
@@ -87,11 +106,14 @@ def print_et3_tables(program: ASMProgram):
                       to_hex(abs(variable.name.lexeme.offset))))
         i += 1
 
-
     print("+================================================+")
 
 
 if __name__ == "__main__":
+
+    # Comment it if youre scared of overriding STDOUT AHHAHAHHAHAH
+    sys.stdout = Logger()
+
     with open(TEST_FILE, "r") as file:
         source = file.read().lower()
 

@@ -10,3 +10,5 @@ target/
 *.user
 cmake-build-debug
 *.filters
+
+python/log\.dat
