@@ -10,9 +10,9 @@ import (
 const splitChars = "\t \n[].,+-:*"
 
 type rawToken struct {
-	token string
-	line int
-	char int
+	value string
+	line  int
+	char  int
 }
 
 func getTypedTokens(tokens []rawToken, program types.ASM) (types.Lexeme, error) {
@@ -20,8 +20,8 @@ func getTypedTokens(tokens []rawToken, program types.ASM) (types.Lexeme, error) 
 
 	var clearedTokens []types.Token
 	for _, rawToken := range tokens {
-		if strings.TrimSpace(rawToken.token) != "" {
-			t, err := tokens2.NewToken(rawToken.token, lex, rawToken.line, rawToken.char)
+		if strings.TrimSpace(rawToken.value) != "" {
+			t, err := tokens2.NewToken(rawToken.value, lex, rawToken.line, rawToken.char)
 			if err != nil {
 				return nil, err
 			}
