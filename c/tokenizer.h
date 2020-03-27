@@ -34,9 +34,6 @@ typedef enum _token_type
    TT_NUMBER10,
    TT_NUMBER16,
 
-   TT_USERSEG,
-   TT_LABEL,
-
    TT_UNKNOWN
 
 } token_type_t;
@@ -44,7 +41,10 @@ typedef enum _token_type
 // Contains information about single code word
 typedef struct _token
 {
+   // String taken from source without processing
    char* string;
+
+   // Parsed type of the token
    token_type_t type;
 
 } token_t;

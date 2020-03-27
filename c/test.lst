@@ -1,0 +1,64 @@
+Turbo Assembler	 Version 3.1	    03/27/20 17:24:59	    Page 1
+test.ASM
+
+
+
+      1					 .386
+      2
+      3	00000000			 DATA SEGMENT
+      4	00000000  43			     Var1    DB	 43h
+      5	00000001  007B			     Var2    DW	 123
+      6	00000003  000002AA		     Var3    DD	 1010101010b
+      7	00000007			 DATA ENDS
+      8
+      9
+     10
+     11	00000000			 CODE SEGMENT
+     12					 assume	CS:CODE, DS:DATA
+     13
+     14	00000000			 lab1:
+     15	00000000  F8			     clc
+     16	00000001  F7 D8			     neg eax
+     17
+     18	00000003  26: FF 4C B2 06	     dec dword ptr ES:[edx+esi*4+6]
+     19	00000008  83 C0	05		     add eax, 5
+     20
+     21	0000000B  85 5C	F9 01		     test ebx, [ecx+edi*8+1]
+     22	0000000F  21 4C	43 02		     and [ebx+eax*2+2],	ecx
+     23	00000013  8A C3			     mov al, bl
+     24	00000015  83 7C	B2 03 05	     cmp dword ptr [edx+esi*4+3], 5
+     25	0000001A  77 04	90 90 90 90	     jnbe lab2
+     26
+     27
+     28	00000020			 lab2:
+     29	00000020  EB DE			     jmp lab1
+     30
+     31	00000022			 CODE ENDS
+     32					 END
+Turbo Assembler	 Version 3.1	    03/27/20 17:24:59	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "03/27/20"
+??FILENAME			  Text	 "test	  "
+??TIME				  Text	 "17:24:59"
+??VERSION			  Number 030A
+@CPU				  Text	 0F0FH
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 TEST
+@WORDSIZE			  Text	 4
+LAB1				  Near	 CODE:0000
+LAB2				  Near	 CODE:0020
+VAR1				  Byte	 DATA:0000
+VAR2				  Word	 DATA:0001
+VAR3				  Dword	 DATA:0003
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  32  0022 Para	  none
+DATA				  32  0007 Para	  none
+

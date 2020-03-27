@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include <assert.h>
-#include <malloc.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -17,6 +16,7 @@ static bool is_whitespace(char c)
    return c == '\r' || c == ' ' || c == '\n' || c == '\t' || c == '\0';
 }
 
+// Split symbols for source.
 static bool is_delimiter(char s)
 {
    return is_whitespace(s) || s == '*' || s == ',' || s == '[' || s == ']' || s == '-' || s == '+' || s == '=' || s == ':';
@@ -110,8 +110,10 @@ static struct {
       { ",",       TT_SYMBOL, "SYMBOL" },
 };
 
-static const type_count = sizeof(types) / sizeof(types[0]);
+// Size of token-type match table
+static const size_t type_count = sizeof(types) / sizeof(types[0]);
 
+// Returns true if string is valid identifier
 static bool is_id(char* string)
 {
    if(isdigit(string[0]))
@@ -122,6 +124,7 @@ static bool is_id(char* string)
    return true;
 }
 
+// Returns true if string is value binary number
 static bool is_bin(char* string)
 {
    size_t len = strlen(string);
@@ -132,6 +135,7 @@ static bool is_bin(char* string)
    return string[len - 1] == 'B';
 }
 
+// Returns true if string is value decimal number
 static bool is_dec(char* string)
 {
    size_t len = strlen(string);
@@ -142,6 +146,7 @@ static bool is_dec(char* string)
    return true;
 }
 
+// Returns true if string is value hexadecimal number
 static bool is_hex(char* string)
 {
    size_t len = strlen(string);
@@ -152,9 +157,11 @@ static bool is_hex(char* string)
    return string[len - 1] == 'H';
 }
 
+// Fills token info and determines its type
 static token_t t_create(char* string, size_t line)
 {
    assert(string);
+
    token_t t;
    t.string = strdup(string);
    t.type = TT_UNKNOWN;
@@ -207,9 +214,9 @@ const char* t_tt_to_name(token_type_t type)
          return "NUMBER10";
       case TT_NUMBER16:
          return "NUMBER16";
+      default:
+         return "unknown";
    }
-
-   return "unknown";
 }
 
 //
@@ -217,6 +224,8 @@ const char* t_tt_to_name(token_type_t type)
 //
 uint8_t* t_read(const char* fn)
 {
+   assert(fn);
+
    FILE* f = fopen(fn, "r");
    assert(f);
 
