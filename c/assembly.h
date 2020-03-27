@@ -13,6 +13,7 @@ typedef struct _assembly
    size_t  labels_cnt;
    struct label
    {
+      size_t line;
       token_t* label;
 
    } labels[100];
@@ -23,6 +24,9 @@ typedef struct _assembly
    {
       token_t* name;
       size_t size;
+
+      size_t line_start;
+      size_t line_end;
 
    }  segments[5];
 
@@ -55,6 +59,9 @@ void a_first_pass(assembly_t* assembly);
 
 // Get user segment by its name
 struct segment* a_get_segment(assembly_t* assembly, char* name);
+
+// Get user segment by line index
+struct segment* a_get_segment_by_line(assembly_t* assembly, size_t line);
 
 // Get user label by its name
 struct label* a_get_label(assembly_t* assembly, char* name);

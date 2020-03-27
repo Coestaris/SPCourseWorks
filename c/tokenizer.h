@@ -38,7 +38,7 @@ typedef enum _token_type
 
 } token_type_t;
 
-// Contains information about single code word
+// Contains information about every single code word
 typedef struct _token
 {
    // String taken from source without processing
@@ -52,10 +52,13 @@ typedef struct _token
 // Reads all bytes from file and returns null terminated string
 uint8_t* t_read(const char* fn);
 
-// Returns list of all tokens
+// Returns list of all tokens in source
 list_t* t_tokenize(char* str);
 
-// Converts token type its mnemonic name
+// Converts token type into it's mnemonic name
 const char* t_tt_to_name(token_type_t type);
+
+// Returns number representation of the token
+int64_t t_num(token_t* token);
 
 #endif // TOKENIZER_H

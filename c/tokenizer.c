@@ -6,10 +6,36 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+
+// Converts string to integer with specified base
+static int64_t string_to_num(char* string, size_t len, uint8_t base)
+{
+   static const char* literals = "0123456789ABCDEF";
+
+   int64_t result = 0;
+   for(int64_t i = len - 1; i >= 0; i--)
+   {
+      int8_t literal = -1;
+      for(size_t j = 0; j < 16; j++)
+         if(literals[j] == string[i])
+         {
+            literal = j;
+            break;
+         }
+
+      assert(literal != -1);
+      assert(literal < base);
+
+      result += pow(base, (double)len - i - 1) * (int64_t)literal;
+   }
+
+   return result;
+}
 
 static bool is_whitespace(char c)
 {
@@ -301,4 +327,19 @@ list_t* t_tokenize(char* str)
       curr_lex->tokens[curr_lex->tokens_cnt++] = t_create(trimmed_buff, line_cnt);
 
    return r;
+}
+
+//
+// t_num()
+//
+int64_t t_num(token_t* token)
+{
+   if(token->type == TT_NUMBER2)
+      return string_to_num(token->string, strlen(token->string) - 1, 2);
+   else if(token->type == TT_NUMBER10)
+      return string_to_num(token->string, strlen(token->string), 10);
+   else if(token->type == TT_NUMBER16)
+      return string_to_num(token->string, strlen(token->string) - 1, 16);
+
+   abort();
 }

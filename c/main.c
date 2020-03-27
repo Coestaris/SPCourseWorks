@@ -69,13 +69,16 @@ void print_et2_table(assembly_t* assembly)
    }
 }
 
+
 int main()
 {
    char* text = (char*)t_read(TEST_FILE);
    assembly_t* assembly = a_create();
 
    a_first_stage(assembly, text);
-   print_et2_table(assembly);
+   //print_et2_table(assembly);
+
+   a_first_pass(assembly);
 
    a_free(assembly);
    return 0;

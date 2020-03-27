@@ -16,7 +16,7 @@ inline void list_push(list_t* list, void* object)
    assert(list);
    assert(object);
 
-   // current collection if full increase its size in 1.5 times
+   // if current collection is full we increase its size in LIST_SIZE_INCREASE times
    if (list->count > list->max_size - 1)
    {
       if (list->max_size == LIST_BOOTSTRAP_SIZE)
