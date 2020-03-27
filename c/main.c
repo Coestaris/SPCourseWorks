@@ -2,14 +2,15 @@
 
 #include "tokenizer.h"
 #include "lexeme.h"
+#include "assembly.h"
 
 #define TEST_FILE "../test.asm"
 
-void print_et2_table(list_t* lexemes)
+void print_et2_table(assembly_t* assembly)
 {
-   for(size_t i = 0; i < lexemes->count; i++)
+   for(size_t i = 0; i < assembly->lexemes->count; i++)
    {
-      lexeme_t* lexeme = lexemes->collection[i];
+      lexeme_t* lexeme = assembly->lexemes->collection[i];
       for(size_t j = 0; j < lexeme->tokens_cnt; j++)
          printf("%s ", lexeme->tokens[j].string);
       putchar('\n');
@@ -51,11 +52,11 @@ void print_et2_table(list_t* lexemes)
 
          if(lexeme->operands_count >= 1)
             snprintf(buff3, sizeof(buff3), "%2li   %2li",
-                  lexeme->operands_info[0].index, lexeme->operands_info[0].length);
+                     lexeme->operands_info[0].op_index, lexeme->operands_info[0].op_length);
 
          if(lexeme->operands_count > 1)
             snprintf(buff4, sizeof(buff4), "%2li   %2li",
-                     lexeme->operands_info[1].index, lexeme->operands_info[1].length);
+                     lexeme->operands_info[1].op_index, lexeme->operands_info[1].op_length);
       }
 
 
@@ -71,14 +72,11 @@ void print_et2_table(list_t* lexemes)
 int main()
 {
    char* text = (char*)t_read(TEST_FILE);
-   list_t* lexemes = t_tokenize(text);
-   for(size_t i = 0; i < lexemes->count; i++)
-   {
-      lexeme_t* lexeme = lexemes->collection[i];
-      l_structure(lexeme);
-   }
+   assembly_t* assembly = a_create();
 
-   print_et2_table(lexemes);
+   a_first_stage(assembly, text);
+   print_et2_table(assembly);
 
+   a_free(assembly);
    return 0;
 }
