@@ -83,9 +83,10 @@ func (a *asm) FirstPass() error {
 		if l.GetSegment() == nil {
 			l.SetOffset(-l.GetOffset())
 			offset = 0
+			continue
 		}
 		if !l.HasInstructions() {
-			l.SetOffset(-l.GetOffset())
+			l.SetOffset(offset)
 			continue
 		}
 
