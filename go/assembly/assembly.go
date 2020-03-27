@@ -80,15 +80,22 @@ func (a *asm) FirstPass() error {
 
 	offset := 0
 	for _, l := range a.GetLexemes() {
-		if !l.HasInstructions() {
+		if l.GetSegment() == nil {
 			l.SetOffset(-l.GetOffset())
+			offset = 0
+			continue
+		}
+		if !l.HasInstructions() {
+			l.SetOffset(offset)
 			continue
 		}
 
 		directive := l.GetInstructionToken()
 		switch directive.GetTokenType() {
 		case tokens.CODE:
+			fallthrough
 		case tokens.DATA:
+			fallthrough
 		case tokens.END:
 			l.SetOffset(-l.GetOffset())
 			offset = 0

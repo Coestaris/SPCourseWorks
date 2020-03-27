@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 )
 
 var compileFiles []string
@@ -32,64 +31,69 @@ func rjust(pad int, str string, padString string) string {
 	return str
 }
 
-func print2(program types.ASM) {
-	for _, l := range program.GetLexemes() {
-		sources := make([]string, len(l.GetTokens()))
-		for i, t := range l.GetTokens() {
-			sources[i] = t.GetValue()
-		}
-		fmt.Printf("Source : %s\n", strings.Join(sources, " "))
-		fmt.Printf("Lexemes: \n")
-		printLexemes(l)
-		fmt.Println("+---------------------------------------+")
-		fmt.Println("|  LBL |  MNEM  |   Op1  |   Op2  | ....|")
-		fmt.Println("|      |  I | L |  I | L |  I | L |     |")
-		fmt.Printf("|  %s\n", l.ToSentenceTableString(0))
-		fmt.Println()
-		fmt.Println()
-	}
-}
-
-func print3(program types.ASM) {
-	fmt.Println("+=============================================+")
-	fmt.Println("| # | Offset  |   Source                      |")
-	fmt.Println("+=============================================+")
-	for i, l := range program.GetLexemes() {
-		offset := strconv.Itoa(l.GetOffset())
+func PrintResults(a types.ASM) {
+	res := ""
+	res += fmt.Sprintln("+---------------------------------------------+")
+	res += fmt.Sprintln("| № | OFFSET  |   SOURCE                      |")
+	res += fmt.Sprintln("+---------------------------------------------+")
+	for i, l := range a.GetLexemes() {
+		offsetHex := fmt.Sprintf("%x", l.GetOffset())
 		inst := l.GetInstructionToken()
 		if inst.GetTokenType() == tokens.END {
-			offset = "-----"
+			offsetHex = "----"
 		}
 
-		fmt.Printf("|%s|%s|%s\n", rjust(3, strconv.Itoa(i), "0"), rjust(9, offset, "-"),
+		res += fmt.Sprintf("|%s|     %s|%s\n", rjust(3, strconv.Itoa(i), "0"), rjust(4, offsetHex, "0"),
 			l.PrettyPrint())
 	}
+	res += fmt.Sprintln("+---------------------------------------------+")
 
-	fmt.Println("\n+------------------------------------------+")
-	fmt.Println("|------------SEGMENTS TABLE----------------|")
-	fmt.Println("| # | segment Name  | Bit depth |  Offset  |")
-	fmt.Println("+------------------------------------------+")
-	fmt.Printf("|%s| DATA          |    32     |%s|\n", rjust(3, "1", "0"),
-		rjust(10, strconv.Itoa(program.GetDataSegment().GetSize()), "-"))
-	fmt.Printf("|%s| CODE          |    32     |%s|\n", rjust(3, "1", "0"),
-		rjust(10, strconv.Itoa(program.GetCodeSegment().GetSize()), "-"))
-	fmt.Println("+------------------------------------------+\n")
+	res += fmt.Sprintln()
 
-	fmt.Println("+------------------------------------------+")
-	fmt.Println("+------USER DEFINED NAMES------------------+")
-	fmt.Println("+------------------------------------------+")
+	res += fmt.Sprintln("+------------------------------------------+")
+	res += fmt.Sprintln("|------------SEGMENTS TABLE----------------|")
+	res += fmt.Sprintln("|------------------------------------------|")
+	res += fmt.Sprintln("| № |    SEG NAME   | BIT DEPTH |  OFFSET  |")
+	res += fmt.Sprintln("|------------------------------------------|")
+	res += fmt.Sprintf("|%s|           DATA|         32|%s|\n", rjust(3, "1", "0"),
+		rjust(10, fmt.Sprintf("%x", a.GetDataSegment().GetSize()), " "))
+	res += fmt.Sprintf("|%s|           CODE|         32|%s|\n", rjust(3, "1", "0"),
+		rjust(10, fmt.Sprintf("%x", a.GetCodeSegment().GetSize()), " "))
+	res += fmt.Sprintln("+------------------------------------------+")
+
+	res += fmt.Sprintln()
+
+	res += fmt.Sprintln("+------------------------------------------+")
+	res += fmt.Sprintln("|------------USER DEFINED NAMES------------|")
+	res += fmt.Sprintln("|------------------------------------------|")
+	res += fmt.Sprintln("| № |   NAME   |  TYPE  |  SEG  |  OFFSET  |")
+	res += fmt.Sprintln("|------------------------------------------|")
 	i := 0
-	for _, l := range program.GetLabels() {
-		fmt.Printf("|%s|%s|   LABEL |%s|%s|\n", rjust(3, strconv.Itoa(i), "0"),
+	for _, l := range a.GetLabels() {
+		res += fmt.Sprintf("|%s|%s|  LABEL |%s|%s|\n", rjust(3, strconv.Itoa(-i), "0"),
 			rjust(10, l.GetValue(), " "),
-			rjust(3, l.GetLexeme().GetSegment().GetOpen().GetValue(), " "),
-			rjust(4, strconv.Itoa(l.GetLexeme().GetOffset()), " "))
+			rjust(7, l.GetLexeme().GetSegment().GetOpen().GetValue(), " "),
+			rjust(10, fmt.Sprintf("%x", l.GetLexeme().GetOffset()), " "))
 	}
-}
+	res += fmt.Sprintln("+------------------------------------------+")
 
-func printLexemes(l types.Lexeme) {
-	for i, t := range l.GetTokens() {
-		fmt.Printf("%s. %s\n", rjust(2, strconv.Itoa(i), "0"), t.ToString())
+	res += fmt.Sprintln()
+
+	res += fmt.Sprintln("+------------------------------------------+")
+	res += fmt.Sprintln("|--------SEG REGISTERS DESTINATIONS--------|")
+	res += fmt.Sprintln("|------------------------------------------|")
+	res += fmt.Sprintln("| № |          REGISTER         |   DEST   |")
+	res += fmt.Sprintln("|------------------------------------------|")
+	res += fmt.Sprintf("| 0 |                         DS|   %s   |\n", a.GetDataSegment().GetOpen().GetValue())
+	res += fmt.Sprintf("| 1 |                         CS|   %s   |\n", a.GetCodeSegment().GetOpen().GetValue())
+	res += fmt.Sprintln("| 2 |                         SS|   NONE   |")
+	res += fmt.Sprintln("| 3 |                         ES|   NONE   |")
+	res += fmt.Sprintln("| 4 |                         GS|   NONE   |")
+	res += fmt.Sprintln("| 5 |                         FS|   NONE   |")
+	res += fmt.Sprintln("+------------------------------------------+")
+
+	if err := ioutil.WriteFile("generated.lst", []byte(res), 0644); err != nil {
+		panic(err)
 	}
 }
 
@@ -115,6 +119,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		print3(program)
+		os.Open("")
+		PrintResults(program)
 	}
 }
