@@ -80,6 +80,10 @@ func (a *asm) FirstPass() error {
 
 	offset := 0
 	for _, l := range a.GetLexemes() {
+		if l.GetSegment() == nil {
+			l.SetOffset(-l.GetOffset())
+			offset = 0
+		}
 		if !l.HasInstructions() {
 			l.SetOffset(-l.GetOffset())
 			continue
@@ -88,7 +92,9 @@ func (a *asm) FirstPass() error {
 		directive := l.GetInstructionToken()
 		switch directive.GetTokenType() {
 		case tokens.CODE:
+			fallthrough
 		case tokens.DATA:
+			fallthrough
 		case tokens.END:
 			l.SetOffset(-l.GetOffset())
 			offset = 0

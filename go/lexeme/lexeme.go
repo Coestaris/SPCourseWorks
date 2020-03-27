@@ -346,7 +346,6 @@ func (l *lexeme) ToString() string {
 }
 
 func (l *lexeme) ToSentenceTableString(level int) string {
-	//l.ParseOperands()
 	res := ""
 
 	if l.hasName {

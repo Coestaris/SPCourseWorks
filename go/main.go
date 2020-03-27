@@ -55,13 +55,13 @@ func print3(program types.ASM) {
 	fmt.Println("| # | Offset  |   Source                      |")
 	fmt.Println("+=============================================+")
 	for i, l := range program.GetLexemes() {
-		offset := strconv.Itoa(l.GetOffset())
+		offset := fmt.Sprintf("%x", l.GetOffset())
 		inst := l.GetInstructionToken()
 		if inst.GetTokenType() == tokens.END {
 			offset = "-----"
 		}
 
-		fmt.Printf("|%s|%s|%s\n", rjust(3, strconv.Itoa(i), "0"), rjust(9, offset, "-"),
+		fmt.Printf("|%s|     %s|%s\n", rjust(3, strconv.Itoa(i), "0"), rjust(4, offset, "0"),
 			l.PrettyPrint())
 	}
 
