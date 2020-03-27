@@ -1,94 +1,340 @@
 package lexeme
 
 import (
+	"course_work_2/segment"
 	ptokens "course_work_2/tokens"
 	"course_work_2/types"
+	"course_work_2/variable"
 	"errors"
 	"fmt"
 	"strings"
 )
 
-type operand struct {
-	index int
-	length int
-}
+const (
+	Register8 = iota
+	Register16
+	Register32
+	Constant8
+	Constant32
+	Mem
+	LabelBackward
+	LabelForward
+)
 
 type lexeme struct {
-	Program types.ASM
-	Tokens  []types.Token
+	program types.ASM
+	tokens  []types.Token
+	offset  int
+	instruction types.Instruction
+	segment types.Segment
 
 	instructionIndex int
 	labelIndex int
 	hasName bool
 	hasInstruction bool
 	hasOperands bool
-	operands []*operand
+	operands []types.Operand
 }
 
-func NewLexeme(program types.ASM, tokens []types.Token) types.Lexeme {
-	return &lexeme{Program: program, Tokens: tokens}
-}
+func (l *lexeme) PrettyPrint() string {
+	str := ""
+	for _, t := range l.tokens {
+		hasSpaceBefore := false
+		hasSpaceAfter := false
+		value := t.GetValue()
 
-func (l *lexeme) GetParentProgram() types.ASM {
-	return l.Program
-}
+		if value == "," {
+			hasSpaceAfter = true
+		} else if value == "+" {
+			hasSpaceAfter = true
+			hasSpaceBefore = true
+		} else if tType := t.GetTokenType(); tType == ptokens.INSTRUCTION || tType == ptokens.DIRECTIVE {
+			hasSpaceAfter = true
+		}
 
-func (l *lexeme) GetTokens() []types.Token {
-	return l.Tokens
-}
+		if t.GetTokenType() == ptokens.DIRECTIVE && (value == "db" || value == "dd" || value == "dw") {
+			hasSpaceBefore = true
+		}
 
-func (l *lexeme) SetTokens(tokens []types.Token) error {
-	l.Tokens = tokens
+		if t.GetTokenType() == ptokens.DIRECTIVE || t.GetTokenType() == ptokens.END {
+			value = strings.ToUpper(value)
+		}
 
-	if len(tokens) == 2 {
-		if *tokens[0].GetTokenType() == ptokens.IDENTIFIER && *tokens[1].GetTokenType() == ptokens.SYM && tokens[1].GetValue() == ":" {
-			labels := l.Program.GetLabels()
-			labelFound := false
-			for _, x := range *labels {
-				if x == tokens[0].GetValue() {
-					labelFound = true
-					break
-				}
-			}
-			if labelFound {
-				return errors.New("same label already exists")
-			}
+		if hasSpaceBefore {
+			str += " "
+		}
 
-			*l.Tokens[0].GetTokenType() = ptokens.LABEL
-			*labels = append(*labels, l.Tokens[0].GetValue())
+		str += value
+
+		if hasSpaceAfter {
+			str += " "
 		}
 	}
 
-	return nil
+	ident := ""
+	directive := l.GetInstructionToken()
+	if val := directive.GetValue(); val == "db" || val == "dd" || val == "dw" {
+		ident = "        "
+	} else {
+		if l.segment != nil {
+			ident = "    "
+		}
+		if !l.hasName && directive.GetTokenType() != ptokens.END {
+			ident += "    "
+		}
+	}
+
+	return ident + str
 }
 
-func (l *lexeme) appendInline() error{
-	labels := l.Program.GetLabels()
-	for _, token := range l.Tokens {
+func (l *lexeme) SetSegment(value types.Segment) {
+	l.segment = value
+}
+
+func (l *lexeme) SetOffset(value int) {
+	l.offset = value
+}
+
+func (l *lexeme) SetInstruction(value types.Instruction) {
+	l.instruction = value
+}
+
+func (l *lexeme) GetOperands() []types.Operand {
+	return l.operands
+}
+
+func NewLexeme(program types.ASM, tokens []types.Token) types.Lexeme {
+	return &lexeme{program: program, tokens: tokens, labelIndex: -1, instructionIndex: 0, hasOperands: true,
+		hasInstruction: false}
+}
+
+func (l *lexeme) HasOperands() bool {
+	return l.hasOperands
+}
+
+func (l *lexeme) GetOffset() int {
+	return l.offset
+}
+
+func (l *lexeme) HasInstructions() bool {
+	return l.hasInstruction
+}
+
+func (l *lexeme) GetParentProgram() types.ASM {
+	return l.program
+}
+
+func (l *lexeme) GetSegment() types.Segment {
+	return l.segment
+}
+
+func (l *lexeme) GetTokens() []types.Token {
+	return l.tokens
+}
+
+func (l *lexeme) SetTokens(tokens []types.Token) error {
+	l.tokens = tokens
+
+	switch tokenLen := len(tokens); {
+	case tokenLen == 1 && tokens[0].GetTokenType() == ptokens.END:
+		parent := l.GetParentProgram()
+		if parent.GetCodeSegment() != nil &&
+			parent.GetCodeSegment().GetOpen() != nil && parent.GetCodeSegment().GetClose() == nil {
+			parent.GetCodeSegment().SetClose(tokens[0])
+		}
+		if parent.GetDataSegment() != nil &&
+			parent.GetDataSegment().GetOpen() != nil && parent.GetDataSegment().GetClose() == nil {
+			parent.GetDataSegment().SetClose(tokens[0])
+		}
+	// SEG START
+	case tokenLen == 2 && tokens[0].GetValue() == ".":
+		firstToken := tokens[0]
+		switch tokens[1].GetTokenType() {
+		case ptokens.DATA:
+			firstToken.SetTokenType(ptokens.DATA)
+
+			newSegment := segment.NewSegment()
+			newSegment.SetOpen(tokens[1])
+			parent := l.GetParentProgram()
+			parent.SetDataSegment(newSegment)
+			// if code segment was opened, close it at the same token
+			if parent.GetCodeSegment() != nil &&
+				parent.GetCodeSegment().GetOpen() != nil && parent.GetCodeSegment().GetClose() == nil {
+				parent.GetCodeSegment().SetClose(firstToken)
+			}
+		case ptokens.CODE:
+			firstToken.SetTokenType(ptokens.DATA)
+
+			newSegment := segment.NewSegment()
+			newSegment.SetOpen(tokens[1])
+			parent := l.GetParentProgram()
+			parent.SetCodeSegment(newSegment)
+			// if data segment was opened, close it at the same token
+			if parent.GetDataSegment() != nil &&
+				parent.GetDataSegment().GetOpen() != nil && parent.GetDataSegment().GetClose() == nil {
+				parent.GetDataSegment().SetClose(firstToken)
+			}
+		default:
+			return errors.New("unknown segment type")
+		}
+	case tokenLen == 3 && tokens[0].GetTokenType() == ptokens.IDENTIFIER && tokens[1].GetTokenType() == ptokens.DIRECTIVE:
+		// VARIABLE
+		variables := l.program.GetVariables()
+		variableFound := false
+		for _, x := range variables {
+			if x == tokens[0].GetValue() {
+				variableFound = true
+				break
+			}
+		}
+		if variableFound {
+			return errors.New("same variable already exists")
+		}
+
+		l.program.SetVariables(append(l.program.GetVariables(), variable.NewVariable(tokens[1], tokens[0], tokens[2])))
+	case tokenLen >= 2 && tokens[0].GetTokenType() == ptokens.IDENTIFIER && tokens[1].GetValue() == ":":
+		// LABEL
+		labels := l.program.GetLabels()
 		labelFound := false
-		for _, x := range *labels {
-			if x == token.GetValue() {
+		for _, x := range labels {
+			if x.GetValue() == tokens[0].GetValue() {
 				labelFound = true
 				break
 			}
 		}
 		if labelFound {
-			*token.GetTokenType() = ptokens.LABEL
+			return errors.New("same label already exists")
+		}
+
+		l.tokens[0].SetTokenType(ptokens.LABEL)
+		l.program.SetLabels(append(l.program.GetLabels(), l.tokens[0]))
+	}
+
+	l.ParseOperands()
+	return nil
+}
+
+func (l *lexeme) GetOperandsInfo() error {
+	if !l.hasInstruction || !l.hasOperands {
+		return nil
+	}
+
+	for _, op := range l.operands {
+		index := op.GetIndex()
+		length := op.GetLength()
+		op.SetOperandTokens(l.GetTokens()[index : index + length])
+		switch opTokens := op.GetOperandTokens(); {
+		case len(opTokens) == 1:
+			token := opTokens[0]
+			op.SetToken(token)
+
+			switch token.GetTokenType() {
+			case ptokens.REG8:
+				op.SetOperandType(Register8)
+			case ptokens.REG16:
+				op.SetOperandType(Register16)
+			case ptokens.REG32:
+				op.SetOperandType(Register32)
+			case ptokens.DEC:
+				fallthrough
+			case ptokens.BIN:
+				fallthrough
+			case ptokens.HEX:
+				switch value := token.GetNumValue(); {
+				case value < 2^8: op.SetOperandType(Constant8)
+				default: op.SetOperandType(Constant32)
+				}
+			case ptokens.IDENTIFIER:
+				op.SetOperandType(Mem)
+				fallthrough
+			case ptokens.LABEL:
+				for _, x := range l.program.GetLabels() {
+					if x.GetValue() == token.GetValue() {
+						if x.GetLine() > token.GetLine() {
+							op.SetOperandType(LabelForward)
+						} else {
+							op.SetOperandType(LabelBackward)
+						}
+					}
+				}
+			default:
+				return fmt.Errorf("wrong token in operand %s", op.GetToken().GetValue())
+			}
+		case len(opTokens) == 3 && opTokens[1].GetTokenType() == ptokens.MODEL:
+			continue
+		case len(opTokens) == 3 && opTokens[0].GetTokenType() == ptokens.SEGREG:
+			op.SetOperandType(Mem)
+			op.SetSegmentPrefix(opTokens[0])
+			op.SetToken(opTokens[2])
+		case len(opTokens) < 6:
+			return fmt.Errorf("wrong token in operand %s", opTokens[0].GetValue())
+		default:
+			offset := 0
+			op.SetOperandType(Mem)
+			if opTokens[offset].GetTokenType() == ptokens.SEGREG {
+				op.SetSegmentPrefix(opTokens[offset])
+				offset += 2
+
+				if len(opTokens) != 8 {
+					return fmt.Errorf("wrong token in operand %s", op.GetToken().GetValue())
+				}
+			}
+			if opTokens[offset + 5].GetTokenType() == ptokens.SYM && opTokens[offset + 5].GetValue() == "*" {
+				// scaled index
+				if len(opTokens) != 8 {
+					return fmt.Errorf("wrong token in operand %s", op.GetToken().GetValue())
+				}
+				op.SetScaleToken(opTokens[offset + 6])
+			}
+			op.SetToken(opTokens[offset])
+			op.SetSumFirstToken(opTokens[offset + 2])
+			op.SetSumSecondToken(opTokens[offset + 4])
+			break
 		}
 	}
 
-	*l.Tokens[0].GetTokenType() = ptokens.LABEL
+	return nil
+}
+
+func (l *lexeme) GetInstruction() types.Instruction {
+	return l.instruction
+}
+
+func (l *lexeme) GetInstructionToken() types.Token {
+	return l.tokens[l.instructionIndex]
+}
+
+func (l *lexeme) GetName() types.Token {
+	return l.tokens[0]
+}
+
+func (l *lexeme) appendInline() error{
+	labels := l.program.GetLabels()
+	for _, token := range l.tokens {
+		labelFound := false
+		for _, x := range labels {
+			if x.GetValue() == token.GetValue() {
+				labelFound = true
+				break
+			}
+		}
+		if labelFound {
+			token.SetTokenType(ptokens.LABEL)
+		}
+	}
+
+	l.tokens[0].SetTokenType(ptokens.LABEL)
 	return nil
 }
 
 func (l *lexeme) hasLabel() bool {
-	return len(l.Tokens) >= 2 && *l.Tokens[0].GetTokenType() == ptokens.LABEL
+	return len(l.tokens) >= 2 && l.tokens[0].GetTokenType() == ptokens.LABEL
 }
 
 func (l *lexeme) ToString() string {
 	str := ""
 	i := 0
-	for _, t := range l.Tokens {
+	for _, t := range l.tokens {
 		str += fmt.Sprintf("%-30s", t.ToString())
 		if i != 0 && i % 4 == 0 {
 			str += "\n"
@@ -100,7 +346,7 @@ func (l *lexeme) ToString() string {
 }
 
 func (l *lexeme) ToSentenceTableString(level int) string {
-	l.toSentenceTable()
+	//l.ParseOperands()
 	res := ""
 
 	if l.hasName {
@@ -119,20 +365,14 @@ func (l *lexeme) ToSentenceTableString(level int) string {
 			if j == len(l.operands) {
 				s = " |"
 			}
-			res += fmt.Sprintf("%3d %3d%s", level + op.index, op.length, s)
+			res += fmt.Sprintf("%3d %3d%s", level + op.GetIndex(), op.GetLength(), s)
 		}
 	}
 
 	return res
 }
 
-func (l *lexeme) toSentenceTable() {
-	l.labelIndex = -1
-	l.instructionIndex = 0
-	l.operands = []*operand{}
-	l.hasOperands = true
-	l.hasInstruction = true
-
+func (l *lexeme) ParseOperands() {
 	offset := 0
 
 	if l.hasLabel() {
@@ -140,14 +380,19 @@ func (l *lexeme) toSentenceTable() {
 		offset += 2
 	}
 
-	if len(l.Tokens) <= offset {
+	if len(l.tokens) <= offset {
 		l.hasInstruction = false
 		return
 	}
 
-	for _, x := range l.Tokens {
-		if tokenType := *x.GetTokenType(); tokenType == ptokens.INSTRUCTION || tokenType == ptokens.DIRECTIVE {
-			l.hasInstruction = false
+	if l.tokens[offset].GetTokenType() == ptokens.IDENTIFIER {
+		offset++
+	}
+
+	for _, x := range l.tokens {
+		if tokenType := x.GetTokenType(); tokenType == ptokens.INSTRUCTION || tokenType == ptokens.DIRECTIVE {
+			l.hasInstruction = true
+			break
 		}
 	}
 
@@ -155,29 +400,24 @@ func (l *lexeme) toSentenceTable() {
 		return
 	}
 
-	if *l.Tokens[offset].GetTokenType() == ptokens.IDENTIFIER {
-		offset++
-	}
-
 	l.instructionIndex = offset
-	if !l.hasInstruction {
-		offset++
-	}
+	offset++
 
-	if len(l.Tokens) <= offset {
+	if len(l.tokens) <= offset {
 		l.hasOperands = false
 		return
 	}
 
 	operandInd := 0
-	l.operands = append(l.operands, &operand{offset, 0})
+	l.operands = append(l.operands, NewOperand(offset, 0))
 
-	for _, t := range l.Tokens[offset:] {
-		if *t.GetTokenType() == ptokens.SYM && t.GetValue() == "," {
-			l.operands = append(l.operands, &operand{l.operands[operandInd].index, 0})
+	for _, t := range l.tokens[offset:] {
+		if t.GetTokenType() == ptokens.SYM && t.GetValue() == "," {
+			l.operands = append(l.operands,
+				NewOperand(l.operands[operandInd].GetLength() + l.operands[operandInd].GetIndex() + operandInd + 1, 0))
 			operandInd++
 		} else {
-			l.operands[operandInd].length++
+			l.operands[operandInd].SetLength(l.operands[operandInd].GetLength() + 1)
 		}
 	}
 	return
