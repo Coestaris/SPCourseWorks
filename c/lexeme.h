@@ -72,6 +72,11 @@ typedef struct _lexeme
    // Line index
    size_t line;
 
+   // Instruction size in assembly. Set by l_get_size()
+   size_t size;
+   // Instruction offset in assembly
+   size_t offset;
+
    // Type of the lexeme. Set by l_fetch_lexeme_type()
    lexeme_type_t type;
 
@@ -128,6 +133,9 @@ lexeme_t* l_create(size_t line);
 // Frees lexeme
 void l_free(lexeme_t* lexeme);
 
+// Converts lexeme to a pretty string
+void l_string(char* buffer, size_t len, lexeme_t* lexeme);
+
 //
 // FIRST STAGE METHODS
 //
@@ -141,9 +149,15 @@ void l_structure(lexeme_t* lexeme);
 void l_fetch_lexeme_type(lexeme_t* lexeme);
 
 // Gets all necessary information about instruction operands according to KR task
+// Assembly - casted to void* parent Assembly object.
+// Used this trick because C can't handle circular dependencies in headers
 void l_fetch_op_info(lexeme_t* lexeme, void* assembly);
 
 // Find instruction that fits current lexeme
 void l_assign_instruction(lexeme_t* lexeme);
+
+// Calculates size of the current instruction / variable definition
+// Assembly is the same as in l_fetch_op_info().
+size_t l_get_size(lexeme_t* lexeme, void* assembly);
 
 #endif // LEXEME_H

@@ -326,6 +326,11 @@ list_t* t_tokenize(char* str)
    if(strlen(trimmed_buff) != 0)
       curr_lex->tokens[curr_lex->tokens_cnt++] = t_create(trimmed_buff, line_cnt);
 
+   if(curr_lex->tokens_cnt)
+      list_push(r, curr_lex);
+   else
+      l_free(curr_lex);
+
    return r;
 }
 

@@ -12,3 +12,5 @@ cmake-build-debug
 *.filters
 
 python/log\.dat
+
+*.log

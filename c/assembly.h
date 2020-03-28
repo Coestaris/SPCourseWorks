@@ -34,6 +34,7 @@ typedef struct _assembly
    size_t variables_cnt;
    struct variable
    {
+      size_t line;
       token_t* name;
       token_t* type;
       token_t* value;
@@ -48,6 +49,9 @@ assembly_t* a_create();
 // Frees assembly object and all its resources
 void a_free(assembly_t* assembly);
 
+//
+// KR Task functions
+//
 // Performs all necessary operation for the first stage.
 // Parse tokens and determine their types
 void a_first_stage(assembly_t* assembly, char* data);
@@ -57,6 +61,9 @@ void a_first_stage(assembly_t* assembly, char* data);
 // Analyze instruction operands and calculate instructions sizes
 void a_first_pass(assembly_t* assembly);
 
+//
+// Useful assembly getters
+//
 // Get user segment by its name
 struct segment* a_get_segment(assembly_t* assembly, char* name);
 
@@ -66,7 +73,13 @@ struct segment* a_get_segment_by_line(assembly_t* assembly, size_t line);
 // Get user label by its name
 struct label* a_get_label(assembly_t* assembly, char* name);
 
+// Get user variable by its declaration line
+struct variable* a_get_variable_by_line(assembly_t* assembly, size_t line);
+
 // Get user variable by its name
 struct variable* a_get_variable(assembly_t* assembly, char* name);
+
+// Get lexeme by its declaration name
+lexeme_t* a_get_lexeme_by_line(assembly_t* assembly, size_t line);
 
 #endif // ASSEMBLY_H

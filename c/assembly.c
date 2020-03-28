@@ -67,6 +67,7 @@ void a_first_pass(assembly_t* assembly)
       else if(lexeme->type == LT_VAR_DEFINITION)
       {
          struct variable* var = &assembly->variable[assembly->variables_cnt++];
+         var->line = lexeme->line;
          var->name = &lexeme->tokens[0];
          var->type = &lexeme->tokens[1];
          var->value = &lexeme->tokens[2];
@@ -80,6 +81,8 @@ void a_first_pass(assembly_t* assembly)
    };
    LEX_LP_END
 
+   // Segment of current lexeme
+   struct segment* active_segment = NULL;
    // Analyze lexeme operands and assign instructions
    LEX_LP_BEG
       if(lexeme->type == LT_INSTRUCTION)
@@ -87,6 +90,15 @@ void a_first_pass(assembly_t* assembly)
          l_fetch_op_info(lexeme, assembly);
          l_assign_instruction(lexeme);
       }
+
+      // If we encounter segment redefinition, this means that
+      // the following instructions will be in another segment
+      if(lexeme->type == LT_SEGMENT_DEFINITION)
+         active_segment = a_get_segment_by_line(assembly, lexeme->line);
+
+      // Calculate instruction offset
+      lexeme->offset = active_segment->size;
+      active_segment->size += l_get_size(lexeme, assembly);
    LEX_LP_END
 
 }
@@ -171,6 +183,37 @@ struct variable* a_get_variable(assembly_t* assembly, char* name)
       if(!strcmp(assembly->variable[i].name->string, name))
          return &assembly->variable[i];
    }
+
+   return NULL;
+}
+
+//
+// a_get_variable_by_line()
+//
+struct variable* a_get_variable_by_line(assembly_t* assembly, size_t line)
+{
+   assert(assembly);
+
+   for(size_t i = 0; i < assembly->variables_cnt; i++)
+   {
+      if(assembly->variable[i].line == line)
+         return &assembly->variable[i];
+   }
+
+   return NULL;
+}
+
+//
+// a_get_lexeme_by_line()
+//
+lexeme_t* a_get_lexeme_by_line(assembly_t* assembly, size_t line)
+{
+   assert(assembly);
+
+   LEX_LP_BEG
+      if(lexeme->line == line)
+         return lexeme;
+   LEX_LP_END
 
    return NULL;
 }
