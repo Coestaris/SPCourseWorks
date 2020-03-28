@@ -3,6 +3,7 @@
 #include "tokenizer.h"
 #include "lexeme.h"
 #include "assembly.h"
+#include "errors.h"
 
 #include <string.h>
 #include <malloc.h>
@@ -184,8 +185,10 @@ static void print_et3_table(FILE* output, assembly_t* assembly)
 
 int main()
 {
+   e_set_out(stderr);
+
    FILE* log = fopen(OUT_FILE, "w");
-   assert(log);
+   e_assert(log, "Unable to open file "OUT_FILE);
 
    char* text = (char*)t_read(TEST_FILE);
    assembly_t* assembly = a_create();

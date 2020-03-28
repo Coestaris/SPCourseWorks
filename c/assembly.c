@@ -2,6 +2,7 @@
 #pragma implementation "assembly.h"
 #endif
 #include "assembly.h"
+#include "errors.h"
 
 #include <malloc.h>
 #include <string.h>
@@ -29,7 +30,7 @@ assembly_t* a_create()
 //
 void a_first_stage(assembly_t* assembly, char* data)
 {
-   assert(assembly);
+   e_assert(assembly, "Passed NULL argument");
 
    assembly->lexemes = t_tokenize(data);
    LEX_LP_BEG
@@ -43,7 +44,7 @@ void a_first_stage(assembly_t* assembly, char* data)
 
 void a_first_pass(assembly_t* assembly)
 {
-   assert(assembly);
+   e_assert(assembly, "Passed NULL argument");
 
    // Analyze lexeme types
    LEX_LP_BEG
@@ -109,7 +110,7 @@ void a_first_pass(assembly_t* assembly)
 
 void a_free(assembly_t* assembly)
 {
-   assert(assembly);
+   e_assert(assembly, "Passed NULL argument");
 
    for(size_t i = 0; i < assembly->lexemes->count; i++)
    {
@@ -125,7 +126,7 @@ void a_free(assembly_t* assembly)
 //
 struct segment* a_get_segment_by_line(assembly_t* assembly, size_t line)
 {
-   assert(assembly);
+   e_assert(assembly, "Passed NULL argument");
 
    for(size_t i = 0; i < assembly->segments_cnt; i++)
    {
@@ -141,8 +142,8 @@ struct segment* a_get_segment_by_line(assembly_t* assembly, size_t line)
 //
 struct segment* a_get_segment(assembly_t* assembly, char* name)
 {
-   assert(assembly);
-   assert(name);
+   e_assert(assembly, "Passed NULL argument");
+   e_assert(name, "Passed NULL argument");
 
    for(size_t i = 0; i < assembly->segments_cnt; i++)
    {
@@ -158,8 +159,8 @@ struct segment* a_get_segment(assembly_t* assembly, char* name)
 //
 struct label* a_get_label(assembly_t* assembly, char* name)
 {
-   assert(assembly);
-   assert(name);
+   e_assert(assembly, "Passed NULL argument");
+   e_assert(name, "Passed NULL argument");
 
    for(size_t i = 0; i < assembly->labels_cnt; i++)
    {
@@ -175,8 +176,8 @@ struct label* a_get_label(assembly_t* assembly, char* name)
 //
 struct variable* a_get_variable(assembly_t* assembly, char* name)
 {
-   assert(assembly);
-   assert(name);
+   e_assert(assembly, "Passed NULL argument");
+   e_assert(name, "Passed NULL argument");
 
    for(size_t i = 0; i < assembly->variables_cnt; i++)
    {
@@ -192,7 +193,7 @@ struct variable* a_get_variable(assembly_t* assembly, char* name)
 //
 struct variable* a_get_variable_by_line(assembly_t* assembly, size_t line)
 {
-   assert(assembly);
+   e_assert(assembly, "Passed NULL argument");
 
    for(size_t i = 0; i < assembly->variables_cnt; i++)
    {
@@ -208,7 +209,7 @@ struct variable* a_get_variable_by_line(assembly_t* assembly, size_t line)
 //
 lexeme_t* a_get_lexeme_by_line(assembly_t* assembly, size_t line)
 {
-   assert(assembly);
+   e_assert(assembly, "Passed NULL argument");
 
    LEX_LP_BEG
       if(lexeme->line == line)

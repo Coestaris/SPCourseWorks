@@ -3,6 +3,7 @@
 #endif
 #include "tokenizer.h"
 #include "lexeme.h"
+#include "errors.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -28,8 +29,8 @@ static int64_t string_to_num(char* string, size_t len, uint8_t base)
             break;
          }
 
-      assert(literal != -1);
-      assert(literal < base);
+      e_assert(literal != -1, "Unable to find specified literal");
+      e_assert(literal < base, "Used wrong literal for specified base");
 
       result += pow(base, (double)len - i - 1) * (int64_t)literal;
    }
@@ -145,7 +146,7 @@ static bool is_id(char* string)
    if(isdigit(string[0]))
       return false;
 
-   assert(strlen(string) <= 4);
+   e_assert(strlen(string) <= 4, "Tokens must be shorter than 4 chars");
 
    return true;
 }
@@ -186,7 +187,7 @@ static bool is_hex(char* string)
 // Fills token info and determines its type
 static token_t t_create(char* string, size_t line)
 {
-   assert(string);
+   e_assert(string, "Passed NULL argument");
 
    token_t t;
    t.string = strdup(string);
@@ -211,7 +212,7 @@ static token_t t_create(char* string, size_t line)
       else if(is_id(string))
          t.type = TT_IDENTIFIER;
       else
-         abort();
+         e_err("Unable to determine token's type");
    }
 
    return t;
@@ -250,21 +251,19 @@ const char* t_tt_to_name(token_type_t type)
 //
 uint8_t* t_read(const char* fn)
 {
-   assert(fn);
+   e_assert(fn, "Passed NULL argument");
 
    FILE* f = fopen(fn, "r");
-   assert(f);
+   e_assert(f, "Unable to open file");
 
    fseek(f, 0, SEEK_END);
    size_t len = ftell(f);
    fseek(f, 0, SEEK_SET);
 
-   assert(len);
-
    uint8_t* data = malloc(len + 1);
    data[len] = 0;
 
-   assert(fread(data, len, 1, f) == 1);
+   e_assert(fread(data, len, 1, f) == 1, "Unable to read data from file");
    fclose(f);
 
    return data;
@@ -275,10 +274,9 @@ uint8_t* t_read(const char* fn)
 //
 list_t* t_tokenize(char* str)
 {
-   assert(str);
-   size_t len = strlen(str);
+   e_assert(str, "Passed NULL argument");
 
-   assert(len);
+   size_t len = strlen(str);
 
    char buffer[100];
    size_t buff_cnt = 0;
@@ -339,6 +337,8 @@ list_t* t_tokenize(char* str)
 //
 int64_t t_num(token_t* token)
 {
+   e_assert(token, "Passed NULL argument");
+
    if(token->type == TT_NUMBER2)
       return string_to_num(token->string, strlen(token->string) - 1, 2);
    else if(token->type == TT_NUMBER10)
@@ -346,5 +346,5 @@ int64_t t_num(token_t* token)
    else if(token->type == TT_NUMBER16)
       return string_to_num(token->string, strlen(token->string) - 1, 16);
 
-   abort();
+   e_err("Unable to convert token to integer");
 }
