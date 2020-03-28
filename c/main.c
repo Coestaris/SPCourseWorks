@@ -1,13 +1,11 @@
 #include <stdio.h>
+#include <string.h>
+#include <malloc.h>
 
 #include "tokenizer.h"
 #include "lexeme.h"
 #include "assembly.h"
 #include "errors.h"
-
-#include <string.h>
-#include <malloc.h>
-#include <assert.h>
 
 #define TEST_FILE "../test.asm"
 #define OUT_FILE "../out.log"

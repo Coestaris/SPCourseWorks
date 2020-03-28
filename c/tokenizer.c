@@ -2,16 +2,16 @@
 #pragma implementation "tokenizer.h"
 #endif
 #include "tokenizer.h"
-#include "lexeme.h"
-#include "errors.h"
 
 #include <stdio.h>
-#include <assert.h>
 #include <math.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+
+#include "lexeme.h"
+#include "errors.h"
 
 // Converts string to integer with specified base
 static int64_t string_to_num(char* string, size_t len, uint8_t base)

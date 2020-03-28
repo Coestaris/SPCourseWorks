@@ -3,15 +3,12 @@
 #endif
 #include "lexeme.h"
 
-#include "assembly.h"
-#include "errors.h"
-
-#include <malloc.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <math.h>
-#include <assert.h>
+
+#include "assembly.h"
+#include "errors.h"
 
 #define DEF_NO_EXP_PREF false
 #define DEF_NO_MODRM ((uint8_t)-1)
@@ -182,8 +179,10 @@ void l_fetch_lexeme_type(lexeme_t* lexeme)
 //
 void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
 {
-   assembly_t* assembly = assembly_ptr;
    e_assert(lexeme, "Passed NULL argument");
+   e_assert(assembly_ptr, "Passed NULL argument");
+
+   assembly_t* assembly = assembly_ptr;
 
    if(!lexeme->has_instruction || lexeme->operands_count == 0)
       return;
@@ -232,7 +231,7 @@ void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
             }
 
             default:
-               e_err("Wrong token in operator"); // =(
+               e_err("Wrong token in operator");
          }
       }
       else
@@ -338,6 +337,8 @@ void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
 //
 void l_assign_instruction(lexeme_t* lexeme)
 {
+   e_assert(lexeme, "Passed NULL argument");
+
    if(!lexeme->has_instruction) return;
    token_t* instruction = &(lexeme->tokens[lexeme->instr_index]);
 
@@ -378,7 +379,11 @@ void l_assign_instruction(lexeme_t* lexeme)
 
 size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
 {
+   e_assert(lexeme, "Passed NULL argument");
+   e_assert(assembly_ptr, "Passed NULL argument");
+
    assembly_t* assembly = assembly_ptr;
+
    if(lexeme->type == LT_VAR_DEFINITION)
    {
       struct variable* var = a_get_variable_by_line(assembly, lexeme->line);
@@ -527,6 +532,9 @@ void l_structure(lexeme_t* lexeme)
 //
 void l_string(char* buffer, size_t len, lexeme_t* lexeme)
 {
+   e_assert(buffer, "Passed NULL argument");
+   e_assert(lexeme, "Passed NULL argument");
+
    buffer[0] = 0;
    for(size_t i = 0; i < lexeme->tokens_cnt; i++)
    {

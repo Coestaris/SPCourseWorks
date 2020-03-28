@@ -2,11 +2,11 @@
 #pragma implementation "assembly.h"
 #endif
 #include "assembly.h"
-#include "errors.h"
 
 #include <malloc.h>
 #include <string.h>
-#include <assert.h>
+
+#include "errors.h"
 
 // Useful macro for iterating through lexemes
 #define LEX_LP_BEG                                                         \

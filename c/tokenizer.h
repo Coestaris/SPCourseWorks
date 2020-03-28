@@ -2,7 +2,6 @@
 #define TOKENIZER_H
 
 #include <stdint.h>
-#include "stddef.h"
 
 #include "list.h"
 
