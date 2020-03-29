@@ -1,6 +1,6 @@
+// Taken from DeepCars =3
 #ifndef LIST_H
 #define LIST_H
-// Taken from DeepCars =3
 
 #include <stddef.h>
 

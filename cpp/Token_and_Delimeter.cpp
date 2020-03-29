@@ -328,7 +328,17 @@ struct Lexem
 	int number_of_operands = 0;
 	//vector<end_token>tokens;
 };
+struct macro_op
+{
+	int line;
+	string var_name;
+	string macro_name;
+	bool has_parameters = false;
+	string regist;
+	TokenType regist_type;
+};
 
+vector<macro_op>macro;
 vector<Lexem> lexems;
 
 
@@ -337,13 +347,11 @@ void create_space_vector()
 	for (int i = 0; i < vector_of_token.size(); i++)
 	{
 		lexems.push_back(Lexem());
+		macro.push_back(macro_op());
 	}
 }
 void Lexem_create(int line) // checks all cases of complex tokens
 {
-	int flag = 0;
-
-
 	if (vector_of_token[line].size() == 2 && vector_of_token[line][0].type == Identifier && (vector_of_token[line][1].type == SegmentKeyword || vector_of_token[line][1].type == EndsKeyword))
 	{
 		vector_of_token[line][0].type = UserSegment;
@@ -362,12 +370,20 @@ void Lexem_create(int line) // checks all cases of complex tokens
 	if (vector_of_token[line].size() >= 2 && vector_of_token[line][0].type == Identifier && vector_of_token[line][1].type == MacroKeyword)
 	{
 		vector_of_token[line][0].type = Label;
+		macro[line].line = line;
+		macro[line].macro_name = vector_of_token[line][0].token;
+		if (vector_of_token[line].size() > 2 && vector_of_token[line][2].type == Identifier)
+		{
+			macro[line].has_parameters = true;
+			macro[line].var_name = vector_of_token[line][2].token;
+		}
 		//lexems[line].tokens[line].type = Label;
 		lexems[line].has_label = true;
 
 	}
-	if (vector_of_token[line].size() == 2 && vector_of_token[line][0].type == Identifier && vector_of_token[line][1].type == Identifier)
+	if (vector_of_token[line].size() == 2 && vector_of_token[line][0].type == Identifier && (vector_of_token[line][1].type == Register16 || vector_of_token[line][1].type == Register8))
 	{
+
 		vector_of_token[line][0].type = Label;
 		//lexems[line].tokens[line].type = Label;
 		lexems[line].has_label = true;
@@ -391,9 +407,22 @@ void has_(int line)
 		lexems[line].offset += 2;
 		if (vector_of_token[line].size() <= lexems[line].offset)
 		{
+			int counter=0;
 			lexems[line].has_label = true;
-			if (vector_of_token[line][1].type == Identifier)  // labels check for MACRO instruction (macro call)
-			{
+			if (vector_of_token[line][0].type == Label && (vector_of_token[line][1].type == Register16 || vector_of_token[line][1].type == Register8))  // labels check for MACRO instruction (macro call)
+			{	
+				vector_of_token[line][0].type = Identifier;
+				lexems[line].has_label = false;
+				lexems[line].has_name = false;
+				lexems[line].has_instruction = true;
+				lexems[line].instr_index = 0;
+				lexems[line].operand_indexes[1] = 1;
+				lexems[line].operand_length[1] = 1;
+
+				macro[line].regist = vector_of_token[line][1].token;//found scale like WITHPAR(macro name) cx(parameter register)
+				macro[line].regist_type = vector_of_token[line][1].type;//remembered type of register
+		
+				
 				lexems[line].has_operands = true;
 				lexems[line].operand_indexes[1] = 1;
 				lexems[line].operand_length[1] = 1;
@@ -416,16 +445,25 @@ void has_(int line)
 	}
 		 if (vector_of_token[line][0].type == Label && vector_of_token[line][1].type == MacroKeyword && vector_of_token[line][2].type == Identifier)//// check for MACRO instruction (macro init with 1 parameters)
 		 {
+			 macro[line].has_parameters = true;
 			lexems[line].has_instruction = true;
 			lexems[line].instr_index = 1;
 			lexems[line].has_operands = true;
-			lexems[line].operand_indexes[1] = 1;
+			lexems[line].operand_indexes[1] = 2;
 			lexems[line].operand_length[1] = 1;
 			return;
 		 }
 
 	int flag = 0;
 	//has name
+	if (vector_of_token[line][0].type == UserSegment && vector_of_token[line][1].type == EndsKeyword)
+	{
+		lexems[line].has_instruction = true;
+		lexems[line].instr_index = 1;
+		lexems[line].has_operands = false;
+		return;
+
+	}
 	if (vector_of_token[line][0].type == Identifier || vector_of_token[line][0].type == UserSegment)
 	{
 		lexems[line].has_name = true;
@@ -475,7 +513,7 @@ void has_(int line)
 					{
 						if (vector_of_token[line][j].type == Symbol && vector_of_token[line][j].token == ",")
 						{
-							lexems[line].operand_indexes[2] = lexems[line].operand_length[lexems[line].number_of_operands] + lexems[line].number_of_operands + 2 + i;
+							lexems[line].operand_indexes[2] = lexems[line].operand_length[lexems[line].number_of_operands+1] + lexems[line].number_of_operands + 1 + i;
 							lexems[line].number_of_operands += 1;
 						}
 						else
@@ -524,7 +562,7 @@ void output()
 		cout << i+1 << "::" << "";
 		for (int j = 0; j < vector_of_token[i].size(); j++)
 		{
-			cout << "\t" << j + 1 << "\t" << vector_of_token[i][j].token << "\t: (" << TokenTypeToString(vector_of_token[i][j].type) << ")" << endl;
+			cout << "\t" << j << "\t" << vector_of_token[i][j].token << "\t: (" << TokenTypeToString(vector_of_token[i][j].type) << ")" << endl;
 			
 		}
 		cout << "--------------------------------------------------" << "\n";

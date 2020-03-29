@@ -1,22 +1,23 @@
+// Taken from DeepCars =3
 #ifdef __GNUC__
 #pragma implementation "list.h"
 #endif
 #include "list.h"
-// Taken from DeepCars =3
 
 #include <string.h>
-#include <assert.h>
 #include <malloc.h>
+
+#include "errors.h"
 
 //
 // list_push()
 //
 inline void list_push(list_t* list, void* object)
 {
-   assert(list);
-   assert(object);
+   e_assert(list, "Passed NULL argument");
+   e_assert(object, "Passed NULL argument");
 
-   // current collection if full increase its size in 1.5 times
+   // if current collection is full we increase its size in LIST_SIZE_INCREASE times
    if (list->count > list->max_size - 1)
    {
       if (list->max_size == LIST_BOOTSTRAP_SIZE)
@@ -43,7 +44,7 @@ inline void list_push(list_t* list, void* object)
 //
 void list_free_elements(list_t* list)
 {
-   assert(list);
+   e_assert(list, "Passed NULL argument");
 
    for (size_t i = 0; i < list->count; i++)
       free(list->collection[i]);
@@ -55,7 +56,7 @@ void list_free_elements(list_t* list)
 //
 void list_free(list_t* list)
 {
-   assert(list);
+   e_assert(list, "Passed NULL argument");
 
    if (list->collection != list->bootstrap) {
       free(list->collection);
@@ -68,8 +69,8 @@ void list_free(list_t* list)
 //
 void list_remove(list_t* list, void* object)
 {
-   assert(list);
-   assert(object);
+   e_assert(list, "Passed NULL argument");
+   e_assert(object, "Passed NULL argument");
 
    //todo
 }

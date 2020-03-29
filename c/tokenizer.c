@@ -2,14 +2,41 @@
 #pragma implementation "tokenizer.h"
 #endif
 #include "tokenizer.h"
-#include "lexeme.h"
 
 #include <stdio.h>
-#include <assert.h>
+#include <math.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+
+#include "lexeme.h"
+#include "errors.h"
+
+// Converts string to integer with specified base
+static int64_t string_to_num(char* string, size_t len, uint8_t base)
+{
+   static const char* literals = "0123456789ABCDEF";
+
+   int64_t result = 0;
+   for(int64_t i = len - 1; i >= 0; i--)
+   {
+      int8_t literal = -1;
+      for(size_t j = 0; j < 16; j++)
+         if(literals[j] == string[i])
+         {
+            literal = j;
+            break;
+         }
+
+      e_assert(literal != -1, "Unable to find specified literal");
+      e_assert(literal < base, "Used wrong literal for specified base");
+
+      result += pow(base, (double)len - i - 1) * (int64_t)literal;
+   }
+
+   return result;
+}
 
 static bool is_whitespace(char c)
 {
@@ -119,9 +146,7 @@ static bool is_id(char* string)
    if(isdigit(string[0]))
       return false;
 
-   assert(strlen(string) <= 4);
-
-   return true;
+   return strlen(string) <= 4;
 }
 
 // Returns true if string is value binary number
@@ -160,7 +185,7 @@ static bool is_hex(char* string)
 // Fills token info and determines its type
 static token_t t_create(char* string, size_t line)
 {
-   assert(string);
+   e_assert(string, "Passed NULL argument");
 
    token_t t;
    t.string = strdup(string);
@@ -184,8 +209,6 @@ static token_t t_create(char* string, size_t line)
          t.type = TT_NUMBER2;
       else if(is_id(string))
          t.type = TT_IDENTIFIER;
-      else
-         abort();
    }
 
    return t;
@@ -224,21 +247,19 @@ const char* t_tt_to_name(token_type_t type)
 //
 uint8_t* t_read(const char* fn)
 {
-   assert(fn);
+   e_assert(fn, "Passed NULL argument");
 
    FILE* f = fopen(fn, "r");
-   assert(f);
+   e_assert(f, "Unable to open file");
 
    fseek(f, 0, SEEK_END);
    size_t len = ftell(f);
    fseek(f, 0, SEEK_SET);
 
-   assert(len);
-
    uint8_t* data = malloc(len + 1);
    data[len] = 0;
 
-   assert(fread(data, len, 1, f) == 1);
+   e_assert(fread(data, len, 1, f) == 1, "Unable to read data from file");
    fclose(f);
 
    return data;
@@ -249,10 +270,9 @@ uint8_t* t_read(const char* fn)
 //
 list_t* t_tokenize(char* str)
 {
-   assert(str);
-   size_t len = strlen(str);
+   e_assert(str, "Passed NULL argument");
 
-   assert(len);
+   size_t len = strlen(str);
 
    char buffer[100];
    size_t buff_cnt = 0;
@@ -271,15 +291,24 @@ list_t* t_tokenize(char* str)
          buffer[buff_cnt] = 0;
          char* trimmed_buff = trim_local_buffer(buffer);
          if(strlen(trimmed_buff) != 0)
-            curr_lex->tokens[curr_lex->tokens_cnt++] = t_create(trimmed_buff, line_cnt);
+         {
+            token_t tk = t_create(trimmed_buff, line_cnt);
+            if(tk.type == TT_UNKNOWN)
+               T_SE(curr_lex, "Unknown token type", curr_lex->tokens_cnt);
+            curr_lex->tokens[curr_lex->tokens_cnt++] = tk;
+         }
 
          // Make string from char
          buffer[0] = c;
          buffer[1] = 0;
          trimmed_buff = trim_local_buffer(buffer);
          if(strlen(trimmed_buff) != 0)
-            curr_lex->tokens[curr_lex->tokens_cnt++] = t_create(trimmed_buff, line_cnt);
-
+         {
+            token_t tk = t_create(trimmed_buff, line_cnt);
+            if(tk.type == TT_UNKNOWN)
+               T_SE(curr_lex, "Unknown token type", curr_lex->tokens_cnt);
+            curr_lex->tokens[curr_lex->tokens_cnt++] = tk;
+         }
          buff_cnt = 0;
       }
       else buffer[buff_cnt++] = (char)toupper(c);
@@ -298,7 +327,34 @@ list_t* t_tokenize(char* str)
    // last token
    char* trimmed_buff = trim_local_buffer(buffer);
    if(strlen(trimmed_buff) != 0)
-      curr_lex->tokens[curr_lex->tokens_cnt++] = t_create(trimmed_buff, line_cnt);
+   {
+      token_t tk = t_create(trimmed_buff, line_cnt);
+      if(tk.type == TT_UNKNOWN)
+      T_SE(curr_lex, "Unknown token type", curr_lex->tokens_cnt);
+      curr_lex->tokens[curr_lex->tokens_cnt++] = tk;
+   }
+
+   if(curr_lex->tokens_cnt)
+      list_push(r, curr_lex);
+   else
+      l_free(curr_lex);
 
    return r;
+}
+
+//
+// t_num()
+//
+int64_t t_num(token_t* token)
+{
+   e_assert(token, "Passed NULL argument");
+
+   if(token->type == TT_NUMBER2)
+      return string_to_num(token->string, strlen(token->string) - 1, 2);
+   else if(token->type == TT_NUMBER10)
+      return string_to_num(token->string, strlen(token->string), 10);
+   else if(token->type == TT_NUMBER16)
+      return string_to_num(token->string, strlen(token->string) - 1, 16);
+
+   e_err("Unable to convert token to integer");
 }

@@ -5,7 +5,7 @@ P1 dw 0b
 P2 dw 0ABh
 P4  dw 1b
 MACROP dw 1b
-DATA1 ends
+DATA1 Ends
 
 NOPAR MACRO
 	mov si,10
@@ -13,14 +13,14 @@ endm
 
 WITHPAR MACRO VARIABLE
 and dx,[bx+di]
- inc dx	
+ inc VARIABLE	
 endm
 
 CODE SEGMENT
 METKA1:
  mov ax, 12h
  mov di, 2h	
-WITHPAR MACROP
+WITHPAR cx
  inc ax
  neg word ptr[bx+di]
  aas
