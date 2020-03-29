@@ -129,5 +129,5 @@ if __name__ == "__main__":
         print(error)
         exit(1)
 
-    # print_et2_table(program)
-    print_et3_tables(program)
+    print_et2_table(program)
+    # print_et3_tables(program)

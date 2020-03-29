@@ -349,13 +349,13 @@ func (l *lexeme) ToSentenceTableString(level int) string {
 	res := ""
 
 	if l.hasName {
-		res += fmt.Sprintf("%3d |", level)
+		res += fmt.Sprintf("%5d |", level)
 	} else {
-		res += fmt.Sprintf("%3s |", "--")
+		res += fmt.Sprintf("%5s |", "--")
 	}
 
 	if l.hasInstruction {
-		res += fmt.Sprintf("%3d %3d |", level + l.instructionIndex, 1)
+		res += fmt.Sprintf(" %2d |%2d |", level + l.instructionIndex, 1)
 	}
 
 	if l.hasOperands && l.hasInstruction {
@@ -364,7 +364,7 @@ func (l *lexeme) ToSentenceTableString(level int) string {
 			if j == len(l.operands) {
 				s = " |"
 			}
-			res += fmt.Sprintf("%3d %3d%s", level + op.GetIndex(), op.GetLength(), s)
+			res += fmt.Sprintf(" %2d |%2d |%s", level + op.GetIndex(), op.GetLength(), s)
 		}
 	}
 
@@ -376,6 +376,7 @@ func (l *lexeme) ParseOperands() {
 
 	if l.hasLabel() {
 		l.labelIndex = 0
+		l.hasName = true
 		offset += 2
 	}
 
@@ -385,6 +386,7 @@ func (l *lexeme) ParseOperands() {
 	}
 
 	if l.tokens[offset].GetTokenType() == ptokens.IDENTIFIER {
+		l.hasName = true
 		offset++
 	}
 
