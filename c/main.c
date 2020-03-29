@@ -7,8 +7,8 @@
 #include "assembly.h"
 #include "errors.h"
 
-#define TEST_FILE "../test.asm"
-#define OUT_FILE "../out.log"
+#define TEST_FILE "../tests/test3.asm"
+#define OUT_FILE "../tests/test3.log"
 
 static void print_et2_table(FILE* output, assembly_t* assembly)
 {
@@ -99,10 +99,14 @@ static void print_et3_table(FILE* output, assembly_t* assembly)
       lexeme_t* lexeme = assembly->lexemes->collection[i];
       l_string(lex_str, sizeof(lex_str), lexeme);
 
-      extend_integer(lidx_str, sizeof(lidx_str) - 1, i, '0', false);
-      extend_integer(offset_str, sizeof(offset_str) - 1, lexeme->offset, '0', true);
+      size_t offset = lexeme->offset;
+      if(lexeme->err && i != 0)
+         offset = ((lexeme_t*)assembly->lexemes->collection[i])->offset;
 
-      fprintf(output, "| %s | %s | %-50s |\n", lidx_str, offset_str, lex_str);
+      extend_integer(lidx_str, sizeof(lidx_str) - 1, i, '0', false);
+      extend_integer(offset_str, sizeof(offset_str) - 1, offset, '0', true);
+
+      fprintf(output, "| %s | %s |%c %-49s |\n", lidx_str, offset_str, lexeme->err ? 'E' : ' ', lex_str);
    }
    fputs("\\====================================================================/\n\n", output);
 
@@ -183,9 +187,9 @@ static void print_et3_table(FILE* output, assembly_t* assembly)
 
 int main()
 {
-   e_set_out(stderr);
-
    FILE* log = fopen(OUT_FILE, "w");
+   e_set_out(log);
+
    e_assert(log, "Unable to open file "OUT_FILE);
 
    char* text = (char*)t_read(TEST_FILE);
@@ -196,6 +200,9 @@ int main()
 
    a_first_pass(assembly);
    print_et3_table(log, assembly);
+
+   fputs("\n\n", log);
+   a_errors(assembly, log);
 
    a_free(assembly);
    free(text);

@@ -14,3 +14,5 @@ cmake-build-debug
 python/log\.dat
 
 *.log
+
+c/tests/

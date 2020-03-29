@@ -146,9 +146,7 @@ static bool is_id(char* string)
    if(isdigit(string[0]))
       return false;
 
-   e_assert(strlen(string) <= 4, "Tokens must be shorter than 4 chars");
-
-   return true;
+   return strlen(string) <= 4;
 }
 
 // Returns true if string is value binary number
@@ -211,8 +209,6 @@ static token_t t_create(char* string, size_t line)
          t.type = TT_NUMBER2;
       else if(is_id(string))
          t.type = TT_IDENTIFIER;
-      else
-         e_err("Unable to determine token's type");
    }
 
    return t;
@@ -295,15 +291,24 @@ list_t* t_tokenize(char* str)
          buffer[buff_cnt] = 0;
          char* trimmed_buff = trim_local_buffer(buffer);
          if(strlen(trimmed_buff) != 0)
-            curr_lex->tokens[curr_lex->tokens_cnt++] = t_create(trimmed_buff, line_cnt);
+         {
+            token_t tk = t_create(trimmed_buff, line_cnt);
+            if(tk.type == TT_UNKNOWN)
+               T_SE(curr_lex, "Unknown token type", curr_lex->tokens_cnt);
+            curr_lex->tokens[curr_lex->tokens_cnt++] = tk;
+         }
 
          // Make string from char
          buffer[0] = c;
          buffer[1] = 0;
          trimmed_buff = trim_local_buffer(buffer);
          if(strlen(trimmed_buff) != 0)
-            curr_lex->tokens[curr_lex->tokens_cnt++] = t_create(trimmed_buff, line_cnt);
-
+         {
+            token_t tk = t_create(trimmed_buff, line_cnt);
+            if(tk.type == TT_UNKNOWN)
+               T_SE(curr_lex, "Unknown token type", curr_lex->tokens_cnt);
+            curr_lex->tokens[curr_lex->tokens_cnt++] = tk;
+         }
          buff_cnt = 0;
       }
       else buffer[buff_cnt++] = (char)toupper(c);
@@ -322,7 +327,12 @@ list_t* t_tokenize(char* str)
    // last token
    char* trimmed_buff = trim_local_buffer(buffer);
    if(strlen(trimmed_buff) != 0)
-      curr_lex->tokens[curr_lex->tokens_cnt++] = t_create(trimmed_buff, line_cnt);
+   {
+      token_t tk = t_create(trimmed_buff, line_cnt);
+      if(tk.type == TT_UNKNOWN)
+      T_SE(curr_lex, "Unknown token type", curr_lex->tokens_cnt);
+      curr_lex->tokens[curr_lex->tokens_cnt++] = tk;
+   }
 
    if(curr_lex->tokens_cnt)
       list_push(r, curr_lex);

@@ -1,6 +1,8 @@
 #ifndef ASSEMBLY_H
 #define ASSEMBLY_H
 
+#include <stdio.h>
+
 #include "lexeme.h"
 
 // Stores all necessary information about assembly file
@@ -48,6 +50,9 @@ assembly_t* a_create();
 
 // Frees assembly object and all its resources
 void a_free(assembly_t* assembly);
+
+// Prints errors
+void a_errors(assembly_t* assembly, FILE* stream);
 
 //
 // KR Task functions

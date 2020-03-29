@@ -3,6 +3,9 @@
 #endif
 #include "lexeme.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EmptyDeclOrStmt"
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -142,7 +145,7 @@ void l_free(lexeme_t* lexeme)
 //
 // l_fetch_lexeme_type()
 //
-void l_fetch_lexeme_type(lexeme_t* lexeme)
+bool l_fetch_lexeme_type(lexeme_t* lexeme)
 {
    e_assert(lexeme, "Passed NULL argument");
 
@@ -171,13 +174,25 @@ void l_fetch_lexeme_type(lexeme_t* lexeme)
       lexeme->type = LT_END;
 
    else
-      lexeme->type = LT_INSTRUCTION;
+   {
+      if(lexeme->has_label && lexeme->tokens_cnt >= 3 && lexeme->tokens[2].type == TT_INSTRUCTION)
+         lexeme->type = LT_INSTRUCTION;
+      else if(!lexeme->has_label && lexeme->tokens_cnt >= 1 && lexeme->tokens[0].type == TT_INSTRUCTION)
+         lexeme->type = LT_INSTRUCTION;
+      else
+      {
+         T_SE(lexeme, "Wrong token in lexeme", 0);
+         return false;
+      }
+   }
+
+   return true;
 }
 
 //
 // l_fetch_op_info()
 //
-void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
+bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
 {
    e_assert(lexeme, "Passed NULL argument");
    e_assert(assembly_ptr, "Passed NULL argument");
@@ -185,7 +200,7 @@ void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
    assembly_t* assembly = assembly_ptr;
 
    if(!lexeme->has_instruction || lexeme->operands_count == 0)
-      return;
+      return true;
 
    for(size_t i = 0; i < lexeme->operands_count; i++)
    {
@@ -220,7 +235,11 @@ void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
             {
                // Label
                struct label* lbl = a_get_label(assembly, op->operand->string);
-               e_assert(lbl, "Unable to find label with specified name");
+               if(!lbl)
+               {
+                  T_SE(lexeme, "Undefined reference", lexeme->operands_info[i].op_index);
+                  return false;
+               }
 
                // declared in next lines - forward labeling
                if(lbl->line > lexeme->line)
@@ -231,7 +250,10 @@ void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
             }
 
             default:
-               e_err("Wrong token in operator");
+            {
+               T_SE(lexeme, "Wrong token in operator", lexeme->operands_info[i].op_index + 1);
+               return false;
+            }
          }
       }
       else
@@ -245,7 +267,12 @@ void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          // [ ecx + edi * 8 + 1 ]
          // Maximum length: 13 tokens
          // dword ptr ES:[edx+esi*4+6]
-         e_assert(op->op_length <= 13 && op->op_length >= 9, "Instruction has wrong format (wrong length)");
+         if(!(op->op_length <= 13 && op->op_length >= 9))
+         {
+            T_SE(lexeme, "Instruction has wrong format (wrong length)",
+                  lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
          // Meh, kinda splice...
          token_t* op_tokens = &lexeme->tokens[op->op_index];
@@ -254,7 +281,12 @@ void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          if(op_tokens[0].type == TT_DWORD || op_tokens[0].type == TT_BYTE || op_tokens[0].type == TT_WORD)
          {
             // After type always must be PTR keyword
-            e_assert(op_tokens[1].type == TT_PTR, "Instruction has wrong format (expected PTR)");
+            if(op_tokens[1].type != TT_PTR)
+            {
+               T_SE(lexeme, "Instruction has wrong format (expected PTR)",
+                    lexeme->operands_info[i].op_index + offset);
+               return false;
+            }
 
             if(op_tokens[0].type == TT_DWORD)
                op->type = OT_MEM32;
@@ -268,50 +300,99 @@ void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          // Has segment prefix
          if(op_tokens[offset].type == TT_REGISTER_SEG)
          {
-            // After segreg always must be colon
-            e_assert(op_tokens[offset + 1].type == TT_SYMBOL && op_tokens[offset + 1].string[0] == ':',
-                  "Instruction has wrong format (expected ':')");
+            // Ignore DS prefix because we already in DS segment
+            if(strcmp(op_tokens[offset].string, "DS") != 0)
+            {
+               // After SegReg always must be colon
+               if(!(op_tokens[offset + 1].type == TT_SYMBOL && op_tokens[offset + 1].string[0] == ':'))
+               {
+                  T_SE(lexeme, "Instruction has wrong format (expected ':')",
+                       lexeme->operands_info[i].op_index + offset);
+                  return false;
+               }
 
-            op->segment = &op_tokens[offset];
+               op->segment = &op_tokens[offset];
+            }
             offset += 2;
          }
 
          // Check for minimal length
-         e_assert(op->op_length - offset == 9,
-                 "Instruction has wrong format (wrong length)");
+         if(op->op_length - offset != 9)
+         {
+                 T_SE(lexeme, "Instruction has wrong format (wrong length)",
+                       lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
-         e_assert(op_tokens[offset + 0].type == TT_SYMBOL    && op_tokens[offset + 0].string[0] == '[',
-                 "Instruction has wrong format (expected '[')");
+         // Check for [REG + REG * NUM + NUM] format
+         if(!(op_tokens[offset + 0].type == TT_SYMBOL && op_tokens[offset + 0].string[0] == '['))
+         {
+            T_SE(lexeme, "Instruction has wrong format (expected '[')",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
-         e_assert(op_tokens[offset + 1].type == TT_REGISTER8 || op_tokens[offset + 1].type == TT_REGISTER32,
-                  "Instruction has wrong format (expected register)");
+         if(!(op_tokens[offset + 1].type == TT_REGISTER8 || op_tokens[offset + 1].type == TT_REGISTER32))
+         {
+            T_SE(lexeme, "Instruction has wrong format (expected register)",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
-         e_assert(op_tokens[offset + 2].type == TT_SYMBOL    && op_tokens[offset + 2].string[0] == '+',
-                  "Instruction has wrong format (expected '+)");
+         if(!(op_tokens[offset + 2].type == TT_SYMBOL && op_tokens[offset + 2].string[0] == '+'))
+         {
+            T_SE(lexeme, "Instruction has wrong format (expected '+)",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
-         e_assert(op_tokens[offset + 3].type == TT_REGISTER8 || op_tokens[offset + 3].type == TT_REGISTER32,
-                  "Instruction has wrong format (expected register)");
+         if(!(op_tokens[offset + 3].type == TT_REGISTER8 || op_tokens[offset + 3].type == TT_REGISTER32))
+         {
+            T_SE(lexeme, "Instruction has wrong format (expected register)",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
-         e_assert(op_tokens[offset + 4].type == TT_SYMBOL    && op_tokens[offset + 4].string[0] == '*',
-                  "Instruction has wrong format (expected '*')");
+         if(!(op_tokens[offset + 4].type == TT_SYMBOL && op_tokens[offset + 4].string[0] == '*'))
+         {
+            T_SE(lexeme, "Instruction has wrong format (expected '*')",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
-         e_assert(
+         if(!(
             op_tokens[offset + 5].type == TT_NUMBER2 ||
             op_tokens[offset + 5].type == TT_NUMBER10 ||
-            op_tokens[offset + 5].type == TT_NUMBER16,
-            "Instruction has wrong format (expected constant)");
+            op_tokens[offset + 5].type == TT_NUMBER16))
+         {
+            T_SE(lexeme, "Instruction has wrong format (expected constant)",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
-         e_assert(op_tokens[offset + 6].type == TT_SYMBOL && op_tokens[offset + 6].string[0] == '+',
-                  "Instruction has wrong format (expected '+')");
+         if(!(op_tokens[offset + 6].type == TT_SYMBOL && op_tokens[offset + 6].string[0] == '+'))
+         {
+            T_SE(lexeme, "Instruction has wrong format (expected '+')",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
-         e_assert(
+         if(!(
                op_tokens[offset + 7].type == TT_NUMBER2 ||
                op_tokens[offset + 7].type == TT_NUMBER10 ||
-               op_tokens[offset + 7].type == TT_NUMBER16,
-               "Instruction has wrong format (expected constant)");
+               op_tokens[offset + 7].type == TT_NUMBER16))
+         {
+            T_SE(lexeme, "Instruction has wrong format (expected constant)",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
-         e_assert(op_tokens[offset + 8].type == TT_SYMBOL && op_tokens[offset + 8].string[0] == ']',
-                  "Instruction has wrong format (expected ']')");
+         if(!(op_tokens[offset + 8].type == TT_SYMBOL && op_tokens[offset + 8].string[0] == ']'))
+         {
+            T_SE(lexeme, "Instruction has wrong format (expected ']')",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
          op->base = &op_tokens[offset + 1];
          op->index = &op_tokens[offset + 3];
@@ -319,27 +400,39 @@ void l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          op->disp = &op_tokens[offset + 7];
 
          // Registers must have same size
-         e_assert(op->base->type == op->index->type,
-                  "Base and index register must have same size");
+         if(!(op->base->type == op->index->type))
+         {
+            T_SE(lexeme, "Base and index register must have same size",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
          // Scale can be only: 1, 2, 4, 8
-         e_assert(
+         if(!(
                op->scale->string[0] == '1' || op->scale->string[0] == '2' ||
-               op->scale->string[0] == '4' || op->scale->string[0] == '8',
-               "Scale could be only: 1, 2, 4 or 8");
+               op->scale->string[0] == '4' || op->scale->string[0] == '8'))
+         {
+            T_SE(lexeme, "Scale could be only: 1, 2, 4 or 8",
+                 lexeme->operands_info[i].op_index + offset);
+            return false;
+         }
 
       }
    }
+
+   return true;
 }
 
 //
 // l_assign_instruction()
 //
-void l_assign_instruction(lexeme_t* lexeme)
+bool l_assign_instruction(lexeme_t* lexeme)
 {
    e_assert(lexeme, "Passed NULL argument");
 
-   if(!lexeme->has_instruction) return;
+   if(!lexeme->has_instruction)
+      return true;
+
    token_t* instruction = &(lexeme->tokens[lexeme->instr_index]);
 
    for(size_t i = 0; i < INSTRUCTIONS; i++)
@@ -371,10 +464,11 @@ void l_assign_instruction(lexeme_t* lexeme)
          continue;
 
       lexeme->info = info;
-      return;
+      return true;
    }
 
-   e_err("Unable to find matching instruction"); // =c
+   T_SE(lexeme, "Unable to find matching instruction", lexeme->instr_index);
+   return false;
 }
 
 size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
@@ -580,3 +674,5 @@ void l_string(char* buffer, size_t len, lexeme_t* lexeme)
    memmove(buffer + identation, buffer, l + 1);
    memset(buffer, ' ', identation);
 }
+
+#pragma clang diagnostic pop

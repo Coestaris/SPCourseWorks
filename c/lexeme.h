@@ -6,6 +6,9 @@
 
 #include "tokenizer.h"
 
+// Set error.
+#define T_SE(l, msg, t) { l->err = msg; l->err_tk = t; }
+
 // Mnemonic type of the lexeme
 typedef enum _lexeme_type
 {
@@ -65,6 +68,10 @@ typedef struct instruction_info {
 // Represent assembly line
 typedef struct _lexeme
 {
+   // If everything OK set to null. Sets to error msg when something went wrong.
+   const char* err;
+   size_t err_tk;
+
    // Line tokens
    size_t tokens_cnt;
    token_t tokens[100];
@@ -146,15 +153,15 @@ void l_structure(lexeme_t* lexeme);
 // FIRST PASS METHODS
 //
 // Determines lexeme's type
-void l_fetch_lexeme_type(lexeme_t* lexeme);
+bool l_fetch_lexeme_type(lexeme_t* lexeme);
 
 // Gets all necessary information about instruction operands according to KR task
 // Assembly - casted to void* parent Assembly object.
 // Used this trick because C can't handle circular dependencies in headers
-void l_fetch_op_info(lexeme_t* lexeme, void* assembly);
+bool l_fetch_op_info(lexeme_t* lexeme, void* assembly);
 
 // Find instruction that fits current lexeme
-void l_assign_instruction(lexeme_t* lexeme);
+bool l_assign_instruction(lexeme_t* lexeme);
 
 // Calculates size of the current instruction / variable definition
 // Assembly is the same as in l_fetch_op_info().
