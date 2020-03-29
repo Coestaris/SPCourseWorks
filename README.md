@@ -7,6 +7,16 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
+Implemented solutions:
+* [C# Version](https://github.com/Coestaris/SPCourseWorks/tree/master/csharp) - Developed by [Coestaris](https://github.com/Coestaris)
+* [Python version](https://github.com/Coestaris/SPCourseWorks/tree/master/python) - Ported from C# version by [Coestaris](https://github.com/Coestaris)
+* [GO verison](https://github.com/Coestaris/SPCourseWorks/tree/master/go) - Proted from Python version by [h0tw4t3r](https://github.com/h0tw4t3r)
+* [C++ Version](https://github.com/Coestaris/SPCourseWorks/tree/master/cpp) - Developed by [iVanyaVas](https://github.com/iVanyaVas)
+* [Java Version](https://github.com/Coestaris/SPCourseWorks/tree/master/java) - Developed by [Leshik_XXL](https://github.com/leshik-xxl)
+* [C Version](https://github.com/Coestaris/SPCourseWorks/tree/master/c) - Developed by [Coestaris](https://github.com/Coestaris)
+
+You can contribute your implementation to make this world better ❤️
+
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):

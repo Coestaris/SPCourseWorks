@@ -21,9 +21,8 @@ label1:
     jbe label1
 
     mov eax, 10
-    mov Var1[eax+edx], 15
 
-    or Var1[eax+edi], 15
+    or Var1[eax+edi], equ1
     jbe label2
 
 label2:

@@ -8,5 +8,11 @@ __pycache__
 target/
 .user
 *.user
-
+cmake-build-debug
 *.filters
+
+python/log\.dat
+
+*.log
+
+c/tests/

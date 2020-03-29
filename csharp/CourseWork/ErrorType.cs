@@ -17,6 +17,7 @@
         ConstantExpected,
         UnexpectedDirective,
         SameEquAlreadyExists,
-        SameVarAlreadyExists
+        SameVarAlreadyExists,
+        InstructionFormat
     }
 }

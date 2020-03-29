@@ -2,31 +2,126 @@ package assembly
 
 import (
 	"course_work_2/parser"
+	"course_work_2/segment"
+	"course_work_2/tokens"
 	"course_work_2/types"
 	"fmt"
 )
 
 type asm struct {
-	Source string
-	FileName string
-	Lexemes []types.Lexeme
-	Labels []string
+	Source      string
+	FileName    string
+	Lexemes     []types.Lexeme
+	Labels      []types.Token
+	variables   []types.Variable
+	dataSegment types.Segment
+	codeSegment types.Segment
+}
+
+func (a *asm) SetLexemes(value []types.Lexeme) {
+	a.Lexemes = value
+}
+
+func (a *asm) SetLabels(value []types.Token) {
+	a.Labels = value
+}
+
+func (a *asm) SetVariables(value []types.Variable) {
+	a.variables = value
+}
+
+func (a *asm) SetSource(value string) {
+	a.Source = value
+}
+
+func (a *asm) SetDataSegment(value types.Segment) {
+	a.dataSegment = value
+}
+
+func (a *asm) SetCodeSegment(value types.Segment) {
+	a.codeSegment = value
 }
 
 func NewAssembly(source string, fileName string) types.ASM {
-	return &asm{source, fileName, []types.Lexeme{}, []string{}}
+	return &asm{Source: source, FileName: fileName}
 }
 
 func (a *asm) GetSource() string {
 	return a.Source
 }
 
-func (a *asm) GetLexemes() *[]types.Lexeme {
-	return &a.Lexemes
+func (a *asm) GetLexemes() []types.Lexeme {
+	return a.Lexemes
 }
 
-func (a *asm) GetLabels() *[]string {
-	return &a.Labels
+func (a *asm) GetLabels() []types.Token {
+	return a.Labels
+}
+
+func (a *asm) GetVariables() []types.Variable {
+	return a.variables
+}
+
+func (a *asm) GetDataSegment() types.Segment {
+	return a.dataSegment
+}
+
+func (a *asm) GetCodeSegment() types.Segment {
+	return a.codeSegment
+}
+
+func (a *asm) FirstPass() error {
+	segment.ProceedSegments(a)
+	for _, l := range a.GetLexemes() {
+		if err := l.GetOperandsInfo(); err != nil {
+			return err
+		}
+	}
+
+	offset := 0
+	for _, l := range a.GetLexemes() {
+		if l.GetSegment() == nil {
+			l.SetOffset(-l.GetOffset())
+			offset = 0
+			continue
+		}
+		if !l.HasInstructions() {
+			l.SetOffset(offset)
+			continue
+		}
+
+		directive := l.GetInstructionToken()
+		switch directive.GetTokenType() {
+		case tokens.CODE:
+			fallthrough
+		case tokens.DATA:
+			fallthrough
+		case tokens.END:
+			l.SetOffset(-l.GetOffset())
+			offset = 0
+			continue
+		case tokens.INSTRUCTION:
+			inst := FindInfo(l)
+			if inst == nil {
+				return fmt.Errorf("wrong instruction format %s", l.GetTokens()[0].GetValue())
+			}
+
+			l.SetInstruction(inst)
+			err := inst.CheckOpRestrictions(l)
+			if err != nil {
+				return err
+			}
+		}
+
+		l.SetOffset(offset)
+		size := GetSize(l)
+		offset += size
+
+		if l.GetSegment() != nil {
+			l.GetSegment().SetSize(offset)
+		}
+	}
+	return nil
 }
 
 func (a *asm) Parse() error {

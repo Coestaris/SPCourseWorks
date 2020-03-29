@@ -1,19 +1,27 @@
-using CourseWork.DataStructures;
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using CourseWork.DataStructures;
 
 namespace CourseWork.LexicalAnalysis
 {
     public class Lexeme
     {
-
-
         public bool HasLabel => Tokens.Count >= 2 && Tokens[0].Type == TokenType.Label;
+
+        public bool HasOffset => Tokens.Count >= 1 && Tokens[0].Type == TokenType.Instruction ||
+                                 Tokens.Count == 3 && Tokens[1].IsDirective() && Tokens[1].Type != TokenType.EquDirective;
+
         public Assembly ParentAssembly { get; }
+
         public List<Token> Tokens { get; private set; }
+
         public LexemeStructure Structure { get; private set; }
+
         public UserSegment Segment { get; internal set; }
+
+        public InstructionInfo InstructionInfo { get; internal set; }
+
+        public int Offset { get; internal set; }
 
         private void AssignUserSegmentsAndLabels(out Error error)
         {
@@ -31,7 +39,8 @@ namespace CourseWork.LexicalAnalysis
                     return;
                 }
 
-                ParentAssembly.UserSegments.Add(new UserSegment() {
+                ParentAssembly.UserSegments.Add(new UserSegment
+                {
                     OpenToken = Tokens[0],
                     Index = ParentAssembly.UserSegments.Count
                 });
@@ -123,7 +132,6 @@ namespace CourseWork.LexicalAnalysis
                     if (label != null)
                     {
                         token.Type = TokenType.Label;
-                        continue;
                     }
                 }
         }
@@ -196,12 +204,12 @@ namespace CourseWork.LexicalAnalysis
             }
 
             var operand = 0;
-            structure.OperandInfos.Add(new OperandInfo() {Index = offset});
+            structure.OperandInfos.Add(new OperandInfo {Index = offset});
             foreach (var token in Tokens.Skip(offset))
             {
                 if (token.Type == TokenType.Symbol && token.StringValue == ",")
                 {
-                    structure.OperandInfos.Add(new OperandInfo()
+                    structure.OperandInfos.Add(new OperandInfo
                     {
                         Index = structure.OperandInfos[operand].Length + operand + 1 + offset,
                         Length = 0
@@ -239,6 +247,100 @@ namespace CourseWork.LexicalAnalysis
 
                     Tokens[i] = ParentAssembly.Equs[Tokens[i].StringValue];
                 }
+        }
+
+        public int GetSize()
+        {
+            if (Structure.HasInstruction)
+            {
+                var instruction = Tokens[Structure.InstructionIndex];
+                if (instruction.Type == TokenType.Instruction)
+                {
+                    // Regular instruction
+                    var size = 1; // OpCode
+                    if (InstructionInfo.OpCode2 != 0) size += 1; // 2 byte opCode
+
+                    if (InstructionInfo.HasModRM) size += 1; // Has ModRM byte
+                    if (InstructionInfo.ConstantIMM != 0) size += InstructionInfo.ConstantIMM;
+
+                    if (InstructionInfo.AllowedTypes.Contains(OperandType.IndexedName))
+                    {
+                        size += 1; // SIB byte always exists when using base indexed
+                        size += 4; // + DSIP32 (govnocoded =3)
+                    }
+
+                    foreach (var operandInfo in Structure.OperandInfos)
+                    {
+                        if (operandInfo.SegmentPrefix != null)
+                            size += 1; // явная замена сегмента
+
+                        if (operandInfo.Type == OperandType.IndexedName)
+                        {
+                            // Get variable
+                            var a = ParentAssembly.UserVariables.Find(p =>
+                                p.Name.StringValue == operandInfo.Token.StringValue);
+
+                            // If variable not in data segment - неявная замена сегмента
+                            if (a.Name.ParentLexeme.Segment.Index != 0)
+                                size += 1;
+                        }
+                    }
+
+                    // Size and Opcode of OR depends on size of constant
+                    if (instruction.StringValue == "or")
+                    {
+                        var operand = Structure.OperandInfos[1].Token;
+
+                        size -= InstructionInfo.ConstantIMM;
+                        size += operand.ByteCount();
+                    }
+
+                    // If jump goes forward we reserve 4 bytes instead of 1
+                    //+ 1 for another opcode
+                    if (instruction.StringValue == "jbe")
+                    {
+                        var operand = Structure.OperandInfos[0].Token;
+                        var label = ParentAssembly.UserLabels.Find(p => p.StringValue == operand.StringValue);
+
+                        if (label.Line > operand.Line) // jmp forward
+                        {
+                            size += 3; // + 3 reversing bytes
+                            size += 1; // for opcode
+                        }
+                    }
+
+                    return size;
+                }
+                else
+                {
+                    // Memory directive
+                    if (instruction.Type == TokenType.DbDirective)
+                    {
+                        // Could be string
+                        var operand = Structure.OperandInfos[0].Token;
+                        if (operand.Type == TokenType.Text)
+                            return operand.StringValue.Length;
+
+                        return 1;
+                    }
+
+
+                    if (instruction.Type == TokenType.DwDirective)
+                    {
+                        return 2;
+                    }
+
+                    if (instruction.Type == TokenType.DdDirective)
+                    {
+                        return 4;
+                    }
+
+                    // Some other directive
+                    return 0;
+                }
+            }
+
+            return 0;
         }
     }
 }

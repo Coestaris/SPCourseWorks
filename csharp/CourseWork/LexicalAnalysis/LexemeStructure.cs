@@ -75,11 +75,6 @@ namespace CourseWork.LexicalAnalysis
             return null;
         }
 
-        public int SumByteCount()
-        {
-            return OperandInfos.Sum(p => p.GetByteCount())
-        }
-
         public string ToTable(int i = 0)
         {
             var res = "";
