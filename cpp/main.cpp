@@ -1,6 +1,7 @@
 #include"TokenType.h"
-#include"Delimeter.h"
+#include"Delimiter.h"
 #include"Lexem.h"
+#include "Assembly.h"
 
 int main()
 {
@@ -9,8 +10,15 @@ int main()
    // ET2 routines
    createTokens("test.txt");
    proceedTokens();
-
    printTokenList();
 
+   // ET3 routines
+   //analyzeSegments();
+   //analyzeVariablesAndLabels();
+   //analyzeOperandTypes();
+
+   //printLexemeList();
+
+   //outputErrors();
    return 0;
 }

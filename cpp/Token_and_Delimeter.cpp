@@ -1,12 +1,14 @@
 #include"TokenType.h"
-#include"Delimeter.h"
+#include"Delimiter.h"
 #include"Lexem.h"
 #include <cassert>
 #include<fstream>
 #include <map>
 
 // two-dimensional vector of vectors to sort tokens by the lines of the input file
-static vector<vector<end_token>> vectorOfTokens;
+vector<vector<end_token>> vectorOfTokens;
+vector<Lexem> lexems;
+
 static unordered_map<string, TokenType> keyword;
 static unordered_map<string, TokenType>::iterator itr;
 
@@ -27,7 +29,6 @@ static TokenType instructionType[] =
 
 // Macro stuff
 static vector<struct macro> macro;
-static vector<Lexem> lexems;
 static struct macro listeningMacro;
 
 //regular expresions for finding types of numeric constants
@@ -543,13 +544,10 @@ void proceedTokens()
       struct macro* m = hasMacro(vectorOfTokens[i]);
       if (!m) continue;
 
-      std::cout << m->name.token;
-
-
       // Check parameters count
       if (vectorOfTokens[i].size() - 1 != m->parameters.size())
       {
-         std::cout << "Wrong macro parameters";
+         //std::cout << "Wrong macro parameters";
          continue;
       }
 
@@ -602,7 +600,7 @@ void printTokenList()
       cout << "\n";
 
       cout << "==================================================" << endl;
-      cout << "#line" << "\t" << "#token" << "   " << "Token" << "\t" << "Type of Token" << "\t\t||" << endl;
+      cout << "#line" << "\t" << "#token" << "   " << "Token" << "\t" << "type of Token" << "\t\t||" << endl;
       cout << "==================================================" << endl;
       for (int j = 0; j < vectorOfTokens[i].size(); j++)
       {
@@ -628,4 +626,11 @@ void printTokenList()
       cout << endl;
       cout << "\n\n\n";
    }
+}
+
+void Lexem::SetError(string error, const end_token &end_token)
+{
+   this->error = error;
+   this->error_token = end_token;
+   this->has_error = true;
 }
