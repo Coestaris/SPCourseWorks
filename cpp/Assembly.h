@@ -23,6 +23,7 @@ struct UserName
 extern vector<UserName> userNames;
 
 UserName* getUserName(UserNameType type, const string& name);
+UserName* getUserName(UserNameType type, int line);
 
 void printLexemeList();
 void outputErrors();

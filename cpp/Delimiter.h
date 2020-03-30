@@ -14,14 +14,14 @@ struct end_token
 enum operandType
 {
    OT_Const8,
-   OT_Const32,
+   OT_Const16,
    OT_Register8,
-   OT_Register32,
+   OT_Register16,
    OT_LabelFwd,
    OT_LabelBack,
    OT_Memory,
    OT_Memory8,
-   OT_Memory32,
+   OT_Memory16,
 };
 
 struct Lexem
@@ -35,9 +35,9 @@ struct Lexem
    // Operand info
    int operandIndices[5];
    int operandLengths[5];
-/*   operandType operandTypes[5];
+   operandType operandTypes[5];
    bool has_segment_prefix;
-   end_token segment_prefix;*/
+   end_token segment_prefix;
 
    bool hasLabel = false;
    bool hasName = false;

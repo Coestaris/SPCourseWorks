@@ -8,7 +8,7 @@ DATA1 SEGMENT
 DATA1 Ends
 
 NOPAR MACRO
-	mov si,10
+    mov si,10
 endm
 
 WITHPAR MACRO VARIABLE
@@ -25,7 +25,7 @@ METKA1:
     NOPAR
     neg word ptr[bx+di]
     aas
-    or GS:byte ptr [bx+si],2
+    or byte ptr GS:[bx+si],2
     bt di, ax
     cmp word ptr [bx+di],ax
     jl METKA2

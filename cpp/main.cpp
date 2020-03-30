@@ -13,12 +13,13 @@ int main()
    printTokenList();
 
    // ET3 routines
-   //analyzeSegments();
-   //analyzeVariablesAndLabels();
-   //analyzeOperandTypes();
+   analyzeSegments();
+   analyzeVariablesAndLabels();
+   analyzeOperandTypes();
 
-   //printLexemeList();
+   printLexemeList();
 
-   //outputErrors();
+   outputErrors();
+   
    return 0;
 }
