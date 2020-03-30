@@ -45,7 +45,7 @@ namespace KeyWord
         UserSegment,
         SegmentRegister,
         Label,
-
+        MacroName,
 
         Unknown
     };

@@ -310,6 +310,7 @@ SegmentKeyword,
 MacroKeyword,
 EndKeyword,
 EndmKeyword,
+MacroName,
 EndsKeyword };
 
 //int line = 0;
@@ -324,20 +325,26 @@ struct Lexem
 	bool has_name = false;
 	bool has_operands = false;
 	bool has_instruction = false;
+	bool has_macro = false;
 	int offset = 0;
 	int number_of_operands = 0;
 	//vector<end_token>tokens;
 };
 struct macro_op
 {
-	int line;
+
 	string var_name;
-	string macro_name;
 	bool has_parameters = false;
+	string macro_name;
 	string regist;
 	TokenType regist_type;
 };
-
+struct macro_lines
+{
+	int line;
+	int endm_line;
+};
+vector<macro_lines>macro_l;
 vector<macro_op>macro;
 vector<Lexem> lexems;
 
@@ -369,9 +376,29 @@ void Lexem_create(int line) // checks all cases of complex tokens
 	}
 	if (vector_of_token[line].size() >= 2 && vector_of_token[line][0].type == Identifier && vector_of_token[line][1].type == MacroKeyword)
 	{
-		vector_of_token[line][0].type = Label;
-		macro[line].line = line;
+		macro_lines sh;
+		vector_of_token[line][0].type = MacroName;
 		macro[line].macro_name = vector_of_token[line][0].token;
+		sh.line = line;
+		vector<end_token>::iterator itr;
+		int iter = 0;
+		
+		while (vector_of_token[line+iter][0].type != EndmKeyword)
+		{
+
+			for (itr = vector_of_token[line+iter].begin(); itr != vector_of_token[line+iter].end(); itr++)
+			{
+				if (vector_of_token[line+iter][0].type == EndmKeyword)
+				{
+					sh.endm_line = line + iter;
+					break;
+				}
+				
+			}
+			iter++;
+		}
+		macro_l.push_back(sh);
+				
 		if (vector_of_token[line].size() > 2 && vector_of_token[line][2].type == Identifier)
 		{
 			macro[line].has_parameters = true;
@@ -379,18 +406,19 @@ void Lexem_create(int line) // checks all cases of complex tokens
 		}
 		//lexems[line].tokens[line].type = Label;
 		lexems[line].has_label = true;
+		lexems[line].has_macro = true;
 
 	}
-	if (vector_of_token[line].size() == 2 && vector_of_token[line][0].type == Identifier && (vector_of_token[line][1].type == Register16 || vector_of_token[line][1].type == Register8))
+	if (vector_of_token[line].size() <= 2 && vector_of_token[line][0].type == Identifier || (vector_of_token[line][1].type == Register16 || vector_of_token[line][1].type == Register8))
 	{
 
-		vector_of_token[line][0].type = Label;
-		//lexems[line].tokens[line].type = Label;
-		lexems[line].has_label = true;
+		vector_of_token[line][0].type = MacroName;
+		//lexems[line].tokens[line].type = Label;0
+		lexems[line].has_instruction = true;
 	}
 	if (vector_of_token[line].size() == 2 && vector_of_token[line][0].token == "jl" && vector_of_token[line][1].type == Label)
 	{
-		vector_of_token[line][0].type = Label;
+		vector_of_token[line][1].type = Label;
 		//lexems[line].tokens[line].type = Label;
 	}
 	has_(line);
@@ -409,19 +437,49 @@ void has_(int line)
 		{
 			int counter=0;
 			lexems[line].has_label = true;
-			if (vector_of_token[line][0].type == Label && (vector_of_token[line][1].type == Register16 || vector_of_token[line][1].type == Register8))  // labels check for MACRO instruction (macro call)
+			if (vector_of_token[line][0].type == MacroName && (vector_of_token[line][1].type == Register16 || vector_of_token[line][1].type == Register8))  // labels check for MACRO instruction (macro call)
 			{	
-				vector_of_token[line][0].type = Identifier;
 				lexems[line].has_label = false;
 				lexems[line].has_name = false;
 				lexems[line].has_instruction = true;
 				lexems[line].instr_index = 0;
+				if(macro[line].has_parameters == true)
 				lexems[line].operand_indexes[1] = 1;
 				lexems[line].operand_length[1] = 1;
 
 				macro[line].regist = vector_of_token[line][1].token;//found scale like WITHPAR(macro name) cx(parameter register)
 				macro[line].regist_type = vector_of_token[line][1].type;//remembered type of register
-		
+				vector<end_token>::iterator itr;
+				vector<Lexem>::iterator itra;
+				end_token h;
+				int it = 0;
+				
+				if (vector_of_token[macro_l[counter].line][0].token == macro[macro_l[counter].line].macro_name)
+				{
+					for (int i = macro_l[counter].line + 1; i <= macro_l[counter].endm_line; i++)
+					{
+						itr = vector_of_token[i].begin();
+						itra = lexems.begin()+i;
+						for (itr; itr < vector_of_token[i].end(); itr++)
+						{
+							h.token = vector_of_token[i][it].token;
+							if (h.token == macro[i].regist)
+							{
+								h.token = macro[i].regist;
+								h.type = macro[i].regist_type;
+								vector_of_token[line].insert(itr, h);
+								lexems.insert(itra, lexems[i]);
+								continue;
+							}
+							h.type = vector_of_token[i][it].type;
+							vector_of_token[line].insert(itr, h);
+							lexems.insert(itra, lexems[i]);
+							it++;
+						}
+						it = 0;
+					}
+				}
+				
 				
 				lexems[line].has_operands = true;
 				lexems[line].operand_indexes[1] = 1;
@@ -443,7 +501,7 @@ void has_(int line)
 			return;
 		}
 	}
-		 if (vector_of_token[line][0].type == Label && vector_of_token[line][1].type == MacroKeyword && vector_of_token[line][2].type == Identifier)//// check for MACRO instruction (macro init with 1 parameters)
+		 if (vector_of_token[line][0].type == MacroName && vector_of_token[line][1].type == MacroKeyword && vector_of_token[line][2].type == Identifier)//// check for MACRO instruction (macro init with 1 parameters)
 		 {
 			 macro[line].has_parameters = true;
 			lexems[line].has_instruction = true;
@@ -453,6 +511,7 @@ void has_(int line)
 			lexems[line].operand_length[1] = 1;
 			return;
 		 }
+		 
 
 	int flag = 0;
 	//has name
