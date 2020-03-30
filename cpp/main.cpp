@@ -4,11 +4,13 @@
 
 int main()
 {
-	input();
-	delimeter();
+   setupTokenTypeDict();
 
-	cycle_creator();
+   // ET2 routines
+   createTokens("test.txt");
+   proceedTokens();
 
+   printTokenList();
 
-	return 0;
+   return 0;
 }

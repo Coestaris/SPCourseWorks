@@ -1,60 +1,55 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
-#include<iostream>
-#include<string.h>
-#include<string>
+
+#include <iostream>
+#include <string>
 #include <unordered_map>
-#include<regex>
-#include<vector>
+#include <regex>
+#include <vector>
 
-namespace KeyWord
+enum TokenType
 {
-    enum  TokenType
-    {
-        
-        DbDirective,
-        DwDirective,
-        DdDirective,
+
+   DbDirective,
+   DwDirective,
+   DdDirective,
 
 
-        Instruction,
-        SegmentKeyword,
-        MacroKeyword,
+   Instruction,
+   SegmentKeyword,
+   MacroKeyword,
 
-        PtrKeyword,
-        WordKey,
-        DwKey,
-        ByteKey,
+   PtrKeyword,
+   WordKey,
+   DwKey,
+   ByteKey,
 
-        EndKeyword,
-        EndmKeyword,
-        EndsKeyword,
+   EndKeyword,
+   EndmKeyword,
+   EndsKeyword,
 
-        Register16,
-        Register8,
+   Register16,
+   Register8,
 
-        Symbol,
+   Symbol,
 
-        Identifier,
+   Identifier,
 
-        HexNumber,
-        DecNumber,
-        BinNumber,
-        Text,
+   HexNumber,
+   DecNumber,
+   BinNumber,
+   Text,
 
-        UserSegment,
-        SegmentRegister,
-        Label,
-        MacroName,
+   UserSegment,
+   SegmentRegister,
+   Label,
+   MacroName,
 
-        Unknown
-    };
-}
+   Unknown
+};
 
 using namespace std;
-using namespace KeyWord;
-string TokenTypeToString(TokenType tochange);
-void input();
-void output();
-TokenType numcheck(string number);
-void emptyCheck();
+
+string tokenTypeToString(TokenType type);
+void setupTokenTypeDict();
+void printTokenList();
