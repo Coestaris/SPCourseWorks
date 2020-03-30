@@ -218,7 +218,12 @@ void delimeter()
 	string token;
 	int line = 0;
 
+#if __linux__ // For linux compatibility
+	FILE* f = fopen("../test.txt", "rb");
+#else
 	FILE* f = fopen("test.txt", "rb");
+#endif
+
 	assert(f); // check if f is NULL
 
 	fseek(f, 0, SEEK_END);
@@ -272,9 +277,8 @@ void delimeter()
 	}
 	vectorfill(token, line);
 
+	delete[] buffer;
 	fclose(f);
-
-	
 }
 
 bool isEmptySpace(int c)
@@ -302,16 +306,17 @@ void emptyCheck() //delete empty strings
 //LEXEM
 TokenType Instruction_Type[] =
 {
-Instruction,
-DbDirective,
-DwDirective,
-DdDirective,
-SegmentKeyword,
-MacroKeyword,
-EndKeyword,
-EndmKeyword,
-MacroName,
-EndsKeyword };
+   Instruction,
+   DbDirective,
+   DwDirective,
+   DdDirective,
+   SegmentKeyword,
+   MacroKeyword,
+   EndKeyword,
+   EndmKeyword,
+   MacroName,
+   EndsKeyword
+};
 
 //int line = 0;
 
@@ -330,33 +335,29 @@ struct Lexem
 	int number_of_operands = 0;
 	//vector<end_token>tokens;
 };
-struct macro_op
-{
 
-	string var_name;
+struct macro
+{
+   end_token name;
 	bool has_parameters = false;
-	string macro_name;
-	string regist;
-	TokenType regist_type;
+   vector<end_token> parameters;
+   int start;
+   int end;
 };
-struct macro_lines
-{
-	int line;
-	int endm_line;
-};
-vector<macro_lines>macro_l;
-vector<macro_op>macro;
-vector<Lexem> lexems;
 
+vector<macro> macro;
+vector<Lexem> lexems;
 
 void create_space_vector()
 {
 	for (int i = 0; i < vector_of_token.size(); i++)
 	{
 		lexems.push_back(Lexem());
-		macro.push_back(macro_op());
 	}
 }
+
+struct macro listening_macro;
+
 void Lexem_create(int line) // checks all cases of complex tokens
 {
 	if (vector_of_token[line].size() == 2 && vector_of_token[line][0].type == Identifier && (vector_of_token[line][1].type == SegmentKeyword || vector_of_token[line][1].type == EndsKeyword))
@@ -374,59 +375,42 @@ void Lexem_create(int line) // checks all cases of complex tokens
 		lexems[line].has_label = true;
 
 	}
+
+	// Macro declaration
 	if (vector_of_token[line].size() >= 2 && vector_of_token[line][0].type == Identifier && vector_of_token[line][1].type == MacroKeyword)
 	{
-		macro_lines sh;
+      struct macro m;
 		vector_of_token[line][0].type = MacroName;
-		macro[line].macro_name = vector_of_token[line][0].token;
-		sh.line = line;
-		vector<end_token>::iterator itr;
-		int iter = 0;
-		
-		while (vector_of_token[line+iter][0].type != EndmKeyword)
-		{
+		m.name = vector_of_token[line][0];
+		m.start = line;
+		m.start = line;
 
-			for (itr = vector_of_token[line+iter].begin(); itr != vector_of_token[line+iter].end(); itr++)
-			{
-				if (vector_of_token[line+iter][0].type == EndmKeyword)
-				{
-					sh.endm_line = line + iter;
-					break;
-				}
-				
-			}
-			iter++;
-		}
-		macro_l.push_back(sh);
-				
-		if (vector_of_token[line].size() > 2 && vector_of_token[line][2].type == Identifier)
-		{
-			macro[line].has_parameters = true;
-			macro[line].var_name = vector_of_token[line][2].token;
-		}
-		//lexems[line].tokens[line].type = Label;
 		lexems[line].has_label = true;
 		lexems[line].has_macro = true;
 
-	}
-	if (vector_of_token[line].size() <= 2 && vector_of_token[line][0].type == Identifier || (vector_of_token[line][1].type == Register16 || vector_of_token[line][1].type == Register8))
-	{
+      if(vector_of_token[line].size() != 2) // has parameters
+      {
+         m.has_parameters = true;
+         for(int i = 2; i < vector_of_token[line].size(); i++) // iterate through parameters
+            m.parameters.push_back(vector_of_token[line][i]);
+      }
 
-		vector_of_token[line][0].type = MacroName;
-		//lexems[line].tokens[line].type = Label;0
-		lexems[line].has_instruction = true;
+      listening_macro = m;
 	}
-	if (vector_of_token[line].size() == 2 && vector_of_token[line][0].token == "jl" && vector_of_token[line][1].type == Label)
-	{
-		vector_of_token[line][1].type = Label;
-		//lexems[line].tokens[line].type = Label;
-	}
-	has_(line);
+	else if (vector_of_token[line].size() == 1 && vector_of_token[line][0].type == EndmKeyword)
+   {
+	   // End of the macro
+		lexems[line].has_label = true;
+      listening_macro.end = line;
+      macro.push_back(listening_macro);
+   }
+
+	determine_structure(line);
 }
 
 
 
-void has_(int line)
+void determine_structure(int line)
 {
 	//has label
 	if (lexems[line].has_label)
@@ -443,11 +427,12 @@ void has_(int line)
 				lexems[line].has_name = false;
 				lexems[line].has_instruction = true;
 				lexems[line].instr_index = 0;
-				if(macro[line].has_parameters == true)
-				lexems[line].operand_indexes[1] = 1;
+				if(macro[line].has_parameters)
+				   lexems[line].operand_indexes[1] = 1;
+
 				lexems[line].operand_length[1] = 1;
 
-				macro[line].regist = vector_of_token[line][1].token;//found scale like WITHPAR(macro name) cx(parameter register)
+			/*	macro[line].regist = vector_of_token[line][1].token;//found scale like WITHPAR(macro name) cx(parameter register)
 				macro[line].regist_type = vector_of_token[line][1].type;//remembered type of register
 				vector<end_token>::iterator itr;
 				vector<Lexem>::iterator itra;
@@ -479,7 +464,7 @@ void has_(int line)
 						it = 0;
 					}
 				}
-				
+				*/
 				
 				lexems[line].has_operands = true;
 				lexems[line].operand_indexes[1] = 1;
@@ -503,7 +488,7 @@ void has_(int line)
 	}
 		 if (vector_of_token[line][0].type == MacroName && vector_of_token[line][1].type == MacroKeyword && vector_of_token[line][2].type == Identifier)//// check for MACRO instruction (macro init with 1 parameters)
 		 {
-			 macro[line].has_parameters = true;
+			//macro[line].has_parameters = true;
 			lexems[line].has_instruction = true;
 			lexems[line].instr_index = 1;
 			lexems[line].has_operands = true;
@@ -530,7 +515,7 @@ void has_(int line)
 	
 	}
 	// instruction check
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		if (vector_of_token[line][lexems[line].offset].type == Instruction_Type[i])
 		{
@@ -586,16 +571,86 @@ void has_(int line)
 		}
 }
 
+struct macro* has_macro(vector<end_token> tokens)
+{
+   for(const end_token& tk : tokens)
+   {
+      if(tk.type == Identifier)
+      {
+         for(int i = 0; i < macro.size(); i++)
+         {
+            if(tk.token == macro[i].name.token)
+               return &macro[i];
+         }
+      }
+   }
+   return nullptr;
+}
+
 void cycle_creator() // call cycle to create lexems for each lines of tokens
 {
 	emptyCheck();//delete empty str
 	create_space_vector(); //creat space for vector of lexems 
-	
+
+	// Create lexemes
 	for (int i = 0; i < vector_of_token.size(); i++)
 	{
 		Lexem_create(i);
-		
 	}
+
+	vector<int> to_delete;
+
+	// MACROROSZIRENNYA
+   for (int i = 0; i < vector_of_token.size(); i++)
+   {
+      // lexeme have macro
+      struct macro* m = has_macro(vector_of_token[i]);
+      if(!m) continue;
+
+      std::cout << m->name.token;
+
+
+      // Check parameters count
+      if(vector_of_token[i].size() - 1 != m->parameters.size())
+      {
+         std::cout << "Wrong macro parameters";
+         continue;
+      }
+
+      map<string, end_token> param_replace;
+      for(int p = 0; p < m->parameters.size(); p++)
+         param_replace[m->parameters[p].token] = vector_of_token[i][p + 1];
+
+      // Remove current lexeme
+      to_delete.push_back(i);
+
+      // Insert macro lines
+      for(int j = m->start + 1; j < m->end; j++)
+      {
+         vector_of_token.insert(vector_of_token.begin() + i + 1, vector_of_token[j]);
+         lexems.insert(lexems.begin() + i + 1, lexems[j]);
+
+         // Replace parameters
+         for(int k = 0; k < vector_of_token[j].size(); k++)
+         {
+            if(vector_of_token[j][k].type == Identifier)
+            {
+               auto a = param_replace.find(vector_of_token[j][k].token);
+               if(a == param_replace.end()) continue;
+
+               vector_of_token[i + j - m->start - 1][k] = a->second;
+            }
+         }
+         i++;
+      }
+   }
+
+   for(int i = to_delete.size() - 1; i >= 0; i--)
+   {
+      vector_of_token.erase(vector_of_token.begin() + to_delete[i]);
+      lexems.erase(lexems.begin() + to_delete[i]);
+   }
+
 	output();
 }
 
@@ -603,22 +658,17 @@ void output()
 {
 	string mas;
 	char ch = '\n';
-	ifstream f("test.txt", ios::in);
-	if (!f)cout << "cannot open file";
 
 	for (int i = 0; i < vector_of_token.size(); i++)
 	{
-		getline(f, mas);
-		if (mas == "\r" ||  mas == "\t" || mas == "\0")
-		{
-			getline(f, mas);
-		}
-		cout << "Source string #:" << i+1 << " = " << mas << endl;
+		cout << "Source string #:" << i+1 << " :: ";
+		for(int j = 0; j < vector_of_token[i].size(); j++)
+		   cout << vector_of_token[i][j].token << " ";
+		cout << "\n";
 
 		cout << "==================================================" << endl;
 		cout << "#line" << "\t" << "#token" << "   " << "Token" << "\t" << "Type of Token" << "\t\t||" << endl;
 		cout << "==================================================" << endl;
-		cout << i+1 << "::" << "";
 		for (int j = 0; j < vector_of_token[i].size(); j++)
 		{
 			cout << "\t" << j << "\t" << vector_of_token[i][j].token << "\t: (" << TokenTypeToString(vector_of_token[i][j].type) << ")" << endl;
@@ -642,6 +692,4 @@ void output()
 			cout << endl;
 			cout << "\n\n\n";
 	}
-	
-	f.close();
 }

@@ -4,5 +4,5 @@
 #include<fstream>
 
 void Lexem_create(int line);
-void has_(int line);
+void determine_structure(int line);
 void cycle_creator();
