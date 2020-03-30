@@ -24,7 +24,7 @@ METKA1:
     inc ax
     NOPAR
     neg word ptr[bx+di]
-    aas
+    aas 
     or byte ptr GS:[bx+si],2
     bt di, ax
     cmp word ptr [bx+di],ax

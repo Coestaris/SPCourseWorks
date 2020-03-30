@@ -30,4 +30,6 @@ void outputErrors();
 
 void analyzeSegments();
 void analyzeVariablesAndLabels();
-void analyzeOperandTypes();
+void analyzeOperandTypes(); 
+void checkInsrtuctionRequirements(); 
+void calculateSize();

@@ -114,10 +114,10 @@ void printLexemeList()
 {
    for(int l = 0; l < vectorOfTokens.size(); l++)
    {
-		if(lexems[l].hasInstruction && lexems[l].hasOperands)
-			for (int t = 0; t <= lexems[l].numberOfOperands; t++)
-				cout << lexems[l].operandTypes[t] << " ";
-
+	//if(lexems[l].hasInstruction && lexems[l].hasOperands)
+	//	for (int t = 0; t <= lexems[l].numberOfOperands; t++)
+	//		cout << lexems[l].operandTypes[t] << " ";
+	   cout << lexems[l].offset << " :::  ";
 	 
       for(int t = 0; t < vectorOfTokens[l].size(); t++)
          cout << vectorOfTokens[l][t].token << " ";
@@ -128,7 +128,7 @@ void printLexemeList()
 UserName* getUserName(UserNameType type, int line)
 {
 	for (auto& a : userNames)
-		if (a.type == type && a.begin >= line && a.end <= line)
+		if (a.type == type && a.begin <= line && a.end >= line)
 			return &a;
 
 	return nullptr;
@@ -186,6 +186,7 @@ void analyzeOperandTypes()
 		 
 		 if (operand.size() != 1)
 		 {
+			 // memory location
 			 // min len = 5, max = 9
 			 if (operand.size() < 5)
 			 {
@@ -198,7 +199,6 @@ void analyzeOperandTypes()
 				 continue;
 			 }
 
-			 // mem
 			 int position = 0;
 			 if (operand[position]->type == ByteKey)
 			 {
@@ -220,6 +220,7 @@ void analyzeOperandTypes()
 			 if (operand[position]->type == Identifier || operand[position]->type == SegmentRegister)
 			 {
 				 lexems[l].segment_prefix = *operand[position];
+				 lexems[l].has_segment_prefix = true;
 				 check_c(position + 1, ':', "Expected ':'");
 				 position += 2;
 			 }
@@ -299,7 +300,7 @@ void analyzeOperandTypes()
 					 continue;
 				 }
 
-				 if(lbl->begin < l)
+				 if(lbl->begin > l)
 					lexems[l].operandTypes[op] = OT_LabelFwd;
 				 else
 					 lexems[l].operandTypes[op] = OT_LabelBack;
@@ -307,4 +308,203 @@ void analyzeOperandTypes()
 		 }
       }
    }
+}
+
+bool check_parameters(Lexem& l, const end_token& token, initializer_list<operandType> list)
+{
+	// Check operand count
+	if(!l.hasOperands)
+	{
+		if (list.size() != 0)
+		{
+			l.SetError("Wrong parameter count", token);
+			return false;
+		}
+	}
+	else
+	{
+		if (l.numberOfOperands + 1 != list.size())
+		{
+			l.SetError("Wrong parameter count", token);
+			return false;
+		}
+	}
+
+	int i = 0;
+	bool wrong = false;
+	for (auto param : list)
+	{
+		wrong = true;
+		if ((param == OT_Const8)    && (l.operandTypes[i] != OT_Const8    && l.operandTypes[i] != OT_Const16)) { break; }
+		if ((param == OT_Register8) && (l.operandTypes[i] != OT_Register8 && l.operandTypes[i] != OT_Register16)) { break; }
+		if ((param == OT_Memory)    && (l.operandTypes[i] != OT_Memory    && l.operandTypes[i] != OT_Memory8 && l.operandTypes[i] != OT_Memory16)) { break; }
+		if ((param == OT_LabelBack) && (l.operandTypes[i] != OT_LabelFwd  && l.operandTypes[i] != OT_LabelBack)) { break; }
+		
+		wrong = false;
+		i++;
+	}
+
+	if (wrong)
+	{
+		l.SetError("Wrong parameter type.", token);
+		return false;
+	}
+
+	return true;
+}
+
+void checkInsrtuctionRequirements()
+{
+	for (int l = 0; l < vectorOfTokens.size(); l++)
+	{
+		lexems[l].offset = 0;
+
+		if (lexems[l].has_error)
+			continue;
+	
+		if (!lexems[l].hasInstruction)
+			continue;
+
+		// Skip instructions in macro
+		UserName* seg = getUserName(NT_Segment, l);
+		if (seg == nullptr)
+			continue;
+
+		const vector<end_token>& vector = vectorOfTokens[l];
+
+		// Skip db, macro and other nonInstruction shit
+		const end_token& instruction = vector[lexems[l].instrIndex];
+		if (instruction.type != Instruction)
+			continue;
+
+		if (instruction.token == "aas") {
+			check_parameters(lexems[l], instruction, {});
+		}
+		else if (instruction.token == "inc") {
+			check_parameters(lexems[l], instruction, { OT_Register8 });
+		}
+		else if (instruction.token == "neg") {
+			check_parameters(lexems[l], instruction, { OT_Memory });
+		}
+		else if (instruction.token == "bt") {
+			check_parameters(lexems[l], instruction, { OT_Register8, OT_Register8 });
+		}
+		else if (instruction.token == "and") {
+			check_parameters(lexems[l], instruction, { OT_Register8, OT_Memory });
+		}
+		else if (instruction.token == "cmp") {
+			check_parameters(lexems[l], instruction, { OT_Memory, OT_Register8 });
+		}
+		else if (instruction.token == "mov") {
+			check_parameters(lexems[l], instruction, { OT_Register8, OT_Const8 });
+		}
+		else if (instruction.token == "or") {
+			check_parameters(lexems[l], instruction, { OT_Memory, OT_Const8 });
+		}
+		else if (instruction.token == "jl") {
+			check_parameters(lexems[l], instruction, { OT_LabelBack });
+		}
+		else
+		{
+			lexems[l].SetError("Unkown instruction", instruction);
+		}
+	}
+}
+
+// 3F  AAS
+
+// FE /0 INC r/m8 
+// 40+rw INC r16
+
+// F6 /3 NEG r/m8
+// F7 /3 NEG r/m16
+
+// 0F A3 BT r/m16, r16 
+
+// 22 /r AND r8, r/m8 
+// 23 /r AND r16, r/m16 
+
+// 38 /r CMP r/m8, r8
+// 39 /r CMP r/m16, r16
+
+// B0+rb MOV reg8, imm8
+// B8+rw MOV reg16, imm16
+
+// 80 /1 ib OR r/m8, imm8
+// 83 /1 ib OR r/m16, imm8
+// 81 /1 iw OR r/m16, imm16
+
+// 7C cb JL rel8 
+// OF 8C cw JL rel16 
+void calculateSize()
+{
+	for (int l = 0; l < vectorOfTokens.size(); l++)
+	{
+		if (lexems[l].has_error)
+			continue;
+
+		if (!lexems[l].hasInstruction)
+			continue;
+
+		UserName* seg = getUserName(NT_Segment, l);
+		if (seg == nullptr)
+			continue;
+
+		const vector<end_token>& vector = vectorOfTokens[l];
+
+		// Skip db, macro and other nonInstruction shit
+		const end_token& instruction = vector[lexems[l].instrIndex];
+		if (instruction.type != Instruction)
+			continue;
+
+		operandType op1 = lexems[l].operandTypes[0];
+		operandType op2 = lexems[l].operandTypes[1];
+
+		int size = 0;
+		if (instruction.token == "aas") {
+			size = 1; // OPCODE
+		}
+		else if (instruction.token == "inc") {
+			if (op1 == OT_Register8)
+				size = 2; // OPCODE + MODRM
+			else
+				size = 1; // Just Opcode. Destination stored in opcode
+		}
+		else if (instruction.token == "neg") {
+			size = 3; // OPCODE + MORM + SIB
+		}
+		else if (instruction.token == "bt") {
+			size = 3; // EXP PREF + MODRM + SIB
+		}
+		else if (instruction.token == "and") {
+			size = 3; // OPCODE + MORM + SIB
+		}
+		else if (instruction.token == "cmp") {
+			size = 3; // OPCODE + MORM + SIB
+		}
+		else if (instruction.token == "mov") {
+			size = 3; // OPCODE (With packed register) + CONST16
+		}
+		else if (instruction.token == "or") {
+			size = 3; // OPCODE + MODRM + SIB
+			
+			// CONST SIZE
+			if (op2 == OT_Const8)
+				size += 1;
+			else
+				size += 2; 
+		}
+		else if (instruction.token == "jl") {
+			if (op1 == OT_LabelBack)
+				size = 2; // OPCODE + OFFSET
+			else
+				size = 6; // OPCODE + OFFSET + 
+				// + (possible 4 bytes for EXP PREFIX and far jump. Thats what TASM and MASM do, Idk...)
+		}
+
+		if (lexems[l].has_segment_prefix)
+			size += 1;
+
+		lexems[l].offset = size;
+	}
 }
