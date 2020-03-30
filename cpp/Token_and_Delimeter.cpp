@@ -3,7 +3,7 @@
 #include"Lexem.h"
 #include <cassert>
 #include<fstream>
-
+#include <map>
 struct end_token //keep information about tokens 
 {
 	string token;
@@ -153,6 +153,8 @@ string TokenTypeToString(TokenType tochange)
 			return "SegmentRegister";
 		case Label:
 			return "Label";
+		case MacroName:
+			return"MacroName";
 		default:
 			return "Unknown";
 	}
@@ -345,7 +347,7 @@ struct macro
    int end;
 };
 
-vector<macro> macro;
+vector<struct macro> macro;
 vector<Lexem> lexems;
 
 void create_space_vector()
@@ -375,7 +377,7 @@ void Lexem_create(int line) // checks all cases of complex tokens
 		lexems[line].has_label = true;
 
 	}
-
+	
 	// Macro declaration
 	if (vector_of_token[line].size() >= 2 && vector_of_token[line][0].type == Identifier && vector_of_token[line][1].type == MacroKeyword)
 	{
@@ -421,57 +423,19 @@ void determine_structure(int line)
 		{
 			int counter=0;
 			lexems[line].has_label = true;
-			if (vector_of_token[line][0].type == MacroName && (vector_of_token[line][1].type == Register16 || vector_of_token[line][1].type == Register8))  // labels check for MACRO instruction (macro call)
-			{	
+			if (vector_of_token[line][0].type == Identifier && (vector_of_token[line][1].type == Register16 || vector_of_token[line][1].type == Register8))  // labels check for MACRO instruction (macro call)
+			{
+				vector_of_token[line][0].type == MacroName;
 				lexems[line].has_label = false;
 				lexems[line].has_name = false;
 				lexems[line].has_instruction = true;
-				lexems[line].instr_index = 0;
-				if(macro[line].has_parameters)
-				   lexems[line].operand_indexes[1] = 1;
-
-				lexems[line].operand_length[1] = 1;
-
-			/*	macro[line].regist = vector_of_token[line][1].token;//found scale like WITHPAR(macro name) cx(parameter register)
-				macro[line].regist_type = vector_of_token[line][1].type;//remembered type of register
-				vector<end_token>::iterator itr;
-				vector<Lexem>::iterator itra;
-				end_token h;
-				int it = 0;
-				
-				if (vector_of_token[macro_l[counter].line][0].token == macro[macro_l[counter].line].macro_name)
-				{
-					for (int i = macro_l[counter].line + 1; i <= macro_l[counter].endm_line; i++)
-					{
-						itr = vector_of_token[i].begin();
-						itra = lexems.begin()+i;
-						for (itr; itr < vector_of_token[i].end(); itr++)
-						{
-							h.token = vector_of_token[i][it].token;
-							if (h.token == macro[i].regist)
-							{
-								h.token = macro[i].regist;
-								h.type = macro[i].regist_type;
-								vector_of_token[line].insert(itr, h);
-								lexems.insert(itra, lexems[i]);
-								continue;
-							}
-							h.type = vector_of_token[i][it].type;
-							vector_of_token[line].insert(itr, h);
-							lexems.insert(itra, lexems[i]);
-							it++;
-						}
-						it = 0;
-					}
-				}
-				*/
-				
+				lexems[line].instr_index = 0;			
 				lexems[line].has_operands = true;
 				lexems[line].operand_indexes[1] = 1;
 				lexems[line].operand_length[1] = 1;
 				return;
 			}
-			else if (vector_of_token[line][1].type == MacroKeyword)// check for MACRO instruction (macro init with no parameters)
+			else if (vector_of_token[line].size()==2 && vector_of_token[line][1].type == MacroKeyword)// check for MACRO instruction (macro init with no parameters)
 			{
 				lexems[line].has_instruction = true;
 				lexems[line].instr_index = 1;
@@ -486,9 +450,10 @@ void determine_structure(int line)
 			return;
 		}
 	}
-		 if (vector_of_token[line][0].type == MacroName && vector_of_token[line][1].type == MacroKeyword && vector_of_token[line][2].type == Identifier)//// check for MACRO instruction (macro init with 1 parameters)
+		 if (vector_of_token[line].size() == 3 && vector_of_token[line][0].type == Identifier && vector_of_token[line][1].type == MacroKeyword && vector_of_token[line][2].type == Identifier)//// check for MACRO instruction (macro init with 1 parameters)
 		 {
 			//macro[line].has_parameters = true;
+			 vector_of_token[line][0].type = MacroName;
 			lexems[line].has_instruction = true;
 			lexems[line].instr_index = 1;
 			lexems[line].has_operands = true;
@@ -515,9 +480,16 @@ void determine_structure(int line)
 	
 	}
 	// instruction check
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i <= 10; i++)
 	{
-		if (vector_of_token[line][lexems[line].offset].type == Instruction_Type[i])
+		if (vector_of_token[line].size() == 1 && vector_of_token[line][0].type == Identifier)
+		{
+			vector_of_token[line][0].type = MacroName;
+			lexems[line].has_instruction = true;
+			flag = 1;
+			break;
+		}
+		if ( vector_of_token[line][lexems[line].offset].type == Instruction_Type[i])
 		{
 			lexems[line].has_instruction = true;
 			flag = 1;
@@ -575,7 +547,7 @@ struct macro* has_macro(vector<end_token> tokens)
 {
    for(const end_token& tk : tokens)
    {
-      if(tk.type == Identifier)
+      if(tk.type == MacroName|| tk.type == Identifier)
       {
          for(int i = 0; i < macro.size(); i++)
          {
