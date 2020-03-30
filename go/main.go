@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var compileFiles []string
@@ -31,7 +32,34 @@ func rjust(pad int, str string, padString string) string {
 	return str
 }
 
-func PrintResults(a types.ASM) {
+func printLexemes(l types.Lexeme) {
+	for i, t := range l.GetTokens() {
+		fmt.Printf("%s. %s\n", rjust(2, strconv.Itoa(i), "0"), t.ToString())
+	}
+}
+
+func PrintET2(program types.ASM) {
+	for _, l := range program.GetLexemes() {
+		sources := make([]string, len(l.GetTokens()))
+		for i, t := range l.GetTokens() {
+			sources[i] = t.GetValue()
+		}
+		fmt.Printf("Source : %s\n", strings.Join(sources, " "))
+		fmt.Printf("Lexemes: \n")
+		printLexemes(l)
+		fmt.Println("+-----------------------------------------+")
+		fmt.Println("|  LABEL |  MNEM  |   Op1  |   Op2  | ....|")
+		fmt.Println("|-----------------------------------------|")
+		fmt.Println("|        |  I | L |  I | L |  I | L |     |")
+		fmt.Println("|-----------------------------------------|")
+		fmt.Printf("|  %s\n", l.ToSentenceTableString(0))
+		fmt.Println("+-----------------------------------------+")
+		fmt.Println()
+		fmt.Println()
+	}
+}
+
+func PrintET3(a types.ASM) {
 	res := ""
 	res += fmt.Sprintln("+---------------------------------------------+")
 	res += fmt.Sprintln("| № | OFFSET  |   SOURCE                      |")
@@ -120,6 +148,6 @@ func main() {
 		}
 
 		os.Open("")
-		PrintResults(program)
+		PrintET2(program)
 	}
 }
