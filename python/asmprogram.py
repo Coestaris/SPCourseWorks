@@ -12,28 +12,30 @@ SPLIT_CHARS = ['\t', ' ', '\n', '[', ']', '.', ',', '*', '+', '-', ':']
 
 class ASMParser:
     @staticmethod
-    def save_tokens(tokens: List[Tuple[str, int, int]], program: 'ASMProgram') -> (Optional[Error], ASMToken):
+    def save_tokens(tokens: List[Tuple[str, int, int]], program: 'ASMProgram') -> Optional[ASMLexeme]:
         real_tokens = []
         lexeme = ASMLexeme(program)
         for token in [t for t in tokens if t[0].strip() != ""]:
 
             error, t = ASMToken.create(token[0], lexeme, token[1], token[2])
             if error is not None:
-                return (error, None)
+                lexeme.error = error
+                t = ASMToken(token[0], lexeme, 0, token[1], token[2])
 
             real_tokens.append(t)
 
         error = lexeme.set_tokens(real_tokens)
         if error is not None:
-            return (error, None)
+            lexeme.error = error
+            return lexeme
 
-        return (None, lexeme)
+        return lexeme
 
     @staticmethod
-    def get_lexemes(program: 'ASMProgram') -> (Optional[Error], List[ASMToken]):
+    def get_lexemes(program: 'ASMProgram') -> List[ASMLexeme]:
         token = ""
         tokens = []
-        real_tokens = []
+        lexemes_list = []
 
         line = 0
         char = 0
@@ -54,12 +56,9 @@ class ASMParser:
                 token += c
 
             if c == '\n':
-                error, t = ASMParser.save_tokens(tokens, program)
-                if error is not None:
-                    return (error, None)
-
-                if len(t.tokens) != 0:
-                    real_tokens.append(t)
+                lexeme = ASMParser.save_tokens(tokens, program)
+                if len(lexeme.tokens) != 0 or lexeme.error:
+                    lexemes_list.append(lexeme)
 
                 tokens = []
 
@@ -69,34 +68,33 @@ class ASMParser:
                 char += 1
 
         tokens.append((token, line, char))
-        error, t = ASMParser.save_tokens(tokens, program)
-        if error is not None:
-            return (error, None)
+        lexeme = ASMParser.save_tokens(tokens, program)
 
-        if len(t.tokens) != 0:
-            real_tokens.append(t)
+        if len(lexeme.tokens) != 0:
+            lexemes_list.append(lexeme)
 
-        return (None, real_tokens)
+        return lexemes_list
 
     @staticmethod
-    def proceed_segments(program: 'ASMProgram') -> Optional[Error]:
+    def proceed_segments(program: 'ASMProgram') -> None:
         current_segment = None
         for lexeme in program.lexemes:
-            if len(lexeme.tokens) == 2 and lexeme.tokens[1].type == TokenType.KEYWORD_SEGMENT:
-                # find segment by its name
-                current_segment = \
-                    [x for x in program.user_segments if x.open.string_value == lexeme.tokens[0].string_value][0]
+            if lexeme.error is None:
+                if len(lexeme.tokens) == 2 and lexeme.tokens[1].type == TokenType.KEYWORD_SEGMENT:
+                    # find segment by its name
+                    current_segment = \
+                        [x for x in program.user_segments if x.open.string_value == lexeme.tokens[0].string_value][0]
 
-            elif len(lexeme.tokens) == 2 and lexeme.tokens[1].type == TokenType.KEYWORD_ENDS:
-                current_segment = None
+                elif len(lexeme.tokens) == 2 and lexeme.tokens[1].type == TokenType.KEYWORD_ENDS:
+                    current_segment = None
 
-            else:
-                lexeme.segment = current_segment
-                if current_segment is None and \
-                        not (len(lexeme.tokens) == 1 and lexeme.tokens[0].type == TokenType.KEYWORD_END):
-                    return Error("OnlyEndCouldBeWithoutSegment", lexeme.tokens[0])
+                else:
+                    lexeme.segment = current_segment
+                    if current_segment is None and \
+                            not (len(lexeme.tokens) == 1 and lexeme.tokens[0].type == TokenType.KEYWORD_END):
+                        lexeme.error = Error("OnlyEndCouldBeWithoutSegment", lexeme.tokens[0])
 
-        return None
+        pass
 
 
 class ASMProgram:
@@ -108,72 +106,95 @@ class ASMProgram:
         self.labels: List[ASMToken] = []
         self.variables: List[ASMVariable] = []
 
-    def parse(self) -> Optional[Error]:
-        error, self.lexemes = ASMParser.get_lexemes(self)
-        if error is not None:
-            return error
+    def parse(self) -> None:
+        self.lexemes = ASMParser.get_lexemes(self)
 
         for lexeme in self.lexemes:
-            error = lexeme.append_inline_user_type_and_labels()
-            if error is not None:
-                return error
+            if lexeme.error is None:
+                lexeme.append_inline_user_type_and_labels()
 
         if len(self.lexemes[-1].tokens) != 1 and self.lexemes[-1].tokens[0].type != TokenType.KEYWORD_ENDS:
-            return Error("Program should end with ENDS keyword", None)
+            self.lexemes[-1].error = Error("Program should end with ENDS keyword", None)
 
         pass
 
     def first_pass(self) -> Optional[Error]:
+
         # Assign segments and check lines that out of segments
-        error = ASMParser.proceed_segments(self)
-        if error is not None:
-            return error
+        ASMParser.proceed_segments(self)
 
         # Fetch information about operands in lexemes with instructions
         for lexeme in self.lexemes:
-            error = lexeme.structure.get_operands_info(lexeme)
-            if error is not None:
-                return error
+            if lexeme.error is None:
+
+                if not lexeme.structure.has_instruction and not lexeme.structure.has_name:
+                    lexeme.error = Error("WrongLexeme", lexeme.tokens[0])
+                    continue
+
+                if lexeme.structure.has_name and not lexeme.has_label() and \
+                        lexeme.structure.has_instruction and \
+                        lexeme.structure.get_instruction(lexeme).type == TokenType.INSTRUCTION:
+                    lexeme.error = Error("TokenInLexeme", lexeme.tokens[0])
+                    continue
+
+                lexeme.structure.get_operands_info(lexeme)
 
         # Find matching instruction for our lexemes:
         offset = 0
         for lexeme in self.lexemes:
+            if lexeme.error is None:
 
-            # We cant caluclate size of directive without instruction
-            if not lexeme.structure.has_instruction:
-                lexeme.offset = -offset
-                continue
+                # We cant caluclate size of directive without instruction
+                if not lexeme.structure.has_instruction:
+                    lexeme.offset = -offset
+                    continue
 
-            # We cant calculate size of SEGMNET, ENDS and END but it resets offset counter
-            directive = lexeme.structure.get_instruction(lexeme)
-            if directive.type == TokenType.KEYWORD_SEGMENT or \
-                    directive.type == TokenType.KEYWORD_ENDS or \
-                    directive.type == TokenType.KEYWORD_END:
-                # We assign negative values for lexemes that dont actually
-                # have offset but we need it to know their position in file for creating
-                # those useless tables
-                lexeme.offset = -offset
+                # We cant calculate size of SEGMNET, ENDS and END but it resets offset counter
+                directive = lexeme.structure.get_instruction(lexeme)
+                if directive.type == TokenType.KEYWORD_SEGMENT or \
+                        directive.type == TokenType.KEYWORD_ENDS or \
+                        directive.type == TokenType.KEYWORD_END:
+                    # We assign negative values for lexemes that dont actually
+                    # have offset but we need it to know their position in file for creating
+                    # those useless tables
+                    lexeme.offset = -offset
 
-                offset = 0
-                continue
+                    offset = 0
+                    continue
 
-            if directive.type == TokenType.INSTRUCTION:
-                # Try to find mathing instruction
-                inst = ASMInstruction.find_info(lexeme)
-                if inst is None:
-                    return Error("WrongInstructionFormat", lexeme.tokens[0])
+                if directive.type == TokenType.INSTRUCTION:
+                    # Try to find mathing instruction
+                    inst = ASMInstruction.find_info(lexeme)
+                    if inst is None:
+                        lexeme.error = Error("UnableToFindMatchingFunction", lexeme.tokens[0])
+                        continue
 
-                lexeme.instruction = inst
+                    lexeme.instruction = inst
 
-                error = inst.check_op_restrictions(lexeme)
-                if error is not None:
-                    return error
+                    error = inst.check_op_restrictions(lexeme)
+                    if error is not None:
+                        lexeme.error = error
+                        continue
 
-            lexeme.offset = offset
-            size = ASMInstruction.get_size(lexeme)
+                lexeme.offset = offset
+                size = ASMInstruction.get_size(lexeme)
 
-            offset += size
-            if lexeme.segment is not None:
-                lexeme.segment.size = offset
+                offset += size
+                if lexeme.segment is not None:
+                    lexeme.segment.size = offset
 
         return None
+
+    def print_errors(self) -> int:
+        for lexeme in self.lexemes:
+            if lexeme.error is not None:
+                if lexeme.error.token:
+                    print("Error occurred in file {}:{} at token \"{}\": {}".format(
+                          lexeme.error.token.file,
+                          lexeme.error.token.line + 1,
+                          lexeme.error.token.string_value,
+                          lexeme.error.message))
+                else:
+                    print("Error occurred: {}".format(lexeme.error))
+
+        return len([a for a in self.lexemes if a.error is not None])

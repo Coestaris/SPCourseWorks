@@ -1,4 +1,4 @@
-DATA SEGMENT 
+DATA SEGMENT
 	Var1    DB  0fch
 	Var2    DW  103
 	Var3    DD  0101010101b

@@ -44,7 +44,8 @@ class ASMLexemeStructure:
         self.instruction_index: int = True
         self.operands: List[ASMOperandInfo] = []
 
-    def get_operands_info(self, parent: 'ASMLexeme') -> Optional[Error]:
+    def get_operands_info(self, parent: 'ASMLexeme') -> None:
+
         if not self.has_instruction or not self.has_operands:
             return None
 
@@ -83,12 +84,14 @@ class ASMLexemeStructure:
                         operand.type = ASMOperandType.LabelBackward
 
                 else:
-                    return Error("WrongTokenInOperand", operand.token)
+                    parent.error = Error("WrongTokenInOperand", operand.token)
+                    return
             else:
                 # mem
                 # VAR [ AAA + BBB ]    = 6 tokens
                 if len(operand.operand_tokens) < 6:
-                    return Error("WrongInstructionFormat", operand.token)
+                    parent.error = Error("WrongInstructionFormat", operand.token)
+                    return
 
                 offset = 0
                 operand.type = ASMOperandType.Mem
@@ -98,13 +101,20 @@ class ASMLexemeStructure:
 
                     # ES : VAR [ AAA + BBB ]    = 8 tokens
                     if len(operand.operand_tokens) != 8:
-                        return Error("WrongInstructionFormat", operand.token)
+                        parent.error = Error("WrongInstructionFormat", operand.token)
+                        return
+
+                if (operand.operand_tokens[offset + 1].string_value != "[" or
+                        operand.operand_tokens[offset + 3].string_value != "+" or
+                        operand.operand_tokens[offset + 5].string_value != "]"):
+                    parent.error = Error("WrongInstructionFormat", operand.operand_tokens[offset])
+                    return
 
                 operand.token = operand.operand_tokens[offset]
                 operand.sum_tk1 = operand.operand_tokens[offset + 2]
                 operand.sum_tk2 = operand.operand_tokens[offset + 4]
 
-        return None
+        pass
 
     def get_instruction(self, parent: 'ASMLexeme') -> ASMToken:
         return parent.tokens[self.instruction_index]
@@ -133,6 +143,7 @@ class ASMLexeme:
     def __init__(self, program: 'ASMProgram'):
         self.program: 'ASMProgram' = program
         self.tokens: List[ASMToken] = []
+        self.error: Optional[Error] = None
         self.structure: ASMLexemeStructure = None
         self.offset: int = -1
         self.instruction: Optional['ASMInstruction'] = None
@@ -210,7 +221,7 @@ class ASMLexeme:
                 self.tokens[0].type == TokenType.IDENTIFIER and \
                 self.tokens[1].type == TokenType.SYM and self.tokens[1].string_value == ":":
 
-            label = next((x for x in self.program.labels if x == self.tokens[0].string_value), None)
+            label = next((x for x in self.program.labels if x.string_value == self.tokens[0].string_value), None)
             if label is not None:
                 return Error("SameLabelAlreadyExists", self.tokens[0])
 
@@ -222,7 +233,7 @@ class ASMLexeme:
                 self.tokens[0].type == TokenType.IDENTIFIER and \
                 self.tokens[1].type == TokenType.DIRECTIVE:
 
-            var = next((x for x in self.program.variables if x == self.tokens[0].string_value), None)
+            var = next((x for x in self.program.variables if x.name.string_value == self.tokens[0].string_value), None)
 
             if var is not None:
                 return Error("SameVariableAlreadyExists", self.tokens[0])
@@ -291,7 +302,7 @@ class ASMLexeme:
         str = ""
         for token in self.tokens:
             has_space_before = False
-            has_space_after  = False
+            has_space_after = False
             value = token.string_value
 
             if token.type == TokenType.SYM and token.string_value == ",":
@@ -305,7 +316,8 @@ class ASMLexeme:
                     token.type == TokenType.USER_SEGMENT:
                 has_space_after = True
 
-            if token.type == TokenType.DIRECTIVE and (token.string_value == "db" or token.string_value == "dd" or token.string_value == "dw"):
+            if token.type == TokenType.DIRECTIVE and (
+                    token.string_value == "db" or token.string_value == "dd" or token.string_value == "dw"):
                 has_space_before = True
 
             if token.type == TokenType.DIRECTIVE or token.type == TokenType.KEYWORD_END \
@@ -314,9 +326,11 @@ class ASMLexeme:
                 value = value.upper()
 
             str += (" " if has_space_before else "") + \
-                    value + \
+                   value + \
                    (" " if has_space_after else "")
 
+        if self.error:
+            return "   " + str
 
         identation = ""
         if has_indentation:

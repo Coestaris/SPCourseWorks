@@ -8,25 +8,25 @@ LOG_FILE = "log.dat"
 
 
 class Logger(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.terminal = sys.stdout
         self.log = open(LOG_FILE, "w")
 
-    def write(self, message):
+    def write(self, message: str) -> None:
         self.terminal.write(message)
         self.log.write(message)
 
-    def flush(self):
+    def flush(self) -> None:
         self.terminal.flush()
         self.log.flush()
 
 
-def print_lexeme(lexeme: ASMLexeme):
+def print_lexeme(lexeme: ASMLexeme) -> None:
     for i, token in enumerate(lexeme.tokens):
         print("{}. {}".format(str(i).rjust(2, "0"), token.to_ded_style()))
 
 
-def print_et2_table(program: ASMProgram):
+def print_et2_table(program: ASMProgram) -> None:
     for lexeme in program.lexemes:
         print("Source   : {}".format(" ".join([x.string_value for x in lexeme.tokens])))
         print_lexeme(lexeme)
@@ -43,16 +43,19 @@ def to_hex(s: int, l: int = 4) -> str:
     return "{:X}".format(s).rjust(l, '0')
 
 
-def print_et3_tables(program: ASMProgram):
+def print_et3_tables(program: ASMProgram) -> None:
     print("+=============================================+")
     print("| #  || Offset ||        Source")
     print("+=============================================+")
     for i, lexeme in enumerate(program.lexemes):
         hex_offset = to_hex(abs(lexeme.offset))
 
-        instruction = lexeme.structure.get_instruction(lexeme)
-        if instruction.type == TokenType.KEYWORD_END:
-            hex_offset = "----"
+        if lexeme.error is None:
+            instruction = lexeme.structure.get_instruction(lexeme)
+            if instruction.type == TokenType.KEYWORD_END:
+                hex_offset = "----"
+        else:
+            hex_offset = " ERR"
 
         print("| {} ||  {:4}  ||  {}".format(str(i).rjust(2, "0"), hex_offset, lexeme.to_pretty_source(True)))
 
@@ -119,15 +122,11 @@ if __name__ == "__main__":
 
     program = ASMProgram(source, TEST_FILE)
 
-    error = program.parse()
-    if error is not None:
-        print(error)
-        exit(1)
+    program.parse()
+    program.first_pass()
 
-    error = program.first_pass()
-    if error is not None:
-        print(error)
-        exit(1)
+    # print_et2_table(program)
+    print_et3_tables(program)
 
-    print_et2_table(program)
-    # print_et3_tables(program)
+    print()
+    print("\nGot {} errors".format(program.print_errors()))
