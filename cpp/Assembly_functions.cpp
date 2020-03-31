@@ -377,6 +377,9 @@ void checkInsrtuctionRequirements()
 		if (instruction.type != Instruction)
 			continue;
 
+		operandType op1 = lexems[l].operandTypes[0];
+		operandType op2 = lexems[l].operandTypes[1];
+
 		if (instruction.token == "aas") {
 			check_parameters(lexems[l], instruction, {});
 		}
@@ -386,20 +389,47 @@ void checkInsrtuctionRequirements()
 		else if (instruction.token == "neg") {
 			check_parameters(lexems[l], instruction, { OT_Memory });
 		}
-		else if (instruction.token == "bt") {
-			check_parameters(lexems[l], instruction, { OT_Register8, OT_Register8 });
+		else if (instruction.token == "bt") 
+		{
+			if (!check_parameters(lexems[l], instruction, { OT_Register8, OT_Register8 }))
+				continue;
+			if (op1 != op2) {
+				lexems[l].SetError("Operands type mismatch", vector[0]);
+			}
 		}
-		else if (instruction.token == "and") {
-			check_parameters(lexems[l], instruction, { OT_Register8, OT_Memory });
+		else if (instruction.token == "and") 
+		{
+			if (!check_parameters(lexems[l], instruction, { OT_Register8, OT_Memory }))
+				continue;
+
+			if ((op1 == OT_Register8 && op2 == OT_Memory16) || (op1 == OT_Register16 && op2 == OT_Memory8)) {
+				lexems[l].SetError("Operands type mismatch", vector[0]);
+			}
 		}
-		else if (instruction.token == "cmp") {
-			check_parameters(lexems[l], instruction, { OT_Memory, OT_Register8 });
+		else if (instruction.token == "cmp")
+		{
+			if (!check_parameters(lexems[l], instruction, { OT_Memory, OT_Register8 }))
+				continue;
+			
+			if ((op1 == OT_Memory8 && op2 == OT_Register16) || (op1 == OT_Memory16 && op2 == OT_Register8)) {
+				lexems[l].SetError("Operands type mismatch", vector[0]);
+			}
 		}
 		else if (instruction.token == "mov") {
-			check_parameters(lexems[l], instruction, { OT_Register8, OT_Const8 });
+			if (!check_parameters(lexems[l], instruction, { OT_Register8, OT_Const8 }))
+				continue;
+
+			if ((op1 == OT_Register8 && op2 == OT_Memory16)) {
+				lexems[l].SetError("Operands type mismatch", vector[0]);
+			}
 		}
 		else if (instruction.token == "or") {
-			check_parameters(lexems[l], instruction, { OT_Memory, OT_Const8 });
+			if (!check_parameters(lexems[l], instruction, { OT_Memory, OT_Const8 }))
+				continue;
+
+			if ((op1 == OT_Register8 && op2 != OT_Const8)) {
+				lexems[l].SetError("Operands type mismatch", vector[0]);
+			}
 		}
 		else if (instruction.token == "jl") {
 			check_parameters(lexems[l], instruction, { OT_LabelBack });
@@ -451,60 +481,65 @@ void calculateSize()
 			continue;
 
 		const vector<end_token>& vector = vectorOfTokens[l];
-
-		// Skip db, macro and other nonInstruction shit
-		const end_token& instruction = vector[lexems[l].instrIndex];
-		if (instruction.type != Instruction)
-			continue;
+		int size = 0;
 
 		operandType op1 = lexems[l].operandTypes[0];
 		operandType op2 = lexems[l].operandTypes[1];
 
-		int size = 0;
-		if (instruction.token == "aas") {
-			size = 1; // OPCODE
+		// Skip db, macro and other nonInstruction shit
+		const end_token& instruction = vector[lexems[l].instrIndex];
+		if (instruction.type != Instruction)
+		{
+			//We need DB, DW and DD to calculate its size
 		}
-		else if (instruction.token == "inc") {
-			if (op1 == OT_Register8)
-				size = 2; // OPCODE + MODRM
-			else
-				size = 1; // Just Opcode. Destination stored in opcode
-		}
-		else if (instruction.token == "neg") {
-			size = 3; // OPCODE + MORM + SIB
-		}
-		else if (instruction.token == "bt") {
-			size = 3; // EXP PREF + MODRM + SIB
-		}
-		else if (instruction.token == "and") {
-			size = 3; // OPCODE + MORM + SIB
-		}
-		else if (instruction.token == "cmp") {
-			size = 3; // OPCODE + MORM + SIB
-		}
-		else if (instruction.token == "mov") {
-			size = 3; // OPCODE (With packed register) + CONST16
-		}
-		else if (instruction.token == "or") {
-			size = 3; // OPCODE + MODRM + SIB
-			
-			// CONST SIZE
-			if (op2 == OT_Const8)
-				size += 1;
-			else
-				size += 2; 
-		}
-		else if (instruction.token == "jl") {
-			if (op1 == OT_LabelBack)
-				size = 2; // OPCODE + OFFSET
-			else
-				size = 6; // OPCODE + OFFSET + 
-				// + (possible 4 bytes for EXP PREFIX and far jump. Thats what TASM and MASM do, Idk...)
-		}
+		else
+		{
+			if (instruction.token == "aas") {
+				size = 1; // OPCODE
+			}
+			else if (instruction.token == "inc") {
+				if (op1 == OT_Register8)
+					size = 2; // OPCODE + MODRM
+				else
+					size = 1; // Just Opcode. Destination stored in opcode
+			}
+			else if (instruction.token == "neg") {
+				size = 3; // OPCODE + MORM + SIB
+			}
+			else if (instruction.token == "bt") {
+				size = 3; // EXP PREF + MODRM + SIB
+			}
+			else if (instruction.token == "and") {
+				size = 3; // OPCODE + MORM + SIB
+			}
+			else if (instruction.token == "cmp") {
+				size = 3; // OPCODE + MORM + SIB
+			}
+			else if (instruction.token == "mov") {
+				size = 3; // OPCODE (With packed register) + CONST16
+			}
+			else if (instruction.token == "or") {
+				size = 3; // OPCODE + MODRM + SIB
 
-		if (lexems[l].has_segment_prefix)
-			size += 1;
+				// CONST SIZE
+				if (op2 == OT_Const8)
+					size += 1;
+				else
+					size += 2;
+			}
+			else if (instruction.token == "jl") {
+				if (op1 == OT_LabelBack)
+					size = 2; // OPCODE + OFFSET
+				else
+					size = 6; // OPCODE + OFFSET + 
+					// + (possible 4 bytes for EXP PREFIX and far jump. Thats what TASM and MASM do, Idk...)
+			}
+
+			if (lexems[l].has_segment_prefix)
+				size += 1;
+		}
 
 		lexems[l].offset = size;
+		seg->offset += size;
 	}
 }
