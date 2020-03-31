@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CourseWork.LexicalAnalysis
 {
     internal class Tokenizer
     {
-        public static List<char> tokenSplitCharacters = new List<char>()
+        private static readonly List<char> tokenSplitCharacters = new List<char>
         {
             '\t', ' ', '\n', '[', ']', '.', ',', '_','+', '-', ':',
         };
@@ -24,9 +25,8 @@ namespace CourseWork.LexicalAnalysis
             }
         }
 
-        private static void TokensToLexeme(List<RawToken> rawTokens, Assembly assembly, out Error error)
+        private static void TokensToLexeme(List<RawToken> rawTokens, Assembly assembly)
         {
-            error = null;
             rawTokens.ForEach(p => p.Token = p.Token.Trim());
 
             var tokens = new List<Token>();
@@ -38,24 +38,23 @@ namespace CourseWork.LexicalAnalysis
                     assembly.Source.FileName, 
                     token.LineIndex, token.charIndex,
                     lexeme,
-                    out error));
-                if (error != null) return;
+                    out var error));
+                if(error != null)
+                    lexeme.Error = error;
             }
 
             if (tokens.Count != 0)
             {
-                lexeme.SetTokens(tokens, out error);
-                if (error != null) return;
-
+                lexeme.InsertTokens(tokens, out var error);
+                if(error != null)
+                    lexeme.Error = error;
                 assembly.Lexemes.Add(lexeme);
             }
             rawTokens.Clear();
         }
 
-        public static void Tokenize(Assembly assembly, out Error error)
+        public static void Tokenize(Assembly assembly)
         {
-            error = null;
-
             var rawTokens = new List<RawToken>();
             var currentToken = "";
             var lastContains = false;
@@ -103,8 +102,7 @@ namespace CourseWork.LexicalAnalysis
 
                     if (c == '\n')
                     {
-                        TokensToLexeme(rawTokens, assembly, out error);
-                        if (error != null) return;
+                        TokensToLexeme(rawTokens, assembly);
 
                         lineCount++;
                         charCount = 0;
@@ -121,14 +119,14 @@ namespace CourseWork.LexicalAnalysis
 
             if(listeningString)
             {
-                error = new Error(ErrorType.UnclosedQuotes);
+                assembly.Lexemes.Last().Error =
+                    new Error(ErrorType.UnclosedQuotes, assembly.Lexemes.Last().Tokens.Last());
                 return;
             }
 
             rawTokens.Add(new RawToken(currentToken, lineCount, charCount));
 
-            TokensToLexeme(rawTokens, assembly, out error);
-            if (error != null) return;
+            TokensToLexeme(rawTokens, assembly);
         }
     }
 }

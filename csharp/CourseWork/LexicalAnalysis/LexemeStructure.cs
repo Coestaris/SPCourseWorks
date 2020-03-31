@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using CourseWork.DataStructures;
 
 namespace CourseWork.LexicalAnalysis
 {
@@ -16,7 +17,9 @@ namespace CourseWork.LexicalAnalysis
 
         internal Error AnalyzeOperands()
         {
-            if (HasInstruction && HasOperands && ParentLexeme.Tokens[0].Type != TokenType.IfDirective)
+            if (HasInstruction && HasOperands &&
+                ParentLexeme.Tokens[0].Type != TokenType.IfDirective &&
+                (ParentLexeme.Tokens.Count == 2 || ParentLexeme.Tokens[1].Type != TokenType.EquDirective))
             {
                 foreach (var operandInfo in OperandInfos)
                 {
@@ -69,6 +72,21 @@ namespace CourseWork.LexicalAnalysis
                     operandInfo.Token = operandInfo.OperandTokens[offset];
                     operandInfo.SumOperand1 = operandInfo.OperandTokens[offset + 2];
                     operandInfo.SumOperand2 = operandInfo.OperandTokens[offset + 4];
+
+                    if (operandInfo.OperandTokens[offset + 1].StringValue != "[" &&
+                        operandInfo.OperandTokens[offset + 3].StringValue != "+" &&
+                        operandInfo.OperandTokens[offset + 5].StringValue != "]")
+                    {
+                        return new Error(ErrorType.NotSupportedExpressionType, operandInfo.OperandTokens[offset]);
+                    }
+
+                    var variable =
+                        ParentLexeme.ParentAssembly.UserVariables.Find(p =>
+                            p.Name.StringValue == operandInfo.Token.StringValue);
+                    if(variable == null)
+                        return new Error(ErrorType.UndefinedReference, operandInfo.Token);
+
+
                 }
             }
 

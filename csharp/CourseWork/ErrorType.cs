@@ -18,6 +18,9 @@
         UnexpectedDirective,
         SameEquAlreadyExists,
         SameVarAlreadyExists,
-        InstructionFormat
+        InstructionFormat,
+        WrongType,
+        ExpectedNumberOrString,
+        UndefinedReference
     }
 }

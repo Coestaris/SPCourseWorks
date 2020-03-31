@@ -27,7 +27,7 @@ namespace CourseWork
         public override string ToString()
         {
             if (Token != null)
-                return $"Error: {ErrorType} near {Token.ToString()}";
+                return $"Error: {ErrorType} near \"{Token.StringValue}\"";
             else
                 return $"Error: {ErrorType}";
         }

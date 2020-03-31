@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Xml.Schema;
 using CourseWork.DataStructures;
 using CourseWork.LexicalAnalysis;
@@ -13,32 +14,43 @@ namespace CourseWork
         private static void WriteAsm(Assembly assembly)
         {
             var i = 0;
+            var err = 0;
             Console.WriteLine(new string('=', 68));
             Console.WriteLine(" #|  Cnt  | Offset |                      Souce                    |");
             Console.WriteLine(new string('=', 68));
 
             foreach (var lexeme in assembly.Lexemes)
             {
-                var s = string.Format("{4,2}|  {5,3}  |  {3} |  {0}{1}{2}",
-                    lexeme.Segment == null ? "" : "   ",
-                    lexeme.Structure.HasName ? "" : "   ",
+                var indentation = "";
+                if (lexeme.Segment != null) indentation = "   ";
+                if (lexeme.Structure == null || !lexeme.Structure.HasName) indentation += "   ";
+
+                var s = string.Format("{3,2}|  {4,3}  |  {2} |  {0}{1}",
+                    indentation,
                     lexeme.ToTable(true),
                     lexeme.HasOffset ? lexeme.Offset.ToString("X").PadLeft(5, '0') : "-----",
-                    i++, lexeme.GetSize());
+                    i++, lexeme.Size);
                 Console.WriteLine(s.PadRight(67,' ') + "|");
+                if (lexeme.Error != null)
+                {
+                    err++;
+                    Console.WriteLine(lexeme.Error);
+                }
             }
             Console.WriteLine(new string('=', 68));
+            Console.WriteLine("{0} errors\n", err);
         }
 
         private static void WriteSegmentsTable(Assembly assembly)
         {
-            Console.WriteLine(new string('=', 40));
-            Console.WriteLine("# | Segment name | Bit depth  | Offset |");
-            Console.WriteLine(new string('=', 40));
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine("# | Segment name | Bit depth  | Offset |  Size   |");
+            Console.WriteLine(new string('=', 50));
             var i = 0;
             foreach (var segment in assembly.UserSegments)
-                Console.WriteLine("{0} | {1,6}       | {2,6}     | {3,2}     |", i++ + 1, segment.Name, 32, segment.OpenToken.Line);
-            Console.WriteLine(new string('=', 40));
+                Console.WriteLine("{0} | {1,6}       | {2,6}     | {3,2}     |  {4,4:X}   |", i++ + 1, segment.Name, 32,
+                    segment.OpenToken.Line, segment.Size);
+            Console.WriteLine(new string('=', 50));
         }
 
         private static void WriteSegRegAssignmentTable(Assembly assembly)
@@ -57,14 +69,16 @@ namespace CourseWork
 
         private static void WriteEQUsTable(Assembly assembly)
         {
-            Console.WriteLine(new string('=', 40));
-            Console.WriteLine("# |   Equ name  |  Equ value  | Offset |");
-            Console.WriteLine(new string('=', 40));
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine("# |   Equ name  |         Equ value     | Offset |");
+            Console.WriteLine(new string('=', 50));
             var i = 0;
-            foreach (var equ in assembly.Equs)
-                Console.WriteLine("{0} | {1,6}      | {2,5}       | {3,2}     |", i++,
-                    equ.Key, equ.Value.StringValue, equ.Value.Line);
-            Console.WriteLine(new string('=', 40));
+            foreach (var equ in assembly.UserEqus)
+                Console.WriteLine("{0} | {1,6}      | {2,16}      | {3,2}     |", i++,
+                    equ.Name.StringValue,
+                    string.Join(" ", equ.EquTokens.Select(p => p.ToSourceValue(false))),
+                    equ.Name.Line);
+            Console.WriteLine(new string('=', 50));
         }
 
 
@@ -80,14 +94,14 @@ namespace CourseWork
                     segment.Name, "SEGMENT", "--");
 
             foreach (var variable in assembly.UserVariables)
-                Console.WriteLine("{0} | {1,9}   |  {2,15} |  {3,2}     |", i++,
+                Console.WriteLine("{0} | {1,9}   |  {2,15} |  {3,2:X}     |", i++,
                     variable.Name.StringValue, "DATA " + variable.Type.StringValue.ToUpper() + " at " +
                                                variable.Name.ParentLexeme.Segment.Name.ToUpper(),
                     variable.Name.ParentLexeme.Offset);
 
             foreach (var label in assembly.UserLabels)
-                Console.WriteLine("{0} | {1,9}   |     {2,9}    |  {3,2}     |", i++,
-                    label.StringValue, "LABEL", "--");
+                Console.WriteLine("{0} | {1,9}   |     {2,9}    |  {3,2:X}     |", i++,
+                    label.StringValue, "LABEL", label.ParentLexeme.Offset);
             Console.WriteLine(new string('=', 46));
         }
 
@@ -105,18 +119,8 @@ namespace CourseWork
 
             var assembly = new Assembly(source);
 
-            Error error;
-            if ((error = assembly.Parse()) != null)
-            {
-                Console.WriteLine(error);
-                return;
-            }
-
-            if ((error = assembly.FirstPass()) != null)
-            {
-                Console.WriteLine(error);
-                return;
-            }
+            assembly.Parse();
+            assembly.FirstPass();
 
 
             Console.WriteLine("TOKENS: ");

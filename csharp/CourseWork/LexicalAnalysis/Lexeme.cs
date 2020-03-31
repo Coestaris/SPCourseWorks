@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using CourseWork.DataStructures;
+using kurs.DataStructures;
 
 namespace CourseWork.LexicalAnalysis
 {
@@ -15,13 +16,17 @@ namespace CourseWork.LexicalAnalysis
 
         public List<Token> Tokens { get; private set; }
 
-        public LexemeStructure Structure { get; private set; }
+        public LexemeStructure Structure { get; set; }
 
         public UserSegment Segment { get; internal set; }
 
         public InstructionInfo InstructionInfo { get; internal set; }
 
         public int Offset { get; internal set; }
+
+        public int Size { get; internal set; }
+
+        public Error Error { get; set; }
 
         private void AssignUserSegmentsAndLabels(out Error error)
         {
@@ -85,17 +90,17 @@ namespace CourseWork.LexicalAnalysis
             }
 
             // *something* equ *something*
-            if (Tokens.Count == 3 &&
+            if (Tokens.Count >= 3 &&
                 Tokens[0].Type == TokenType.Identifier &&
                 Tokens[1].Type == TokenType.EquDirective)
             {
-                if (ParentAssembly.Equs.ContainsKey(Tokens[0].StringValue))
+                if (ParentAssembly.UserEqus.FindIndex(p => p.Name.StringValue == Tokens[0].StringValue) != -1)
                 {
                     error = new Error(ErrorType.SameEquAlreadyExists, Tokens[0]);
                     return;
                 }
 
-                ParentAssembly.Equs.Add(Tokens[0].StringValue, Tokens[2]);
+                ParentAssembly.UserEqus.Add(new Equ(Tokens[0], Tokens.Skip(2).ToList()));
             }
 
             // *something* db/dw/dd *something*
@@ -110,6 +115,13 @@ namespace CourseWork.LexicalAnalysis
                     error = new Error(ErrorType.SameVarAlreadyExists, Tokens[0]);
                     return;
                 }
+
+                if(!Tokens[2].IsNumber() && Tokens[2].Type != TokenType.Text)
+                {
+                    error = new Error(ErrorType.ExpectedNumberOrString, Tokens[2]);
+                    return;
+                }
+
 
                 ParentAssembly.UserVariables.Add(new Variable(Tokens[0], Tokens[1], Tokens[2]));
             }
@@ -141,17 +153,15 @@ namespace CourseWork.LexicalAnalysis
             ParentAssembly = assembly;
         }
 
-        public void SetTokens(List<Token> tokens, out Error error)
+        public void InsertTokens(List<Token> tokens, out Error error)
         {
             error = null;
             Tokens = tokens;
             AssignUserSegmentsAndLabels(out error);
             if (error != null) return;
-
-            Structure = GetStructure();
         }
 
-        private LexemeStructure GetStructure()
+        public LexemeStructure GetStructure()
         {
             var structure = new LexemeStructure(this)
             {
@@ -240,17 +250,23 @@ namespace CourseWork.LexicalAnalysis
         public void ProceedEqu()
         {
             for (var i = 0; i < Tokens.Count; i++)
-                if (ParentAssembly.Equs.ContainsKey(Tokens[i].StringValue))
+            {
+                Equ equ;
+                if ((equ = ParentAssembly.UserEqus.Find(p => p.Name.StringValue == Tokens[i].StringValue)) != null)
                 {
-                    if(Tokens.Count == 3 && Tokens[1].Type == TokenType.EquDirective)
+                    if (Tokens.Count >= 3 && Tokens[1].Type == TokenType.EquDirective)
                         continue;
 
-                    Tokens[i] = ParentAssembly.Equs[Tokens[i].StringValue];
+                    Tokens.RemoveAt(i);
+                    Tokens.InsertRange(i, equ.EquTokens);
                 }
+            }
         }
 
         public int GetSize()
         {
+            if (Error != null) return 0;
+
             if (Structure.HasInstruction)
             {
                 var instruction = Tokens[Structure.InstructionIndex];
@@ -266,7 +282,7 @@ namespace CourseWork.LexicalAnalysis
                     if (InstructionInfo.AllowedTypes.Contains(OperandType.IndexedName))
                     {
                         size += 1; // SIB byte always exists when using base indexed
-                        size += 4; // + DSIP32 (govnocoded =3)
+                        size += 4; // + DSIP32
                     }
 
                     foreach (var operandInfo in Structure.OperandInfos)

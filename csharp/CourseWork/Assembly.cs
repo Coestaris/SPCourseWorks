@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using kurs.DataStructures;
 
 namespace CourseWork
 {
@@ -16,81 +17,106 @@ namespace CourseWork
         public List<UserSegment> UserSegments { get; }
         public List<Token> UserLabels { get; }
         public List<Variable> UserVariables { get; }
-
-        public Dictionary<string, Token> Equs{ get; }
+        public List<Equ> UserEqus{ get; }
 
         public Assembly(AssemblySource source)
         {
             Lexemes = new List<Lexeme>();
             UserSegments = new List<UserSegment>();
             UserLabels = new List<Token>();
-            Equs = new Dictionary<string, Token>();
+            UserEqus = new List<Equ>();
             UserVariables = new List<Variable>();
 
             Source = source;
         }
 
-        public Error Parse()
+        public void Parse()
         {
-            Tokenizer.Tokenize(this, out Error error);
-            if(error != null) return error;
-            
+            Tokenizer.Tokenize(this);
+
             foreach(var us in UserSegments)
             {
                 if (!us.Closed)
-                    return new Error(ErrorType.UnclosedSegment, us.OpenToken);
+                    us.OpenToken.ParentLexeme.Error = new Error(ErrorType.UnclosedSegment, us.OpenToken);
                 if (!us.Opened)
-                    return new Error(ErrorType.UnopenedSegment, us.CloseToken);
+                    us.CloseToken.ParentLexeme.Error = new Error(ErrorType.UnopenedSegment, us.CloseToken);
             }
 
-            foreach(var lexeme in Lexemes)
+            // Replace EQUs
+            foreach (var lexeme in Lexemes)
             {
-                lexeme.AssignInlineUserSegmentsAndLabels(out error);
-                if (error != null) return error;
+                if (lexeme.Error == null)
+                {
+                    lexeme.ProceedEqu();
+                    lexeme.Structure = lexeme.GetStructure();
+                }
+            }
+
+            foreach (var lexeme in Lexemes)
+            {
+                if (lexeme.Error == null)
+                {
+                    lexeme.AssignInlineUserSegmentsAndLabels(out var error);
+                    if(error != null)
+                        lexeme.Error = error;
+                }
             }
 
             var lastLexeme = Lexemes.Last();
             if(lastLexeme.Tokens.Count != 1 ||
                 lastLexeme.Tokens[0].Type != TokenType.EndKeyword)
             {
-                return new Error(ErrorType.MissingEndKeyword);
+                lastLexeme.Error = new Error(ErrorType.MissingEndKeyword);
             }
-
-            return null;
         }
 
-        private Error ProceedConditionalDirectives()
+        private void ProceedConditionalDirectives()
         {
             var toDelete = new List<int>();
             var openedIf = false;
             var openedElse = false;
             var ifCond = false;
 
-            for(var i = 0; i < Lexemes.Count; i++)
+            for (var i = 0; i < Lexemes.Count; i++)
             {
                 var lexeme = Lexemes[i];
+                if (lexeme.Error != null) continue;
+
                 if (lexeme.Tokens[0].Type == TokenType.IfDirective)
                 {
-                    if(openedIf || openedElse)
-                        return new Error(ErrorType.UnexpectedDirective, lexeme.Tokens[0]);
+                    if (openedIf || openedElse)
+                    {
+                        lexeme.Error = new Error(ErrorType.UnexpectedDirective, lexeme.Tokens[0]);
+                        continue;
+                    }
 
                     openedIf = true;
 
                     if (lexeme.Tokens.Count != 2)
-                        return new Error(ErrorType.WrongDirectiveFormat, lexeme.Tokens[0]);
+                    {
+                        lexeme.Error = new Error(ErrorType.WrongDirectiveFormat, lexeme.Tokens[0]);
+                        continue;
+                    }
 
                     var cond = lexeme.Tokens[1];
                     if (cond.IsNumber())
                         ifCond = cond.ToValue() != 0;
 
-                    else return new Error(ErrorType.ConstantExpected, lexeme.Tokens[0]);
+                    else
+                    {
+                        lexeme.Error = new Error(ErrorType.ConstantExpected, lexeme.Tokens[0]);
+                        continue;
+                    }
 
                     toDelete.Add(i);
                 }
                 else if (lexeme.Tokens[0].Type == TokenType.ElseDirective)
                 {
-                    if(!openedIf)
-                        return new Error(ErrorType.UnexpectedDirective, lexeme.Tokens[0]);
+                    if (!openedIf)
+                    {
+                        lexeme.Error = new Error(ErrorType.UnexpectedDirective, lexeme.Tokens[0]);
+                        continue;
+                    }
 
                     openedIf = false;
                     openedElse = true;
@@ -99,8 +125,11 @@ namespace CourseWork
                 }
                 else if (lexeme.Tokens[0].Type == TokenType.EndifDirective)
                 {
-                    if(!openedIf && !openedElse)
-                        return new Error(ErrorType.UnexpectedDirective, lexeme.Tokens[0]);
+                    if (!openedIf && !openedElse)
+                    {
+                        lexeme.Error = new Error(ErrorType.UnexpectedDirective, lexeme.Tokens[0]);
+                        continue;
+                    }
 
                     openedElse = false;
                     openedIf = false;
@@ -109,25 +138,31 @@ namespace CourseWork
                 }
                 else
                 {
-                    if(openedIf && !ifCond)
+                    if (openedIf && !ifCond)
                         toDelete.Add(i);
                     else if (openedElse && ifCond)
                         toDelete.Add(i);
                 }
             }
 
+            if (openedIf || openedElse)
+            {
+                var lastLexeme = Lexemes.Last();
+                lastLexeme.Error = new Error(ErrorType.MissingEndKeyword);
+            }
+
             toDelete.Reverse();
             foreach (var index in toDelete)
                 Lexemes.RemoveAt(index);
-
-            return null;
         }
 
-        private Error ProceedSegmentCounter()
+        private void ProceedSegmentCounter()
         {
             UserSegment segment = null;
             foreach (var lexeme in Lexemes)
             {
+                if(lexeme.Error != null) continue;
+
                 if (lexeme.Tokens.Count == 2 &&
                     lexeme.Tokens[1].Type == TokenType.SegmentKeyword)
                 {
@@ -145,19 +180,24 @@ namespace CourseWork
                             lexeme.Tokens.Count == 1 && lexeme.Tokens[0].Type == TokenType.EndKeyword)
                             continue;
                         else
-                            return new Error(ErrorType.UnexpectedDirective, lexeme.Tokens[0]);
+                        {
+                            lexeme.Error = new Error(ErrorType.UnexpectedDirective, lexeme.Tokens[0]);
+                            continue;
+                        }
 
                     lexeme.Segment = segment;
                 }
             }
-            return null;
         }
 
-        private Error AssignInfos()
+        private void AssignInfos()
         {
             var offset = 0;
             foreach (var lexeme in Lexemes)
             {
+                if(lexeme.Error != null)
+                    continue;
+
                 if (lexeme.Structure.HasInstruction)
                 {
                     var instruction = lexeme.Tokens[lexeme.Structure.InstructionIndex];
@@ -165,48 +205,54 @@ namespace CourseWork
                     {
 
                         if (!InstructionInfo.Match(lexeme, out var info))
-                            return new Error(ErrorType.InstructionFormat, lexeme.Tokens[0]);
+                        {
+                            lexeme.Error = new Error(ErrorType.InstructionFormat, lexeme.Tokens[0]);
+                            continue;
+                        }
+
+                        if (info.Name == "bt" && lexeme.Structure.OperandInfos[1].Token.Type != TokenType.Register32)
+                        {
+                            lexeme.Error = new Error(ErrorType.WrongType, lexeme.Structure.OperandInfos[1].Token);
+                            continue;
+                        }
+
                         lexeme.InstructionInfo = info;
                     }
                 }
 
                 lexeme.Offset = offset;
-                offset += lexeme.GetSize();
+                lexeme.Size = lexeme.GetSize();
+                offset += lexeme.Size;
+
+                if (lexeme.Segment != null)
+                    lexeme.Segment.Size += lexeme.Size;
 
                 // segment declaration or closing
                 if (lexeme.Segment == null)
                     offset = 0;
             }
-
-            return null;
         }
 
-        public Error FirstPass()
+        public void FirstPass()
         {
             Error error;
 
-            // Replace EQUs
-            foreach (var lexeme in Lexemes)
-                lexeme.ProceedEqu();
-
             // Proceed if else endif
-            if ((error = ProceedConditionalDirectives()) != null)
-                return error;
+            ProceedConditionalDirectives();
 
             // Proceed segment counter
-            if ((error = ProceedSegmentCounter()) != null)
-                return error;
+            ProceedSegmentCounter();
 
             // Get all information about instruction operands
-            foreach(var lexeme in Lexemes)
-                if((error = lexeme.Structure.AnalyzeOperands()) != null)
-                    return error;
+            foreach (var lexeme in Lexemes)
+                if (lexeme.Error == null)
+                {
+                    if ((error = lexeme.Structure.AnalyzeOperands()) != null)
+                        lexeme.Error = error;
+                }
 
             // Assign instruction infos to lexemes
-            if ((error = AssignInfos()) != null)
-                return error;
-
-            return null;
+            AssignInfos();
         }
     }
 }

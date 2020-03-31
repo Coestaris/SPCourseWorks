@@ -11,6 +11,7 @@ namespace CourseWork.DataStructures
         public Token OpenToken { get; internal set; }
         public Token CloseToken { get; internal set; }
         public int Index { get; internal set; }
+        public int Size { get; set; }
 
         public UserSegment() { }
 

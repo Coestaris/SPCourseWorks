@@ -42,6 +42,7 @@
     <Compile Include="AssemblySource.cs" />
     <Compile Include="Bytes\ModRM.cs" />
     <Compile Include="Bytes\SIB.cs" />
+    <Compile Include="DataStructures\Equ.cs" />
     <Compile Include="DataStructures\InstructionInfo.cs" />
     <Compile Include="DataStructures\OperandInfo.cs" />
     <Compile Include="DataStructures\OperandType.cs" />
