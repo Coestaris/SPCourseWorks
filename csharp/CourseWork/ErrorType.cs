@@ -21,6 +21,7 @@
         InstructionFormat,
         WrongType,
         ExpectedNumberOrString,
-        UndefinedReference
+        UndefinedReference,
+        UnexpectedToken
     }
 }

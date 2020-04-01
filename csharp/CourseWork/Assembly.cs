@@ -56,6 +56,21 @@ namespace CourseWork
             {
                 if (lexeme.Error == null)
                 {
+                    if (!lexeme.HasLabel && lexeme.Structure.HasName && lexeme.Structure != null &&
+                        lexeme.Structure.HasInstruction && lexeme.Tokens[lexeme.Structure.InstructionIndex].Type ==
+                        TokenType.Instruction)
+                    {
+                        lexeme.Error = new Error(ErrorType.UnexpectedToken, lexeme.Tokens[0]);
+                        continue;
+                    }
+
+                    if (!lexeme.HasLabel && lexeme.Structure != null && lexeme.Structure.HasName &&
+                        !lexeme.Structure.HasInstruction)
+                    {
+                        lexeme.Error = new Error(ErrorType.UnexpectedToken, lexeme.Tokens[0]);
+                        continue;
+                    }
+
                     lexeme.AssignInlineUserSegmentsAndLabels(out var error);
                     if(error != null)
                         lexeme.Error = error;
