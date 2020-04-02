@@ -12,13 +12,13 @@ public class FileParser {
         }
     }
 
-    public static void fileParser() {
-        String file = DownloadFile.downloadFile("D:\\Repos\\sp_kurs\\java\\src\\main\\resources\\testFile.asm");
+    public static List<List<Token>> fileParser(String filePath) {
+        String file = DownloadFile.downloadFile(filePath);
         List<List<Token>> fileToken= new ArrayList<>();
         file = file.toUpperCase();
         String[] lines = file.split("\n");
         for (String line : lines) {
-            List<Token> arrayToken = new ArrayList<Token>();
+            List<Token> arrayToken = new ArrayList<>();
             char[] charLine = line.toCharArray();
             StringBuilder token = new StringBuilder();
             for (char c : charLine) {
@@ -34,8 +34,9 @@ public class FileParser {
             fileToken.add(arrayToken);
         }
         //lexicalAnalysis(fileToken, lines);
-        print(lines, fileToken);
+        //print(lines, fileToken);
         //syntaxAnalysis(fileToken, lines);
+        return fileToken;
     }
 
     public static boolean contains(char ch) {
@@ -110,9 +111,16 @@ public class FileParser {
            // }
         }
     }
-    public static void print(String[] line, List<List<Token>> fileToken){
-        for (int i = 0; i < line.length; i++){
 
+    public static void LexicalAndSyntaxAnalysis(String filePath){
+        print(filePath, fileParser(filePath));
+    }
+
+    public static void print(String filePath, List<List<Token>> fileToken){
+        String file = DownloadFile.downloadFile(filePath);
+        file = file.toUpperCase();
+        String[] line = file.split("\n");
+        for (int i = 0; i < line.length; i++){
             System.out.println("Source: " + line[i]);
             System.out.println("Lexical Analysis :");
             lexicalAnalysis(fileToken, i);

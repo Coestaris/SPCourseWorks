@@ -37,9 +37,9 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("BYTE", TokenType.ByteWord);
         NAME_TO_TOKEN_TYPE_MAP.put("EAX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("EBX", TokenType.Reg32);
+        NAME_TO_TOKEN_TYPE_MAP.put("ECX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("DX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("SI", TokenType.Reg16);
-        NAME_TO_TOKEN_TYPE_MAP.put("ECX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("BX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("AX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("DI", TokenType.Reg16);
@@ -48,6 +48,8 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("CS", TokenType.SegmentRegister);
         NAME_TO_TOKEN_TYPE_MAP.put("DS", TokenType.SegmentRegister);
         NAME_TO_TOKEN_TYPE_MAP.put("FS", TokenType.SegmentRegister);
+        NAME_TO_TOKEN_TYPE_MAP.put("SS", TokenType.SegmentRegister);
+        NAME_TO_TOKEN_TYPE_MAP.put("GS", TokenType.SegmentRegister);
     }
 
     private static Pattern numberHexRegex = Pattern.compile("^[0-9A-F]+H$");
