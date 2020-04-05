@@ -332,7 +332,7 @@ public class Instruction {
                             operands.get(0).get(7 + isSegmentRegister).type.equals(TokenType.BinNumber)) &&
                     operands.get(0).get(8 + isSegmentRegister).type.equals(TokenType.Symbol)) {
 
-                if (operands.get(0).get(3 + isSegmentRegister).type.equals(TokenType.Reg16)) offset += 4s;
+                if (operands.get(0).get(3 + isSegmentRegister).type.equals(TokenType.Reg16)) offset += 4;
                 else offset += 3;
             }
         } else if (operands.get(0).get(isSegmentRegister).type.equals(TokenType.Identifier) && operands.get(0).size() != isSegmentRegister + 1) {

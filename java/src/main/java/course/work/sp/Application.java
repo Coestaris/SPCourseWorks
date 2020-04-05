@@ -13,9 +13,11 @@ public class Application {
         //filePath = "D:\\LAB\\SP\\CourseWork\\start.asm";
         //filePath = "D:\\LAB\\SP\\CourseWork\\start.asm";
         //FileParser.LexicalAndSyntaxAnalysis(filePath);
-        System.out.println(FirstPass.TableInstraction(FileParser.fileParser(filePath)) + "\n");
         //FirstPass.SegmentDestination(FileParser.fileParser(filePath));
         //FirstPass.firstPass(FileParser.fileParser(filePath), filePath);
+
+       // FirstPass.TableOfInstructionAndIdentifier();
+        FirstPass.print();
 
     }
 }
