@@ -4,9 +4,13 @@ public enum TokenType {
     DbDir,
     DwDir,
     DdDir,
+    Db,
+    Dw,
+    Dd,
 
     Instruction,
     JmpWord,
+    JncWord,
     SegmentWord,
     EndWord,
     EndsWord,
@@ -19,17 +23,31 @@ public enum TokenType {
     Comma,
 
     Identifier,
+    IdentifierEnd,
+
 
     HexNumber,
     DecNumber,
     BinNumber,
+
     Text,
-    PtrWord,
-    ByteWord,
-    DwordWord,
+
+    BytePtr,
+    DwordPtr,
+    WordPtr,
+    Ptr,
 
     SegmentRegister,
     KeyWord,
+    Label,
+
+    Mem8,
+    Mem16,
+    Mem32,
+
+    Imm8,
+    Imm16,
+    Imm32,
 
     Unknown,
 }

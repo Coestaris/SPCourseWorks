@@ -18,7 +18,7 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("STC", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("PUSH", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("JMP", TokenType.JmpWord);
-        NAME_TO_TOKEN_TYPE_MAP.put("JNC", TokenType.JmpWord);
+        NAME_TO_TOKEN_TYPE_MAP.put("JNC", TokenType.JncWord);
         NAME_TO_TOKEN_TYPE_MAP.put("MOV", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("MUL", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("XOR", TokenType.Instruction);
@@ -32,11 +32,14 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("+", TokenType.Symbol);
         NAME_TO_TOKEN_TYPE_MAP.put(":", TokenType.Symbol);
         NAME_TO_TOKEN_TYPE_MAP.put(",", TokenType.Comma);
-        NAME_TO_TOKEN_TYPE_MAP.put("DWORD", TokenType.DwordWord);
-        NAME_TO_TOKEN_TYPE_MAP.put("PTR", TokenType.PtrWord);
-        NAME_TO_TOKEN_TYPE_MAP.put("BYTE", TokenType.ByteWord);
+        NAME_TO_TOKEN_TYPE_MAP.put("DWORD", TokenType.DwordPtr);
+        NAME_TO_TOKEN_TYPE_MAP.put("PTR", TokenType.Ptr);
+        NAME_TO_TOKEN_TYPE_MAP.put("BYTE", TokenType.BytePtr);
         NAME_TO_TOKEN_TYPE_MAP.put("EAX", TokenType.Reg32);
+        NAME_TO_TOKEN_TYPE_MAP.put("EBP", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("EBX", TokenType.Reg32);
+        NAME_TO_TOKEN_TYPE_MAP.put("EDX", TokenType.Reg32);
+        NAME_TO_TOKEN_TYPE_MAP.put("ESI", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("ECX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("DX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("SI", TokenType.Reg16);

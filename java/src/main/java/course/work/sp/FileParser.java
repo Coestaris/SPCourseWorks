@@ -88,10 +88,11 @@ public class FileParser {
                                 fileToken.get(lineNumber).get(tokenNumber).type == TokenType.Reg16 ||
                                 fileToken.get(lineNumber).get(tokenNumber).type == TokenType.Reg32 ||
                                 fileToken.get(lineNumber).get(tokenNumber).type == TokenType.Identifier ||
-                                fileToken.get(lineNumber).get(tokenNumber).type == TokenType.DwordWord ||
-                                fileToken.get(lineNumber).get(tokenNumber).type == TokenType.PtrWord ||
+                                fileToken.get(lineNumber).get(tokenNumber).type == TokenType.DwordPtr ||
+                                fileToken.get(lineNumber).get(tokenNumber).type == TokenType.WordPtr ||
+                                fileToken.get(lineNumber).get(tokenNumber).type == TokenType.Ptr ||
                                 fileToken.get(lineNumber).get(tokenNumber).type == TokenType.SegmentRegister ||
-                                fileToken.get(lineNumber).get(tokenNumber).type == TokenType.ByteWord ||
+                                fileToken.get(lineNumber).get(tokenNumber).type == TokenType.WordPtr ||
                                 fileToken.get(lineNumber).get(tokenNumber).type == TokenType.HexNumber ||
                                 fileToken.get(lineNumber).get(tokenNumber).type == TokenType.BinNumber ||
                                 fileToken.get(lineNumber).get(tokenNumber).type == TokenType.DecNumber ||

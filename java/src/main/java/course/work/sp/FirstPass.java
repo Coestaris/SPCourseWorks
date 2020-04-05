@@ -1,10 +1,13 @@
 package course.work.sp;
 
+import com.sun.corba.se.impl.oa.toa.TOA;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class FirstPass {
-        public static void SegmentDestination(List<List<Token>> fileToken){
+
+    public static void SegmentDestination(List<List<Token>> fileToken){
             boolean isAssume = false;
             List<List<Token>> operand = new ArrayList<>();
             for (List<Token> tokens : fileToken) {
@@ -69,4 +72,26 @@ public class FirstPass {
 
             }
         }
+
+    public static List<Identifier> TableIdentifier(List<List<Token>> fileToken){
+        List<Identifier> identifiers = new ArrayList<>();
+        for (int index = 0; index < fileToken.size(); index++) {
+            if(!fileToken.get(index).isEmpty() && fileToken.get(index).get(0).type == TokenType.Identifier) identifiers.add(new Identifier(index, fileToken.get(index)));
+        }
+        return identifiers;
+    }
+
+    public static List<Instruction> TableInstraction(List<List<Token>> fileToken){
+        List<Instruction> instructions = new ArrayList<>();
+        for (int index = 0; index < fileToken.size(); index++) {
+            if(!fileToken.get(index).isEmpty())
+            for (int indexToken = 0; indexToken < fileToken.get(index).size();indexToken++)
+            if(fileToken.get(index).get(indexToken).type == TokenType.Instruction ||
+                    fileToken.get(index).get(indexToken).type == TokenType.JmpWord ||
+                    fileToken.get(index).get(indexToken).type == TokenType.JncWord ) instructions.add(new Instruction(index, fileToken.get(index)));
+        }
+        return instructions;
+    }
 }
+
+
