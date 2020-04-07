@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from asmbytes import InstructionBytes
 from asmstructures import ASMUserSegment, ASMVariable
 from asmtoken import ASMToken
 from ttype import TokenType
@@ -21,7 +22,8 @@ class ASMOperandType:
     Constant32 = 4
     LabelForward = 5
     LabelBackward = 6
-    Mem = 7
+    Mem8 = 7
+    Mem32 = 8
 
 
 class ASMOperandInfo:
@@ -94,7 +96,6 @@ class ASMLexemeStructure:
                     return
 
                 offset = 0
-                operand.type = ASMOperandType.Mem
                 if operand.operand_tokens[0].type == TokenType.SEGREG:
                     offset += 2
                     operand.segment_prefix = operand.operand_tokens[0]
@@ -113,6 +114,21 @@ class ASMLexemeStructure:
                 operand.token = operand.operand_tokens[offset]
                 operand.sum_tk1 = operand.operand_tokens[offset + 2]
                 operand.sum_tk2 = operand.operand_tokens[offset + 4]
+
+                variable = next((x for x in parent.program.variables if x.name.string_value == operand.token.string_value),
+                                None)
+
+                if variable is None:
+                    parent.error = Error("UnknownVariable", operand.token)
+                    return
+
+                if variable.directive.string_value == "db":
+                    operand.type = ASMOperandType.Mem8
+                elif variable.directive.string_value == "dd":
+                    operand.type = ASMOperandType.Mem32
+                else:
+                    parent.error = Error("UnexpectedVariableType", operand.token)
+                    return
 
         pass
 
@@ -146,6 +162,8 @@ class ASMLexeme:
         self.error: Optional[Error] = None
         self.structure: ASMLexemeStructure = None
         self.offset: int = -1
+        self.size: int = 0
+        self.bytes: Optional[InstructionBytes] = None
         self.instruction: Optional['ASMInstruction'] = None
         self.segment: Optional[ASMUserSegment] = None
 

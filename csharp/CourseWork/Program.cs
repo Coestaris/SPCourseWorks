@@ -67,41 +67,42 @@ namespace CourseWork
             Console.WriteLine(new string('=', 36));
         }
 
-        private static void WriteEQUsTable(Assembly assembly)
-        {
-            Console.WriteLine(new string('=', 50));
-            Console.WriteLine("# |   Equ name  |         Equ value     | Offset |");
-            Console.WriteLine(new string('=', 50));
-            var i = 0;
-            foreach (var equ in assembly.UserEqus)
-                Console.WriteLine("{0} | {1,6}      | {2,16}      | {3,2}     |", i++,
-                    equ.Name.StringValue,
-                    string.Join(" ", equ.EquTokens.Select(p => p.ToSourceValue(false))),
-                    equ.Name.Line);
-            Console.WriteLine(new string('=', 50));
-        }
-
-
         private static void WriteUserNamesTable(Assembly assembly)
         {
             Console.WriteLine(new string('=', 46));
-            Console.WriteLine("# |    Name     |     Type         | Mem off |");
+            Console.WriteLine("  # |    Name     |     Type         | Value  |");
             Console.WriteLine(new string('=', 46));
             var i = 0;
 
             foreach (var segment in assembly.UserSegments)
-                Console.WriteLine("{0} | {1,9}   |     {2,9}    |  {3,2}     |", i++,
+                Console.WriteLine("{0,3} | {1,9}   |     {2,9}    |  {3,2}     |", i++,
                     segment.Name, "SEGMENT", "--");
 
             foreach (var variable in assembly.UserVariables)
-                Console.WriteLine("{0} | {1,9}   |  {2,15} |  {3,2:X}     |", i++,
+                Console.WriteLine("{0,3} | {1,9}   |  {2,15} |  {3,2:X}     |", i++,
                     variable.Name.StringValue, "DATA " + variable.Type.StringValue.ToUpper() + " at " +
                                                variable.Name.ParentLexeme.Segment.Name.ToUpper(),
                     variable.Name.ParentLexeme.Offset);
 
             foreach (var label in assembly.UserLabels)
-                Console.WriteLine("{0} | {1,9}   |     {2,9}    |  {3,2:X}     |", i++,
-                    label.StringValue, "LABEL", label.ParentLexeme.Offset);
+                Console.WriteLine("{0,3} | {1,9}   |  {2,15} |  {3,2:X}     |", i++,
+                    label.StringValue, "LABEL at " + label.ParentLexeme.Segment.Name.ToUpper(), label.ParentLexeme.Offset);
+
+            foreach (var equ in assembly.UserEqus)
+            {
+                var type = "EQU (";
+                if (equ.EquTokens.Count == 1)
+                    type += equ.EquTokens[0].Type + ")";
+                else
+                    type += "text)";
+
+                var value = string.Join(" ", equ.EquTokens.Select(p => p.StringValue));
+
+                Console.WriteLine("{0,3} | {1,9}   |  {2,15} |  {3,2:X}     |", i++,
+                    equ.Name.StringValue, type,
+                    value);
+            }
+
             Console.WriteLine(new string('=', 46));
         }
 
@@ -133,10 +134,6 @@ namespace CourseWork
             Console.WriteLine();
             Console.WriteLine("SEGMENT REGISTER DESTINATIONS: ");
             WriteSegRegAssignmentTable(assembly);
-
-            Console.WriteLine();
-            Console.WriteLine("EQUs: ");
-            WriteEQUsTable(assembly);
 
             Console.WriteLine();
             Console.WriteLine("USER DEFINED NAMES: ");

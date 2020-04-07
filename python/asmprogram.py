@@ -1,5 +1,6 @@
 from typing import Optional, List, Tuple
 
+from asmbytes import InstructionBytes
 from asmstructures import ASMUserSegment, ASMVariable
 from asmtoken import ASMToken
 from asminstruction import ASMInstruction
@@ -177,13 +178,29 @@ class ASMProgram:
                         continue
 
                 lexeme.offset = offset
-                size = ASMInstruction.get_size(lexeme)
+                lexeme.size = ASMInstruction.get_size(lexeme)
 
-                offset += size
+                offset += lexeme.size
                 if lexeme.segment is not None:
                     lexeme.segment.size = offset
 
         return None
+
+    def second_pass(self):
+        for lexeme in self.lexemes:
+            if lexeme.error is None:
+
+                #if directive.type == TokenType.KEYWORD_SEGMENT or \
+                #    directive.type == TokenType.KEYWORD_ENDS or \
+                #    directive.type == TokenType.KEYWORD_END:
+                #    continue
+
+                directive = lexeme.structure.get_instruction(lexeme)
+                if directive.type == TokenType.INSTRUCTION or \
+                    directive.type == TokenType.DIRECTIVE:
+                    lexeme.bytes = InstructionBytes()
+                    lexeme.error = ASMInstruction.get_bytes(lexeme)
+        pass
 
     def print_errors(self) -> int:
         for lexeme in self.lexemes:
