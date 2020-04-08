@@ -378,7 +378,7 @@ void lexemeCreate(int line)
    else if (vectorOfTokens[line].size() == 1 && vectorOfTokens[line][0].type == EndmKeyword)
    {
       // End of the macro
-      lexems[line].hasLabel = true;
+     // lexems[line].hasLabel = true;
       listeningMacro.end = line;
       macro.push_back(listeningMacro);
    }
@@ -398,21 +398,8 @@ void determineStructure(int line)
       {
          int counter = 0;
          lexems[line].hasLabel = true;
-         if (vectorOfTokens[line][0].type == Identifier && (vectorOfTokens[line][1].type == Register16 ||
-                                                            vectorOfTokens[line][1].type ==
-                                                            Register8))  // labels check for MACRO instruction (macro call)
-         {
-            vectorOfTokens[line][0].type = MacroName;
-            lexems[line].hasLabel = false;
-            lexems[line].hasName = false;
-            lexems[line].hasInstruction = true;
-            lexems[line].instrIndex = 0;
-            lexems[line].hasOperands = true;
-            lexems[line].operandIndices[1] = 1;
-            lexems[line].operandLengths[1] = 1;
-            return;
-         }
-         else if (vectorOfTokens[line].size() == 2 && vectorOfTokens[line][1].type ==
+        
+         if (vectorOfTokens[line].size() == 2 && vectorOfTokens[line][1].type ==
                                                       MacroKeyword)// check for MACRO instruction (macro init with no parameters)
          {
             lexems[line].hasInstruction = true;
@@ -428,11 +415,35 @@ void determineStructure(int line)
          return;
       }
    }
-   if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][0].type == Identifier &&
+   if (vectorOfTokens[line].size() == 1 && vectorOfTokens[line][0].type == Identifier)
+   {
+       vectorOfTokens[line][0].type = MacroName;
+       lexems[line].hasLabel = false;
+       lexems[line].hasName = false;
+       lexems[line].hasInstruction = true;
+       lexems[line].instrIndex = 0;
+       lexems[line].hasOperands = false;
+       return;
+   }
+   if (vectorOfTokens[line].size() == 2 && vectorOfTokens[line][0].type == Identifier && (vectorOfTokens[line][1].type == Register16 ||
+       vectorOfTokens[line][1].type ==
+       Register8))  // labels check for MACRO instruction (macro call)
+   {
+       vectorOfTokens[line][0].type = MacroName;
+       lexems[line].hasLabel = false;
+       lexems[line].hasName = false;
+       lexems[line].hasInstruction = true;
+       lexems[line].instrIndex = 0;
+       lexems[line].hasOperands = true;
+       lexems[line].operandIndices[1] = 1;
+       lexems[line].operandLengths[1] = 1;
+       return;
+   }
+   if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][0].type == MacroName &&
        vectorOfTokens[line][1].type == MacroKeyword &&
        vectorOfTokens[line][2].type == Identifier)//// check for MACRO instruction (macro init with 1 parameters)
    {
-      vectorOfTokens[line][0].type = MacroName;
+     // vectorOfTokens[line][0].type = MacroName;
       lexems[line].hasInstruction = true;
       lexems[line].instrIndex = 1;
       lexems[line].hasOperands = true;
@@ -535,7 +546,7 @@ void proceedTokens()
       lexemeCreate(i);
    }
 
-   vector<int> to_delete;
+  // vector<int> to_delete;
 
    // MACROROSZIRENNYA
    for (int i = 0; i < vectorOfTokens.size(); i++)
@@ -556,13 +567,13 @@ void proceedTokens()
          param_replace[m->parameters[p].token] = vectorOfTokens[i][p + 1];
 
       // Remove current lexeme
-      to_delete.push_back(i);
+      //to_delete.push_back(i);
 
       // Insert macro lines
-      for (int j = m->start + 1; j < m->end; j++)
+      for (int j = m->start+1 ; j < m->end; j++)
       {
-         vectorOfTokens.insert(vectorOfTokens.begin() + i + 1, vectorOfTokens[j]);
-         lexems.insert(lexems.begin() + i + 1, lexems[j]);
+         vectorOfTokens.insert(vectorOfTokens.begin() + i+1, vectorOfTokens[j]);
+         lexems.insert(lexems.begin() + i +1, lexems[j]);
 
          // Replace parameters
          for (int k = 0; k < vectorOfTokens[j].size(); k++)
@@ -579,11 +590,11 @@ void proceedTokens()
       }
    }
 
-   for (int i = to_delete.size() - 1; i >= 0; i--)
+  /* for (int i = to_delete.size() - 1; i >= 0; i--)
    {
       vectorOfTokens.erase(vectorOfTokens.begin() + to_delete[i]);
       lexems.erase(lexems.begin() + to_delete[i]);
-   }
+   }*/
 }
 
 // Prints all token in a beautiful list
