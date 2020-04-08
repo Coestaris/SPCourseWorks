@@ -16,7 +16,7 @@ int main()
 	analyzeSegments();
 	analyzeVariablesAndLabels();
 	analyzeOperandTypes();
-	checkInsrtuctionRequirements();
+   checkInstructionRequirements();
 	calculateSize();
 
 	printLexemeList();

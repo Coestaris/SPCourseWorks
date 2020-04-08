@@ -26,6 +26,21 @@
 
 vector<UserName> userNames;
 
+static string padTo(int input, const size_t num, const char paddingChar = ' ', bool hex = false)
+{
+   char buff[30];
+   if (hex)
+      snprintf(buff, sizeof(buff), "%X", input);
+   else
+      snprintf(buff, sizeof(buff), "%i", input);
+
+   string str = string(buff);
+
+   if (num > str.size())
+      str.insert(0, num - str.size(), paddingChar);
+   return str;
+}
+
 // Creates segments and fills their parameters
 void analyzeSegments()
 {
@@ -110,21 +125,6 @@ void analyzeVariablesAndLabels()
 			userNames.push_back(name);
 		}
 	}
-}
-
-string padTo(int input, const size_t num, const char paddingChar = ' ', bool hex = false)
-{
-	char buff[30];
-	if (hex)
-		snprintf(buff, sizeof(buff), "%X", input);
-	else
-		snprintf(buff, sizeof(buff), "%i", input);
-
-	string str = string(buff);
-
-	if (num > str.size())
-		str.insert(0, num - str.size(), paddingChar);
-	return str;
 }
 
 void printLexemeList()
@@ -439,7 +439,7 @@ void analyzeOperandTypes()
 					if (lbl == nullptr)
 					{
 						// Maybe, its not label, but macro parameter... "variable"
-						// If line stand out of segments, it mean current line is insede macro
+						// If line stand out of segments, it mean current line is inside macro
 						UserName* seg = getUserName(NT_Segment, l);
 						if (seg == nullptr)
 							continue;
@@ -458,7 +458,7 @@ void analyzeOperandTypes()
 	}
 }
 
-bool check_parameters(Lexem& l, const end_token& token, initializer_list<operandType> list)
+static bool check_parameters(Lexem& l, const end_token& token, initializer_list<operandType> list)
 {
 	// Check operand count
 	if (!l.hasOperands)
@@ -501,7 +501,7 @@ bool check_parameters(Lexem& l, const end_token& token, initializer_list<operand
 	return true;
 }
 
-void checkInsrtuctionRequirements()
+void checkInstructionRequirements()
 {
 	for (int l = 0; l < vectorOfTokens.size(); l++)
 	{
@@ -613,7 +613,7 @@ void checkInsrtuctionRequirements()
 // 83 /1 ib OR r/m16, imm8
 // 81 /1 iw OR r/m16, imm16
 
-// 7C cb JL rel8 
+// 7C cb JL rel8
 // OF 8C cw JL rel16 
 void calculateSize()
 {
@@ -652,7 +652,7 @@ void calculateSize()
 				// there could be a string
 				end_token* tk = &vectorOfTokens[l][2];
 				if (tk->type == Text)
-					size = tk->token.size();
+					size = tk->token.size() - 2;
 				else
 					size = 1;
 			}

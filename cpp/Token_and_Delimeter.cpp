@@ -546,8 +546,6 @@ void proceedTokens()
 		lexemeCreate(i);
 	}
 
-	// vector<int> to_delete;
-
 	 // MACROROSZIRENNYA
 	for (int i = 0; i < vectorOfTokens.size(); i++)
 	{
@@ -567,9 +565,6 @@ void proceedTokens()
 		map<string, end_token> param_replace;
 		for (int p = 0; p < m->parameters.size(); p++)
 			param_replace[m->parameters[p].token] = vectorOfTokens[i][p + 1];
-
-		// Remove current lexeme
-		//to_delete.push_back(i);
 
 		// Insert macro lines
 		for (int j = m->start + 1; j < m->end; j++)
@@ -591,12 +586,6 @@ void proceedTokens()
 			i++;
 		}
 	}
-
-	/* for (int i = to_delete.size() - 1; i >= 0; i--)
-	 {
-		vectorOfTokens.erase(vectorOfTokens.begin() + to_delete[i]);
-		lexems.erase(lexems.begin() + to_delete[i]);
-	 }*/
 }
 
 // Prints all token in a beautiful list

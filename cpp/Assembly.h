@@ -31,5 +31,5 @@ void outputErrors();
 void analyzeSegments();
 void analyzeVariablesAndLabels();
 void analyzeOperandTypes(); 
-void checkInsrtuctionRequirements(); 
+void checkInstructionRequirements();
 void calculateSize();

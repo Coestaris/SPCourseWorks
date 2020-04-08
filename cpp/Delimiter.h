@@ -36,6 +36,7 @@ struct Lexem
    int operandIndices[5];
    int operandLengths[5];
    operandType operandTypes[5];
+
    bool has_segment_prefix;
    end_token segment_prefix;
 
