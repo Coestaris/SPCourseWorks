@@ -1,6 +1,8 @@
 #include "Assembly.h"
 #include "Delimiter.h"
 
+#include <iomanip>
+
 // Some macro for analyzeOperandTypes.
 // Check operand to be a specific type
 #define check(pos, should, msg)                  \
@@ -27,102 +29,248 @@ vector<UserName> userNames;
 // Creates segments and fills their parameters
 void analyzeSegments()
 {
-   for(int l = 0; l < vectorOfTokens.size(); l++)
-   {
-      if(lexems[l].has_error)
-         continue;
+	for (int l = 0; l < vectorOfTokens.size(); l++)
+	{
+		if (lexems[l].has_error)
+			continue;
 
-      const vector<end_token>& vector = vectorOfTokens[l];
-      if(vector.size() == 2 && vector[0].type == UserSegment && vector[1].type == SegmentKeyword)
-      {
-         auto segment = getUserName(NT_Segment, vector[0].token);
-         if(segment)
-         {
-            lexems[l].SetError("Segment with that name already exists", vector[0]);
-            continue;
-         }
+		const vector<end_token>& vector = vectorOfTokens[l];
+		if (vector.size() == 2 && vector[0].type == UserSegment && vector[1].type == SegmentKeyword)
+		{
+			auto segment = getUserName(NT_Segment, vector[0].token);
+			if (segment)
+			{
+				lexems[l].SetError("Segment with that name already exists", vector[0]);
+				continue;
+			}
 
-         UserName name;
-         name.begin = l;
-         name.type = NT_Segment;
-         name.token = vector[0];
+			UserName name;
+			name.begin = l;
+			name.type = NT_Segment;
+			name.token = vector[0];
 
-         userNames.push_back(name);
-      }
-      else if(vector.size() == 2 && vector[0].type == UserSegment && vector[1].type == EndsKeyword)
-      {
-         auto segment = getUserName(NT_Segment, vector[0].token);
-         if(!segment)
-         {
-            lexems[l].SetError("Unable to close nonexisting segment", vector[0]);
-            continue;
-         }
+			userNames.push_back(name);
+		}
+		else if (vector.size() == 2 && vector[0].type == UserSegment && vector[1].type == EndsKeyword)
+		{
+			auto segment = getUserName(NT_Segment, vector[0].token);
+			if (!segment)
+			{
+				lexems[l].SetError("Unable to close nonexisting segment", vector[0]);
+				continue;
+			}
 
-         segment->end = l;
-      }
-   }
+			segment->end = l;
+		}
+	}
 }
 
 // Creates variables and labels, and fills their parametrs
 void analyzeVariablesAndLabels()
 {
-   for(int l = 0; l < vectorOfTokens.size(); l++)
-   {
-      if (lexems[l].has_error)
-         continue;
+	for (int l = 0; l < vectorOfTokens.size(); l++)
+	{
+		if (lexems[l].has_error)
+			continue;
 
-      const vector<end_token>& vector = vectorOfTokens[l];
-      if(vector.size() == 2 && vector[0].type == Label && vector[1].type == Symbol && vector[1].token == ":")
-      {
-         auto label = getUserName(NT_Label, vector[0].token);
-         if(label)
-         {
-            lexems[l].SetError("Label with that name already exists", vector[0]);
-            continue;
-         }
+		const vector<end_token>& vector = vectorOfTokens[l];
+		if (vector.size() == 2 && vector[0].type == Label && vector[1].type == Symbol && vector[1].token == ":")
+		{
+			auto label = getUserName(NT_Label, vector[0].token);
+			if (label)
+			{
+				lexems[l].SetError("Label with that name already exists", vector[0]);
+				continue;
+			}
 
-         UserName name;
-         name.begin = l;
-         name.end = l;
-         name.type = NT_Label;
-         name.token = vector[0];
+			UserName name;
+			name.begin = l;
+			name.end = l;
+			name.type = NT_Label;
+			name.token = vector[0];
 
-         userNames.push_back(name);
-      }
-      else if(vector.size() == 3 && vector[0].type == Identifier &&
-         (vector[1].type == DbDirective || vector[1].type == DwDirective || vector[1].type == DdDirective))
-      {
-         auto var = getUserName(NT_Var, vector[0].token);
-         if(var)
-         {
-            lexems[l].SetError("Variable with that name already exists", vector[0]);
-            continue;
-         }
+			userNames.push_back(name);
+		}
+		else if (vector.size() == 3 && vector[0].type == Identifier &&
+			(vector[1].type == DbDirective || vector[1].type == DwDirective || vector[1].type == DdDirective))
+		{
+			auto var = getUserName(NT_Var, vector[0].token);
+			if (var)
+			{
+				lexems[l].SetError("Variable with that name already exists", vector[0]);
+				continue;
+			}
 
-         UserName name;
-         name.begin = l;
-         name.end = l;
-         name.type = NT_Var;
-         name.token = vector[0];
+			UserName name;
+			name.begin = l;
+			name.end = l;
+			name.type = NT_Var;
+			name.token = vector[0];
 
-         userNames.push_back(name);
-      }
-   }
+			userNames.push_back(name);
+		}
+	}
+}
+
+string padTo(int input, const size_t num, const char paddingChar = ' ', bool hex = false)
+{
+	char buff[30];
+	if (hex)
+		snprintf(buff, sizeof(buff), "%X", input);
+	else
+		snprintf(buff, sizeof(buff), "%i", input);
+
+	string str = string(buff);
+
+	if (num > str.size())
+		str.insert(0, num - str.size(), paddingChar);
+	return str;
 }
 
 void printLexemeList()
 {
-   for(int l = 0; l < vectorOfTokens.size(); l++)
-   {
-	//if(lexems[l].hasInstruction && lexems[l].hasOperands)
-	//	for (int t = 0; t <= lexems[l].numberOfOperands; t++)
-	//		cout << lexems[l].operandTypes[t] << " ";
-	   cout << lexems[l].offset << " :::  ";
-	 
-      for(int t = 0; t < vectorOfTokens[l].size(); t++)
-         cout << vectorOfTokens[l][t].token << " ";
-      cout << "\n";
-   }
+	// Print lexeme list
+	cout << " # | SIZE|  OFFSET  |            LINE    \n";
+	cout << "======================================================\n";
+	for (int l = 0; l < vectorOfTokens.size(); l++)
+	{
+		UserName* currSegment = getUserName(NT_Segment, l);
+
+		// Output line index
+		cout << padTo(l, 2, '0');
+		cout << " : ";
+
+		// Output size or macro 
+		if (lexems[l].hasMacro && !lexems[l].hasLabel)
+		{
+			cout << "   ---- M ---  ";
+		}
+		else
+		{
+			if (currSegment)
+			{
+				cout << padTo(lexems[l].size, 2, '0', true) << " :|  ";
+				cout << padTo(lexems[l].offset, 6, '0', true) << " :| ";
+			}
+			else
+			{
+				cout << "--- | -------- |: ";
+			}
+		}
+
+		// Output indentation
+		if (!lexems[l].hasLabel)
+		{
+			if (lexems[l].hasInstruction)
+			{
+				TokenType type = vectorOfTokens[l][lexems[l].instrIndex].type;
+				if (type != EndmKeyword && type != EndsKeyword && type != SegmentKeyword)
+					cout << "  ";
+			}
+			else cout << "  ";
+		}
+		if (currSegment && currSegment->begin != 0)
+			cout << "  ";
+
+		// Output tokens
+		for (int t = 0; t < vectorOfTokens[l].size(); t++)
+			cout << vectorOfTokens[l][t].token << " ";
+		cout << "\n";
+	}
+
+
+	// Print segment table
+	cout << "\n\nSegments: \n";
+	cout << "==============================\n";
+	cout << "|# |   NAME   |  BIT |  SIZE |\n";
+	cout << "==============================\n";
+	int c = 0;
+	for (int i = 0; i < userNames.size(); i++)
+	{
+		UserName* name = &userNames[i];
+		if (name->type == NT_Segment)
+		{
+			cout 
+				<< "| " << c++ << "| "
+				<< setw(7) << name->token.token << "  |  "
+				<< 16 << "  | "
+				<< padTo(name->offset, 4, '0', true) << "  |"
+				<< endl;
+		}
+	}
+	cout << "==============================\n";
+	
+	c = 0;
+	cout << "\nMacro: \n";
+	for (int i = 0; i < macro.size(); i++)
+	{
+		cout
+			<< "| " << c++ << "| "
+			<< setw(10) << macro[i].name.token 
+			<< endl;
+	}
+
+	// Print name table
+	cout << "\nUserNames: \n";
+	cout << "===========================================\n";
+	cout << "|# |   NAME   |    TYPE     |    VALUE    |\n";
+	cout << "===========================================\n";
+	c = 0;
+	for (int i = 0; i < userNames.size(); i++)
+	{
+		string type;
+		string value;
+		UserName* name = &userNames[i];
+		if (name->type == NT_Var)
+		{
+			switch (vectorOfTokens[name->begin][1].type)
+			{
+			case DbDirective:
+				type = "Byte";
+				break;
+			case DwDirective:
+				type = "Word";
+				break;
+			case DdDirective:
+				type = "Double";
+				break;
+			}
+			UserName* segment = getUserName(NT_Segment, name->begin);
+			value = segment->token.token + ":" + padTo(lexems[name->begin].offset, 4, '0', true);
+		}
+		else if (name->type == NT_Segment)
+		{
+			type = "Semgment";
+			value = "--";
+		}
+		else
+		{
+			//label
+			type = "Near";
+			UserName* segment = getUserName(NT_Segment, name->begin);
+			value = segment->token.token + ":" + padTo(lexems[name->begin].offset, 4, '0', true);
+		}
+
+		cout
+			<< "| " << c++ << "| "
+			<< setw(7) << name->token.token << "  |  "
+			<< setw(10) << type  << " | "
+			<< setw(11) << value << " | "
+			<< endl;
+	}
+	cout << "===========================================\n";
+
+	cout << "\nSegments destination: \n";
+	cout << "===================================\n";
+	cout << "|# | SEGMENT REGISTER |  SEGMENT  |\n";
+	cout << "===================================\n";
+	cout << "| 0|         DS       |  " << setw(7) << userNames[0].token.token << "  |\n";
+	cout << "| 1|         CS       |  " << setw(7) << userNames[1].token.token << "  |\n";
+	cout << "| 2|         FS       |  NOTHING  |\n";
+	cout << "| 3|         GS       |  NOTHING  |\n";
+	cout << "| 4|         SS       |  NOTHING  |\n";
+	cout << "| 5|         ES       |  NOTHING  |\n";
+	cout << "===================================\n";
 }
 
 UserName* getUserName(UserNameType type, int line)
@@ -136,184 +284,184 @@ UserName* getUserName(UserNameType type, int line)
 
 UserName* getUserName(UserNameType type, const string& name)
 {
-   for(auto& a : userNames)
-      if(a.type == type && a.token.token == name)
-         return &a;
+	for (auto& a : userNames)
+		if (a.type == type && a.token.token == name)
+			return &a;
 
-   return nullptr;
+	return nullptr;
 }
 
 void outputErrors()
 {
-   int e = 0;
-   for(int l = 0; l < vectorOfTokens.size(); l++)
-   {
-      if(lexems[l].has_error)
-      {
-         cout << "Error: \"" + lexems[l].error << "\" at line " << l << " at lexeme \"" << lexems[l].error_token.token << "\"\n";
-         e++;
-      }
-   }
-   cout << "\n";
-   cout << e << " errors.";
+	int e = 0;
+	for (int l = 0; l < vectorOfTokens.size(); l++)
+	{
+		if (lexems[l].has_error)
+		{
+			cout << "Error: \"" + lexems[l].error << "\" at line " << l << " at lexeme \"" << lexems[l].error_token.token << "\"\n";
+			e++;
+		}
+	}
+	cout << "\n";
+	cout << e << " errors.";
 }
 
 void analyzeOperandTypes()
 {
-   for(int l = 0; l < vectorOfTokens.size(); l++)
-   {
-      if (lexems[l].has_error)
-         continue;
+	for (int l = 0; l < vectorOfTokens.size(); l++)
+	{
+		if (lexems[l].has_error)
+			continue;
 
-      if(!lexems[l].hasInstruction || !lexems[l].hasOperands)
-         continue;
+		if (!lexems[l].hasInstruction || !lexems[l].hasOperands)
+			continue;
 
-	  // Skip macro declarations, they are strange...
-	  if (lexems[l].hasMacro)
-		  continue;
+		// Skip macro declarations, they are strange...
+		if (lexems[l].hasMacro)
+			continue;
 
-      const vector<end_token> &vector = vectorOfTokens[l];
+		const vector<end_token>& vector = vectorOfTokens[l];
 
-      for(int op = 0; op < lexems[l].numberOfOperands + 1; op++)
-      {
-         // Vector of tokens in current operand
-         int index = lexems[l].operandIndices[op + 1];
-         int length = lexems[l].operandLengths[op + 1];
+		for (int op = 0; op < lexems[l].numberOfOperands + 1; op++)
+		{
+			// Vector of tokens in current operand
+			int index = lexems[l].operandIndices[op + 1];
+			int length = lexems[l].operandLengths[op + 1];
 
-         std::vector<end_token*> operand;
-         for(int i = index; i < index + length; i++)
-            operand.push_back(&vectorOfTokens[l][i]);
-		 
-		 if (operand.size() != 1)
-		 {
-			 // memory location
-			 // min len = 5, max = 9
-			 if (operand.size() < 5)
-			 {
-				 lexems[l].SetError("Operand is too short", *operand[0]);
-				 continue;
-			 }
-			 if (operand.size() > 9)
-			 {
-				 lexems[l].SetError("Operand is too long", *operand[0]);
-				 continue;
-			 }
+			std::vector<end_token*> operand;
+			for (int i = index; i < index + length; i++)
+				operand.push_back(&vectorOfTokens[l][i]);
 
-			 int position = 0;
-			 if (operand[position]->type == ByteKey)
-			 {
-				 lexems[l].operandTypes[op] = OT_Memory8;
-				 check(position + 1, PtrKeyword, "Expected PTR");
-				 position += 2;
-			 }
-			 else if (operand[position]->type == WordKey)
-			 {
-				 lexems[l].operandTypes[op] = OT_Memory16;
-				 check(position + 1, PtrKeyword, "Expected PTR");
-				 position += 2;
-			 }
-			 else
-			 {
-				 lexems[l].operandTypes[op] = OT_Memory;
-			 }
+			if (operand.size() != 1)
+			{
+				// memory location
+				// min len = 5, max = 9
+				if (operand.size() < 5)
+				{
+					lexems[l].SetError("Operand is too short", *operand[0]);
+					continue;
+				}
+				if (operand.size() > 9)
+				{
+					lexems[l].SetError("Operand is too long", *operand[0]);
+					continue;
+				}
 
-			 if (operand[position]->type == Identifier || operand[position]->type == SegmentRegister)
-			 {
-				 lexems[l].segment_prefix = *operand[position];
-				 lexems[l].has_segment_prefix = true;
-				 check_c(position + 1, ':', "Expected ':'");
-				 position += 2;
-			 }
+				int position = 0;
+				if (operand[position]->type == ByteKey)
+				{
+					lexems[l].operandTypes[op] = OT_Memory8;
+					check(position + 1, PtrKeyword, "Expected PTR");
+					position += 2;
+				}
+				else if (operand[position]->type == WordKey)
+				{
+					lexems[l].operandTypes[op] = OT_Memory16;
+					check(position + 1, PtrKeyword, "Expected PTR");
+					position += 2;
+				}
+				else
+				{
+					lexems[l].operandTypes[op] = OT_Memory;
+				}
 
-			 if (operand.size() - position != 5)
-			 {
-				 lexems[l].SetError("Operand has wrong structure", *operand[0]);
-				 continue;
-			 }
-			 
-			 check_c(position + 0, '[', "Expected '['");
-			 check2 (position + 1, Register8, Register16, "Expected register");
-			 check_c(position + 2, '+', "Expected '+'");
-			 check2 (position + 3, Register8, Register16, "Expected register");
-			 check_c(position + 4, ']', "Expected ']'");
+				if (operand[position]->type == Identifier || operand[position]->type == SegmentRegister)
+				{
+					lexems[l].segment_prefix = *operand[position];
+					lexems[l].has_segment_prefix = true;
+					check_c(position + 1, ':', "Expected ':'");
+					position += 2;
+				}
 
-			 if (operand[position + 1]->type != operand[position + 3]->type)
-			 {
-				 lexems[l].SetError("Registers must have equal size", *operand[position + 1]);
-				 continue;
-			 }
-		 }
-		 else
-		 {
-			 // constant register or label
-			 end_token* t = operand[0];
+				if (operand.size() - position != 5)
+				{
+					lexems[l].SetError("Operand has wrong structure", *operand[0]);
+					continue;
+				}
 
-			 if (t->type == Register8)
-				 lexems[l].operandTypes[op] = OT_Register8;
-			 else if (t->type == Register16)
-				 lexems[l].operandTypes[op] = OT_Register16;
-			 else if (t->type == BinNumber || t->type == DecNumber || t->type == HexNumber)
-			 {
-				 uint64_t number = 0;
-				 if (t->type == BinNumber)
-				 {
-					 string toConvert = t->token.substr(0, t->token.size() - 1);
-					 number = stoul(toConvert, nullptr, 2);
-				 }
-				 else if (t->type == HexNumber)
-				 {
-					 string toConvert = t->token.substr(0, t->token.size() - 1);
-					 number = stoul(toConvert, nullptr, 16);
-				 }
-				 else
-				 {
-					 number = stoul(t->token);
-				 }
-				 
-				 if (number < 0xFF)
-					 lexems[l].operandTypes[op] = OT_Const8;
-				 else 
-					 lexems[l].operandTypes[op] = OT_Const16;
-			 }
-			 else
-			 {
-				 // I dunno what to with text here...
-				 if (t->type == Text)
-					 continue;
+				check_c(position + 0, '[', "Expected '['");
+				check2(position + 1, Register8, Register16, "Expected register");
+				check_c(position + 2, '+', "Expected '+'");
+				check2(position + 3, Register8, Register16, "Expected register");
+				check_c(position + 4, ']', "Expected ']'");
 
-				 if (t->type != Identifier)
-				 {
-					 lexems[l].SetError("Expected label", *t);
-					 continue;
-				 }
+				if (operand[position + 1]->type != operand[position + 3]->type)
+				{
+					lexems[l].SetError("Registers must have equal size", *operand[position + 1]);
+					continue;
+				}
+			}
+			else
+			{
+				// constant register or label
+				end_token* t = operand[0];
 
-				 UserName* lbl = getUserName(NT_Label, t->token);
-				 if (lbl == nullptr)
-				 {
-					 // Maybe, its not label, but macro parameter... "variable"
-					 // If line stand out of segments, it mean current line is insede macro
-					 UserName* seg = getUserName(NT_Segment, l);
-					 if (seg == nullptr)
-						 continue;
+				if (t->type == Register8)
+					lexems[l].operandTypes[op] = OT_Register8;
+				else if (t->type == Register16)
+					lexems[l].operandTypes[op] = OT_Register16;
+				else if (t->type == BinNumber || t->type == DecNumber || t->type == HexNumber)
+				{
+					uint64_t number = 0;
+					if (t->type == BinNumber)
+					{
+						string toConvert = t->token.substr(0, t->token.size() - 1);
+						number = stoul(toConvert, nullptr, 2);
+					}
+					else if (t->type == HexNumber)
+					{
+						string toConvert = t->token.substr(0, t->token.size() - 1);
+						number = stoul(toConvert, nullptr, 16);
+					}
+					else
+					{
+						number = stoul(t->token);
+					}
 
-					 lexems[l].SetError("Unkwown label", *t);
-					 continue;
-				 }
+					if (number < 0xFF)
+						lexems[l].operandTypes[op] = OT_Const8;
+					else
+						lexems[l].operandTypes[op] = OT_Const16;
+				}
+				else
+				{
+					// I dunno what to with text here...
+					if (t->type == Text)
+						continue;
 
-				 if(lbl->begin > l)
-					lexems[l].operandTypes[op] = OT_LabelFwd;
-				 else
-					 lexems[l].operandTypes[op] = OT_LabelBack;
-			 }
-		 }
-      }
-   }
+					if (t->type != Identifier)
+					{
+						lexems[l].SetError("Expected label", *t);
+						continue;
+					}
+
+					UserName* lbl = getUserName(NT_Label, t->token);
+					if (lbl == nullptr)
+					{
+						// Maybe, its not label, but macro parameter... "variable"
+						// If line stand out of segments, it mean current line is insede macro
+						UserName* seg = getUserName(NT_Segment, l);
+						if (seg == nullptr)
+							continue;
+
+						lexems[l].SetError("Unkwown label", *t);
+						continue;
+					}
+
+					if (lbl->begin > l)
+						lexems[l].operandTypes[op] = OT_LabelFwd;
+					else
+						lexems[l].operandTypes[op] = OT_LabelBack;
+				}
+			}
+		}
+	}
 }
 
 bool check_parameters(Lexem& l, const end_token& token, initializer_list<operandType> list)
 {
 	// Check operand count
-	if(!l.hasOperands)
+	if (!l.hasOperands)
 	{
 		if (list.size() != 0)
 		{
@@ -335,11 +483,11 @@ bool check_parameters(Lexem& l, const end_token& token, initializer_list<operand
 	for (auto param : list)
 	{
 		wrong = true;
-		if ((param == OT_Const8)    && (l.operandTypes[i] != OT_Const8    && l.operandTypes[i] != OT_Const16)) { break; }
+		if ((param == OT_Const8) && (l.operandTypes[i] != OT_Const8 && l.operandTypes[i] != OT_Const16)) { break; }
 		if ((param == OT_Register8) && (l.operandTypes[i] != OT_Register8 && l.operandTypes[i] != OT_Register16)) { break; }
-		if ((param == OT_Memory)    && (l.operandTypes[i] != OT_Memory    && l.operandTypes[i] != OT_Memory8 && l.operandTypes[i] != OT_Memory16)) { break; }
-		if ((param == OT_LabelBack) && (l.operandTypes[i] != OT_LabelFwd  && l.operandTypes[i] != OT_LabelBack)) { break; }
-		
+		if ((param == OT_Memory) && (l.operandTypes[i] != OT_Memory && l.operandTypes[i] != OT_Memory8 && l.operandTypes[i] != OT_Memory16)) { break; }
+		if ((param == OT_LabelBack) && (l.operandTypes[i] != OT_LabelFwd && l.operandTypes[i] != OT_LabelBack)) { break; }
+
 		wrong = false;
 		i++;
 	}
@@ -357,11 +505,12 @@ void checkInsrtuctionRequirements()
 {
 	for (int l = 0; l < vectorOfTokens.size(); l++)
 	{
+		lexems[l].size = 0;
 		lexems[l].offset = 0;
 
 		if (lexems[l].has_error)
 			continue;
-	
+
 		if (!lexems[l].hasInstruction)
 			continue;
 
@@ -389,7 +538,7 @@ void checkInsrtuctionRequirements()
 		else if (instruction.token == "neg") {
 			check_parameters(lexems[l], instruction, { OT_Memory });
 		}
-		else if (instruction.token == "bt") 
+		else if (instruction.token == "bt")
 		{
 			if (!check_parameters(lexems[l], instruction, { OT_Register8, OT_Register8 }))
 				continue;
@@ -397,7 +546,7 @@ void checkInsrtuctionRequirements()
 				lexems[l].SetError("Operands type mismatch", vector[0]);
 			}
 		}
-		else if (instruction.token == "and") 
+		else if (instruction.token == "and")
 		{
 			if (!check_parameters(lexems[l], instruction, { OT_Register8, OT_Memory }))
 				continue;
@@ -410,7 +559,7 @@ void checkInsrtuctionRequirements()
 		{
 			if (!check_parameters(lexems[l], instruction, { OT_Memory, OT_Register8 }))
 				continue;
-			
+
 			if ((op1 == OT_Memory8 && op2 == OT_Register16) || (op1 == OT_Memory16 && op2 == OT_Register8)) {
 				lexems[l].SetError("Operands type mismatch", vector[0]);
 			}
@@ -468,17 +617,24 @@ void checkInsrtuctionRequirements()
 // OF 8C cw JL rel16 
 void calculateSize()
 {
+	int offset = 0;
 	for (int l = 0; l < vectorOfTokens.size(); l++)
 	{
 		if (lexems[l].has_error)
 			continue;
 
 		if (!lexems[l].hasInstruction)
+		{
+			lexems[l].offset = offset;
 			continue;
+		}
 
 		UserName* seg = getUserName(NT_Segment, l);
 		if (seg == nullptr)
+		{
+			offset = 0;
 			continue;
+		}
 
 		const vector<end_token>& vector = vectorOfTokens[l];
 		int size = 0;
@@ -490,7 +646,20 @@ void calculateSize()
 		const end_token& instruction = vector[lexems[l].instrIndex];
 		if (instruction.type != Instruction)
 		{
-			//We need DB, DW and DD to calculate its size
+			//We need to calculate DB, DW and DD 
+			if (instruction.type == DbDirective)
+			{
+				// there could be a string
+				end_token* tk = &vectorOfTokens[l][2];
+				if (tk->type == Text)
+					size = tk->token.size();
+				else
+					size = 1;
+			}
+			else if (instruction.type == DwDirective)
+				size = 2;
+			else if (instruction.type == DdDirective)
+				size = 4;
 		}
 		else
 		{
@@ -539,7 +708,10 @@ void calculateSize()
 				size += 1;
 		}
 
-		lexems[l].offset = size;
+		lexems[l].size = size;
+		lexems[l].offset = offset;
+
+		offset += size;
 		seg->offset += size;
 	}
 }

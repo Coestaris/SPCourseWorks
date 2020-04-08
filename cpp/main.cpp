@@ -5,23 +5,23 @@
 
 int main()
 {
-   setupTokenTypeDict();
+	setupTokenTypeDict();
 
-   // ET2 routines
-   createTokens("test.txt");
-   proceedTokens();
-   printTokenList();
+	// ET2 routines
+	createTokens("test.txt");
+	proceedTokens();
+	//printTokenList();
 
-   // ET3 routines
-   analyzeSegments();
-   analyzeVariablesAndLabels();
-   analyzeOperandTypes();
-   checkInsrtuctionRequirements();
-   calculateSize();
+	// ET3 routines
+	analyzeSegments();
+	analyzeVariablesAndLabels();
+	analyzeOperandTypes();
+	checkInsrtuctionRequirements();
+	calculateSize();
 
-   printLexemeList();
+	printLexemeList();
 
-   outputErrors();
-   
-   return 0;
+	outputErrors();
+
+	return 0;
 }

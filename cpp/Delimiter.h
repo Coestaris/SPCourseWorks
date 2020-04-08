@@ -45,6 +45,7 @@ struct Lexem
    bool hasInstruction = false;
    bool hasMacro = false;
    int offset = 0;
+   int size = 0;
    int numberOfOperands = 0;
 
    void SetError(string error, const end_token& end_token);
@@ -60,6 +61,7 @@ struct macro
 
 extern vector<vector<end_token>> vectorOfTokens;
 extern vector<Lexem> lexems;
+extern vector<struct macro> macro;
 
 void createTokens(const string& filename);
 
