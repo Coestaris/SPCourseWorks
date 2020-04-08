@@ -92,7 +92,7 @@ class ASMLexemeStructure:
                 # mem
                 # VAR [ AAA + BBB ]    = 6 tokens
                 if len(operand.operand_tokens) < 6:
-                    parent.error = Error("WrongInstructionFormat", operand.token)
+                    parent.error = Error("WrongInstructionFormat", parent.tokens[0])
                     return
 
                 offset = 0

@@ -74,6 +74,10 @@ class InstructionBytes:
         if seg.string_value not in SEG_PREFIX:
             return Error("UnknownSegmentPrefix", seg)
 
+        # We are already in DS,
+        if seg.string_value == "ds":
+            return None
+
         self.prefixes += [SEG_PREFIX[seg.string_value]]
         return None
 

@@ -40,24 +40,25 @@ def print_et2_table(program: ASMProgram) -> None:
         print()
 
 
-def print_et3_tables(program: ASMProgram) -> None:
-    print("+=============================================+")
-    print("| #  || Offset ||        Source")
-    print("+=============================================+")
-    for i, lexeme in enumerate(program.lexemes):
-        hex_offset = to_hex(abs(lexeme.offset))
+def print_et3_tables(program: ASMProgram, print_source: bool) -> None:
+    if print_source:
+        print("+=============================================+")
+        print("| #  || Offset ||        Source")
+        print("+=============================================+")
+        for i, lexeme in enumerate(program.lexemes):
+            hex_offset = to_hex(abs(lexeme.offset))
 
-        if lexeme.error is None:
-            instruction = lexeme.structure.get_instruction(lexeme)
-            if instruction.type == TokenType.KEYWORD_END:
-                hex_offset = "----"
-        else:
-            hex_offset = " ERR"
+            if lexeme.error is None:
+                instruction = lexeme.structure.get_instruction(lexeme)
+                if instruction.type == TokenType.KEYWORD_END:
+                    hex_offset = "----"
+            else:
+                hex_offset = " ERR"
 
-        print("| {} ||  {:4}  ||  {}".format(str(i).rjust(2, "0"), hex_offset, lexeme.to_pretty_source(True)))
+            print("| {} ||  {:4}  ||  {}".format(str(i).rjust(2, "0"), hex_offset, lexeme.to_pretty_source(True)))
 
-    print("+=============================================+")
-    print()
+        print("+=============================================+")
+        print()
 
     print("Segments table:")
     print("+==========================================+")
@@ -110,6 +111,8 @@ def print_et3_tables(program: ASMProgram) -> None:
 
 
 def print_et4_table(program: ASMProgram):
+    print("+======================================================+")
+
     for i, lexeme in enumerate(program.lexemes):
         hex_offset = to_hex(abs(lexeme.offset))
 
@@ -125,9 +128,9 @@ def print_et4_table(program: ASMProgram):
             hex_offset,
             "" if lexeme.bytes is None else lexeme.bytes.to_pretty_string(),
             lexeme.to_pretty_source(True)))
+    print("+======================================================+")
 
-
-pass
+    print_et3_tables(program, False)
 
 
 if __name__ == "__main__":
@@ -145,8 +148,8 @@ if __name__ == "__main__":
 
     program.second_pass()
 
-    # print_et2_table(program)
-    # print_et3_tables(program)
+    #print_et2_table(program)
+    # print_et3_tables(program, true)
     print_et4_table(program)
 
     print()

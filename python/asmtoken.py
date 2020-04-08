@@ -4,8 +4,8 @@ from ttype import TokenType
 from error import Error
 import re
 
-TOKEN_SYMBOLS = ['[', ']', '.', ',', '+', '-', ':', '*']
-TOKEN_REGISTER32 = ['eax', 'ebx', 'ecx', 'edx', 'esi', 'edi']
+TOKEN_SYMBOLS = ['[', ']', '.', ',', '-', '+', ':', '*']
+TOKEN_REGISTER32 = ['eax', 'ebx', 'ecx', 'edx', 'esi', 'edi', 'esp', 'ebp']
 TOKEN_REGISTER16 = ['ax', 'bx', 'cx', 'dx', 'sp', 'bp', 'si', 'di']
 TOKEN_REGISTER8 = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh']
 TOKEN_SEGREG = ['es', 'cs', 'ss', 'ds', 'fs', 'gs']
@@ -25,10 +25,10 @@ TOKEN_DICT = [
     [["ends"], TokenType.KEYWORD_ENDS],
 ]
 
-numberHexRegex = re.compile(r"^[0-9a-f]+h$")
-numberDecRegex = re.compile(r"^[0-9]+$")
-numberBinRegex = re.compile(r"^[01]+b$")
-identifierRegex = re.compile(r"^[a-z]\w*$")
+numberHexRegex = re.compile(r"^-?[0-9a-f]+h$")
+numberDecRegex = re.compile(r"^-?[0-9]+$")
+numberBinRegex = re.compile(r"^-?[01]+b$")
+identifierRegex = re.compile(r"^-?[a-z]\w*$")
 
 
 def tokenTypeByValue(value: str) -> int:

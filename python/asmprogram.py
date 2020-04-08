@@ -8,7 +8,7 @@ from asmlexeme import ASMLexeme
 from error import Error
 from ttype import TokenType
 
-SPLIT_CHARS = ['\t', ' ', '\n', '[', ']', '.', ',', '*', '+', '-', ':']
+SPLIT_CHARS = ['\t', ' ', '\n', '[', ']', '.', ',', '*', '+', ':']
 
 
 class ASMParser:
