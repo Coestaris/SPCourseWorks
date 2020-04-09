@@ -96,6 +96,9 @@ typedef struct _lexeme
    // Info about lexeme's instruction. Set by l_assign_instruction()
    instruction_info_t* info;
 
+   // Bytes of the instruction
+   uint8_t* data;
+
    // Information about operands. Set by l_fetch_op_info()
    struct operand
    {

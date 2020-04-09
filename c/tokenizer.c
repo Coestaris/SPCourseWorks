@@ -17,9 +17,10 @@
 static int64_t string_to_num(char* string, size_t len, uint8_t base)
 {
    static const char* literals = "0123456789ABCDEF";
+   bool has_sign = string[0] == '-';
 
    int64_t result = 0;
-   for(int64_t i = len - 1; i >= 0; i--)
+   for(int64_t i = len - 1; i >= has_sign ? 1 : 0; i--)
    {
       int8_t literal = -1;
       for(size_t j = 0; j < 16; j++)
@@ -35,6 +36,9 @@ static int64_t string_to_num(char* string, size_t len, uint8_t base)
       result += pow(base, (double)len - i - 1) * (int64_t)literal;
    }
 
+   if(has_sign)
+      return -result;
+
    return result;
 }
 
@@ -46,7 +50,7 @@ static bool is_whitespace(char c)
 // Split symbols for source.
 static bool is_delimiter(char s)
 {
-   return is_whitespace(s) || s == '*' || s == ',' || s == '[' || s == ']' || s == '-' || s == '+' || s == '=' || s == ':';
+   return is_whitespace(s) || s == '*' || s == ',' || s == '[' || s == ']' || s == '+' || s == '=' || s == ':';
 }
 
 // Remove whitespaces from both sides
@@ -152,8 +156,10 @@ static bool is_id(char* string)
 // Returns true if string is value binary number
 static bool is_bin(char* string)
 {
+   bool has_sign = string[0] == '-';
+
    size_t len = strlen(string);
-   for(size_t i = 0; i < len - 1; i++)
+   for(size_t i = has_sign ? 1 : 0; i < len - 1; i++)
       if(string[i] != '0' && string[i] != '1')
          return false;
 
@@ -163,8 +169,10 @@ static bool is_bin(char* string)
 // Returns true if string is value decimal number
 static bool is_dec(char* string)
 {
+   bool has_sign = string[0] == '-';
+
    size_t len = strlen(string);
-   for(size_t i = 0; i < len; i++)
+   for(size_t i = has_sign ? 1 : 0; i < len; i++)
       if((string[i] < '0' || string[i] > '9'))
          return false;
 
@@ -174,8 +182,10 @@ static bool is_dec(char* string)
 // Returns true if string is value hexadecimal number
 static bool is_hex(char* string)
 {
+   bool has_sign = string[0] == '-';
+
    size_t len = strlen(string);
-   for(size_t i = 0; i < len - 1; i++)
+   for(size_t i = has_sign ? 1 : 0; i < len - 1; i++)
       if(!((string[i] >= '0' && string[i] <= '9') || (string[i] >= 'A' && string[i] <= 'H')))
          return false;
 

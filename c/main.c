@@ -7,8 +7,8 @@
 #include "assembly.h"
 #include "errors.h"
 
-#define TEST_FILE "../tests/test3.asm"
-#define OUT_FILE "../tests/test3.log"
+#define TEST_FILE "../tests/test1.asm"
+#define OUT_FILE "../tests/test1.log"
 
 static void print_et2_table(FILE* output, assembly_t* assembly)
 {
@@ -89,26 +89,29 @@ static void print_et3_table(FILE* output, assembly_t* assembly)
    char lex_str[200];
    char lidx_str[3];
    char offset_str[9];
+   char size_str[2];
 
    fputs("OFFSET TABLE\n", output);
-   fputs("/====================================================================\\\n", output);
-   fputs("| LN |  OFFSET  |                        SOURCE                      |\n", output);
-   fputs("|----|----------|----------------------------------------------------|\n", output);
+   fputs("/========================================================================\\\n", output);
+   fputs("| LN |  OFFSET  | S |                       SOURCE                       |\n", output);
+   fputs("|----|----------|---|----------------------------------------------------|\n", output);
    for(size_t i = 0; i < assembly->lexemes->count; i++)
    {
       lexeme_t* lexeme = assembly->lexemes->collection[i];
       l_string(lex_str, sizeof(lex_str), lexeme);
 
       size_t offset = lexeme->offset;
-      if(lexeme->err && i != 0)
-         offset = ((lexeme_t*)assembly->lexemes->collection[i])->offset;
+      if(lexeme->err && i)
+         offset = ((lexeme_t*)assembly->lexemes->collection[i - 1])->offset;
 
       extend_integer(lidx_str, sizeof(lidx_str) - 1, i, '0', false);
       extend_integer(offset_str, sizeof(offset_str) - 1, offset, '0', true);
+      extend_integer(size_str, sizeof(size_str) - 1, lexeme->size, '0', false);
 
-      fprintf(output, "| %s | %s |%c %-49s |\n", lidx_str, offset_str, lexeme->err ? 'E' : ' ', lex_str);
+      fprintf(output, "| %s | %s | %s |%c %-49s |\n", lidx_str, offset_str, size_str,
+            lexeme->err ? 'E' : ' ', lex_str);
    }
-   fputs("\\====================================================================/\n\n", output);
+   fputs("\\========================================================================/\n\n", output);
 
    fputs("SEGMENTS TABLE\n", output);
    fputs("/===================================\\\n", output);
@@ -198,11 +201,16 @@ int main()
    a_first_stage(assembly, text);
    //print_et2_table(log, assembly);
 
+
    a_first_pass(assembly);
+
+   a_errors(assembly, log);
+
    print_et3_table(log, assembly);
 
+   a_second_pass(assembly);
+
    fputs("\n\n", log);
-   a_errors(assembly, log);
 
    a_free(assembly);
    free(text);

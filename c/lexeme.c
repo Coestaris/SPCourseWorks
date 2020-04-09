@@ -108,14 +108,14 @@ static struct instruction_info instruction_infos[INSTRUCTIONS] =
         .const_modrm = 7, .const_imm = 4, .op = { OT_MEM32, OT_IMM32 } },
 
       { .name = "JNBE", .opcode = 0x77, .ex_pr = false, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
-        .const_modrm = DEF_NO_MODRM, .const_imm = 1, .op = { OT_LABEL_BACKWARD } },
+        .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = { OT_LABEL_BACKWARD } },
       { .name = "JNBE", .opcode = 0x87, .ex_pr = true,  .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
         .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = { OT_LABEL_FORWARD } },
 
       { .name = "JMP", .opcode = 0xEB, .ex_pr = false, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
-        .const_modrm = DEF_NO_MODRM, .const_imm = 1, .op = { OT_LABEL_BACKWARD } },
+        .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = { OT_LABEL_BACKWARD } },
       { .name = "JMP", .opcode = 0xE9, .ex_pr = false, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
-        .const_modrm = DEF_NO_MODRM, .const_imm = 5, .op = { OT_LABEL_FORWARD } },
+        .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = { OT_LABEL_FORWARD } },
 };
 
 //
@@ -136,6 +136,9 @@ lexeme_t* l_create(size_t line)
 void l_free(lexeme_t* lexeme)
 {
    e_assert(lexeme, "Passed NULL argument");
+
+   if(lexeme->data)
+      free(lexeme->data);
 
    for(size_t i = 0; i < lexeme->tokens_cnt; i++)
       free(lexeme->tokens[i].string);
@@ -224,7 +227,7 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
             case TT_NUMBER16:
             {
                int64_t value = t_num(op->operand);
-               if(value < 255)
+               if(labs(value) < 255)
                   op->type = OT_IMM8;
                else
                   op->type = OT_IMM32;
@@ -454,9 +457,23 @@ bool l_assign_instruction(lexeme_t* lexeme)
       {
          if(lexeme->operands_info[j].type != info->op[j])
          {
+            type_mismatch = true;
+
             // Give him another chance by assuming that MEM is MEM32
-            if(!(lexeme->operands_info[j].type == OT_MEM && info->op[j] == OT_MEM32))
-               type_mismatch = true;
+            if((lexeme->operands_info[j].type == OT_MEM && info->op[j] == OT_MEM32))
+            {
+               type_mismatch = false;
+               continue;
+            }
+
+            // Give him another chance by assuming that MEM is MEM8
+            if((lexeme->operands_info[j].type == OT_MEM && info->op[j] == OT_MEM8))
+            {
+               type_mismatch = false;
+               continue;
+            }
+
+            break;
          }
       }
 
@@ -498,6 +515,34 @@ size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
    {
       size_t size = 0;
 
+      if(!strcmp(lexeme->info->name, "JMP") || !strcmp(lexeme->info->name, "JNBE"))
+      {
+         struct operand* operand = &lexeme->operands_info[0];
+         struct label* lbl = a_get_label(assembly, operand->operand->string);
+         lexeme_t* lbl_lexeme = a_get_lexeme_by_line(assembly, lbl->line);
+
+         int32_t diff = (int32_t)lexeme->offset - (int32_t)lbl_lexeme->offset;
+
+         bool jmp = !strcmp(lexeme->info->name, "JMP");
+         bool far = abs(diff) > 127;
+         bool back = operand->type == OT_LABEL_BACKWARD;
+
+         // JMP NEAR BACKWARD
+         if(jmp && !far && back)
+            return 2;
+         // JMP FAR BACKWARD, NEAR FORWARD, FAR FORWARD
+         if(jmp)
+            return 5;
+
+         // JNBE NEAR BACKWARD
+         if(!far && back)
+            return 2;
+
+         // JNBE FAR BACKWARD, NEAR FORWARD, FAR FORWARD
+         return 6;
+      }
+
+
       // Opcode
       size += 1;
 
@@ -522,7 +567,7 @@ size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
             size += 1; // SIB
 
             int64_t disp = t_num(lexeme->operands_info[i].disp);
-            if(disp < 255)
+            if(labs(disp) < 255)
                size += 1; // DISP8
             else
                size += 4; // DISP32
@@ -538,7 +583,6 @@ size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
       if(lexeme->info->const_imm != DEF_NO_IMM)
          size += lexeme->info->const_imm;
 
-      lexeme->size = size;
       return size;
    }
 

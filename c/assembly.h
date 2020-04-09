@@ -66,6 +66,9 @@ void a_first_stage(assembly_t* assembly, char* data);
 // Analyze instruction operands and calculate instructions sizes
 void a_first_pass(assembly_t* assembly);
 
+// Allocates instruction buffers and calculates bytes
+void a_second_pass(assembly_t* assembly);
+
 //
 // Useful assembly getters
 //

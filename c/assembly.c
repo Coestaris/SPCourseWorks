@@ -116,11 +116,12 @@ void a_first_pass(assembly_t* assembly)
          {
             //Instruction without instruction
             if(!lexeme->has_instruction)
-               T_SE(lexeme, "Met unexpected token", 0);
+               T_SE(lexeme, "Unexpected token met", 0);
          }
          else
          {
-            T_SE(lexeme, "Met unexpected token", 0);
+            if(lexeme->type != LT_END)
+               T_SE(lexeme, "Unexpected token met", 0);
          }
       }
    };
@@ -150,7 +151,7 @@ void a_first_pass(assembly_t* assembly)
 
          // Calculate instruction offset
          lexeme->offset = active_segment->size;
-         active_segment->size += l_get_size(lexeme, assembly);
+         active_segment->size += (lexeme->size = l_get_size(lexeme, assembly));
          if(lexeme->err) continue;
       }
    }
@@ -269,6 +270,18 @@ lexeme_t* a_get_lexeme_by_line(assembly_t* assembly, size_t line)
    LEX_LP_END
 
    return NULL;
+}
+
+//
+// a_second_pass()
+//
+void a_second_pass(assembly_t* assembly)
+{
+   LEX_LP_BEG
+   {
+
+   };
+   LEX_LP_END
 }
 
 //
