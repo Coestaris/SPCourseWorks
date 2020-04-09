@@ -124,10 +124,16 @@ def print_et4_table(program: ASMProgram):
             hex_offset = " ERR"
 
         print("| {} ||  {:4}  |  {:20}  :  {}".format(
-            str(i).rjust(2, "0"),
+            str(lexeme.tokens[0].line + 1).rjust(2, "0"),
             hex_offset,
             "" if lexeme.bytes is None else lexeme.bytes.to_pretty_string(),
             lexeme.to_pretty_source(True)))
+
+        if lexeme.bytes is not None:
+            b = lexeme.bytes.to_bytes()
+            if len(b) != lexeme.size:
+                print("Expected {} but got {}".format(lexeme.size, len(b)))
+
     print("+======================================================+")
 
     print_et3_tables(program, False)

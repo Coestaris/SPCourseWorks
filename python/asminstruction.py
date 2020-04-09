@@ -99,6 +99,35 @@ class ASMInstruction:
             # Instruction
             inst: 'ASMInstruction' = lexeme.instruction
 
+            if inst.name == "jnz" or inst.name == "jmp":
+
+                operand = lexeme.structure.operands[0]
+                lbl = next((x for x in lexeme.program.labels if x.string_value == operand.token.string_value), None)
+
+                current_offset = abs(lexeme.offset)
+                lbl_offset = abs(lbl.lexeme.offset)
+                diff = lbl_offset - current_offset
+
+                far = abs(diff) > 127
+
+                if inst.name == "jnz" and not far and operand.type == ot.LabelBackward:
+                    return 2
+                if inst.name == "jnz" and not far and operand.type == ot.LabelForward:
+                    return 6
+                if inst.name == "jnz" and far and operand.type == ot.LabelBackward:
+                    return 6
+                if inst.name == "jnz" and far and operand.type == ot.LabelForward:
+                    return 6
+                if inst.name == "jmp" and not far and operand.type == ot.LabelBackward:
+                    return 2
+                if inst.name == "jmp" and not far and operand.type == ot.LabelForward:
+                    return 5
+                if inst.name == "jmp" and far and operand.type == ot.LabelBackward:
+                    return 5
+                if inst.name == "jmp" and far and operand.type == ot.LabelForward:
+                    return 5
+
+
             # Op code
             size += len(inst.opcode)
 
@@ -116,7 +145,7 @@ class ASMInstruction:
                 size += 4  # Displacement
 
             for operand in lexeme.structure.operands:
-                if operand.segment_prefix is not None:
+                if operand.segment_prefix is not None and operand.segment_prefix.string_value != "ds":
                     size += 1  # Replace segment prefix
 
         else:
@@ -139,13 +168,6 @@ class ASMInstruction:
             inst: 'ASMInstruction' = lexeme.instruction
             bytes = lexeme.bytes
 
-            # Opcode
-            if len(inst.opcode) == 2:
-                bytes.set_expansion_prefix()
-                bytes.set_opcode(inst.opcode[1])
-            else:
-                bytes.set_opcode(inst.opcode[0])
-
             # Jumps are weird. Just hardcode them...
             if inst.name == "jnz" or inst.name == "jmp":
                 operand = lexeme.structure.operands[0]
@@ -154,25 +176,68 @@ class ASMInstruction:
 
                 current_offset = abs(lexeme.offset)
                 lbl_offset = abs(lbl.lexeme.offset)
-                diff = lbl_offset - current_offset
+                diff = lbl_offset - current_offset - 2
 
+                far = abs(diff) > 127
+
+                prefix = False
+                opcode = 0
                 imm = []
-                if inst.name == "jnz":
-                    if operand.type == ot.LabelForward:
-                        # I cant explain this right now....
-                        imm = asmbytes.int8tobytes(diff - 2)
-                        imm += [0x90] * 4
-                    else:
-                        imm = asmbytes.int8tobytes(diff - lexeme.size)
-                else:
-                    if operand.type == ot.LabelForward:
-                        imm = asmbytes.int8tobytes(diff - 2)
-                        imm += [0x90] * 3
-                    else:
-                        imm = asmbytes.int32tobytes(diff - lexeme.size)
+                if inst.name == "jnz" and not far and operand.type == ot.LabelBackward:
+                    opcode = 0x75
+                    imm = asmbytes.int8tobytes(diff)
+                    # return 2
 
+                if inst.name == "jnz" and not far and operand.type == ot.LabelForward:
+                    opcode = 0x75
+                    imm = asmbytes.int8tobytes(diff) + [0x90] * 4
+                    # return 6
+
+                if inst.name == "jnz" and far and operand.type == ot.LabelBackward:
+                    prefix = True
+                    opcode = 0x85
+                    imm = asmbytes.int32tobytes(diff)
+                    # return 6
+
+                if inst.name == "jnz" and far and operand.type == ot.LabelForward:
+                    prefix = True
+                    opcode = 0x85
+                    imm = asmbytes.int32tobytes(diff)
+                    # return 6
+
+                if inst.name == "jmp" and not far and operand.type == ot.LabelBackward:
+                    opcode = 0xEB
+                    imm = asmbytes.int8tobytes(diff)
+                    # return 2
+
+                if inst.name == "jmp" and not far and operand.type == ot.LabelForward:
+                    opcode = 0xEB
+                    imm = asmbytes.int8tobytes(diff) + [0x90] * 3
+                    # return 5
+
+                if inst.name == "jmp" and far and operand.type == ot.LabelBackward:
+                    opcode = 0xE9
+                    imm = asmbytes.int32tobytes(diff)
+                    # return 5
+
+                if inst.name == "jmp" and far and operand.type == ot.LabelForward:
+                    opcode = 0xE9
+                    imm = asmbytes.int32tobytes(diff)
+                    # return 5
+
+                if prefix:
+                    bytes.set_expansion_prefix()
+                bytes.set_opcode(opcode)
                 bytes.set_imm(imm)
+
                 return None
+
+            # Opcode
+            if len(inst.opcode) == 2:
+                bytes.set_expansion_prefix()
+                bytes.set_opcode(inst.opcode[1])
+            else:
+                bytes.set_opcode(inst.opcode[0])
 
             # First register packed to an opcode
             if inst.packed_register:

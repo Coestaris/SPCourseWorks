@@ -14,10 +14,15 @@ DATA ENDS
 
 CODE SEGMENT
 Var31    DD  0fh
-jnz label1
+    jnz label1
+    jmp label1
 label1:
-jnz label1
-jmp label2
+    jnz label1
+    jmp label1
+
+    jnz label2
+    jmp label2
+
     cld
     dec eax
     dec ecx

@@ -64,7 +64,7 @@ class InstructionBytes:
         if packed_reg.string_value not in REG_CODES:
             return Error("UnknownRegister", packed_reg)
 
-        self.opcode |= REG_CODES[packed_reg.string_value]
+        self.opcode |= REG_CODES[packed_reg.string_value] & 0b111
         return None
 
     def set_expansion_prefix(self) -> None:
@@ -132,13 +132,13 @@ class InstructionBytes:
         b += self.prefixes
 
         if self.opcode != -1:
-            b += self.opcode
+            b += [self.opcode]
 
         if self.modrm != -1:
-            b += self.modrm
+            b += [self.modrm]
 
-        if self.sib:
-            b += self.sib
+        if self.sib != -1:
+            b += [self.sib]
 
         b += self.disp
         b += self.imm
@@ -164,6 +164,7 @@ class InstructionBytes:
             result += "".join([to_hex(x, 2) for x in self.imm]) + " "
 
         return result
+
 
 def int32tobytes(value: int) -> List[int]:
     return [
