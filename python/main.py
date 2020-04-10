@@ -4,8 +4,8 @@ from asmprogram import ASMProgram
 from ttype import TokenType
 import sys
 
-TEST_FILE = "test.asm"
-LOG_FILE = "log.dat"
+TEST_FILE = "tests/test.asm"
+LOG_FILE = "tests/log.dat"
 
 
 class Logger(object):

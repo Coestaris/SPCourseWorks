@@ -135,7 +135,11 @@ class ASMProgram:
                 if lexeme.structure.has_name and not lexeme.has_label() and \
                         lexeme.structure.has_instruction and \
                         lexeme.structure.get_instruction(lexeme).type == TokenType.INSTRUCTION:
-                    lexeme.error = Error("TokenInLexeme", lexeme.tokens[0])
+                    lexeme.error = Error("WrongTokenInLexeme", lexeme.tokens[0])
+                    continue
+
+                if len(lexeme.tokens) >= 2 and lexeme.tokens[0].string_value == "assume":
+                    lexeme.error = Error("WrongTokenInLexeme", lexeme.tokens[0])
                     continue
 
                 lexeme.structure.get_operands_info(lexeme)

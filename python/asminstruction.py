@@ -174,9 +174,11 @@ class ASMInstruction:
 
                 lbl = next((x for x in lexeme.program.labels if x.string_value == operand.token.string_value), None)
 
+                next_lexeme = lexeme.program.lexemes[lexeme.program.lexemes.index(lbl.lexeme) + 1]
+
                 current_offset = abs(lexeme.offset)
                 lbl_offset = abs(lbl.lexeme.offset)
-                diff = lbl_offset - current_offset - 2
+                diff = lbl_offset - current_offset - lexeme.size
 
                 far = abs(diff) > 127
 
@@ -190,7 +192,7 @@ class ASMInstruction:
 
                 if inst.name == "jnz" and not far and operand.type == ot.LabelForward:
                     opcode = 0x75
-                    imm = asmbytes.int8tobytes(diff) + [0x90] * 4
+                    imm = asmbytes.int8tobytes(diff + 4) + [0x90] * 4
                     # return 6
 
                 if inst.name == "jnz" and far and operand.type == ot.LabelBackward:
@@ -212,7 +214,7 @@ class ASMInstruction:
 
                 if inst.name == "jmp" and not far and operand.type == ot.LabelForward:
                     opcode = 0xEB
-                    imm = asmbytes.int8tobytes(diff) + [0x90] * 3
+                    imm = asmbytes.int8tobytes(diff + 3) + [0x90] * 3
                     # return 5
 
                 if inst.name == "jmp" and far and operand.type == ot.LabelBackward:

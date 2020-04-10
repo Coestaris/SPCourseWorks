@@ -69,7 +69,7 @@ class ASMLexemeStructure:
                         token.type == TokenType.NUMBER_BIN or \
                         token.type == TokenType.NUMBER_HEX:
                     value = token.get_num_value()
-                    if value < 255:
+                    if value <= 255:
                         operand.type = ASMOperandType.Constant8
                     else:
                         operand.type = ASMOperandType.Constant32

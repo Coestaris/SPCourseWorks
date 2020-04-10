@@ -16,3 +16,5 @@ python/log\.dat
 *.log
 
 c/tests/
+
+python/tests/
