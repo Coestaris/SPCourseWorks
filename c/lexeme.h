@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "tokenizer.h"
+#include "coding.h"
 
 // Set error.
 #define T_SE(l, msg, t) { l->err = msg; l->err_tk = t; }
@@ -97,7 +98,7 @@ typedef struct _lexeme
    instruction_info_t* info;
 
    // Bytes of the instruction
-   uint8_t* data;
+   coding_t data;
 
    // Information about operands. Set by l_fetch_op_info()
    struct operand
@@ -169,5 +170,11 @@ bool l_assign_instruction(lexeme_t* lexeme);
 // Calculates size of the current instruction / variable definition
 // Assembly is the same as in l_fetch_op_info().
 size_t l_get_size(lexeme_t* lexeme, void* assembly);
+
+//
+// SECOND PASS METHODS
+//
+// Calculates bytes using all collected information
+void l_get_bytes(lexeme_t* lexeme, void* assembly);
 
 #endif // LEXEME_H

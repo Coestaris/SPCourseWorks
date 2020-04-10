@@ -19,6 +19,11 @@
 #define DEF_NO_OC_REG false
 #define INSTRUCTIONS 21
 
+#define JMP_NEAR 0xEB
+#define JMP_FAR 0xE9
+#define JNBE_NEAR 0x77
+#define JNBE_FAR 0x87
+
 /*
  * clc
  *   F8 CLC
@@ -85,9 +90,9 @@ static struct instruction_info instruction_infos[INSTRUCTIONS] =
       { .name = "ADD", .opcode = 0x81, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
         .const_modrm = 0, .const_imm = 4, .op = { OT_REG32, OT_IMM32 } },
 
-      { .name = "TEST", .opcode = 0x84, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+      { .name = "TEST", .opcode = 0x84, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
         .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_REG8, OT_MEM8 } },
-      { .name = "TEST", .opcode = 0x85, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+      { .name = "TEST", .opcode = 0x85, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
         .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_REG32, OT_MEM32 } },
 
       { .name = "AND", .opcode = 0x20, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
@@ -95,9 +100,9 @@ static struct instruction_info instruction_infos[INSTRUCTIONS] =
       { .name = "AND", .opcode = 0x21, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
         .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_MEM32, OT_REG32 } },
 
-      { .name = "MOV", .opcode = 0x88, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+      { .name = "MOV", .opcode = 0x8A, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
         .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_REG8, OT_REG8 } },
-      { .name = "MOV", .opcode = 0x89, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+      { .name = "MOV", .opcode = 0x8B, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
         .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_REG32, OT_REG32 } },
 
       { .name = "CMP", .opcode = 0x80, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
@@ -126,6 +131,7 @@ lexeme_t* l_create(size_t line)
    lexeme_t* l = malloc(sizeof(lexeme_t));
    memset(l, 0, sizeof(lexeme_t));
    l->line = line;
+   c_fill(&l->data);
    return l;
 }
 
@@ -137,11 +143,9 @@ void l_free(lexeme_t* lexeme)
 {
    e_assert(lexeme, "Passed NULL argument");
 
-   if(lexeme->data)
-      free(lexeme->data);
-
    for(size_t i = 0; i < lexeme->tokens_cnt; i++)
       free(lexeme->tokens[i].string);
+
    free(lexeme);
 }
 
@@ -587,6 +591,156 @@ size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
    }
 
    return 0;
+}
+
+//
+// l_get_bytes()
+//
+void l_get_bytes(lexeme_t* lexeme, void* assembly_ptr)
+{
+   e_assert(lexeme, "Passed NULL argument");
+   e_assert(assembly_ptr, "Passed NULL argument");
+
+   assembly_t* assembly = assembly_ptr;
+   if(lexeme->type == LT_VAR_DEFINITION)
+   {
+      struct variable* var = a_get_variable_by_line(assembly, lexeme->line);
+      int64_t value = t_num(var->value);
+
+      switch(var->type->type)
+      {
+         case TT_DB_DIRECTIVE:
+            c_set_imm(&lexeme->data, value, 1);
+            return;
+         case TT_DW_DIRECTIVE:
+            c_set_imm(&lexeme->data, value, 2);
+            return;
+         case TT_DD_DIRECTIVE:
+            c_set_imm(&lexeme->data, value, 4);
+            return;
+      }
+   }
+   else if(lexeme->type == LT_INSTRUCTION)
+   {
+      if(!strcmp(lexeme->info->name, "JMP") || !strcmp(lexeme->info->name, "JNBE"))
+      {
+         struct operand* operand = &lexeme->operands_info[0];
+         struct label* lbl = a_get_label(assembly, operand->operand->string);
+         lexeme_t* lbl_lexeme = a_get_lexeme_by_line(assembly, lbl->line);
+
+         int64_t diff = (int64_t)lbl_lexeme->offset - (int64_t)lexeme->offset - lexeme->size;
+
+         bool jmp = !strcmp(lexeme->info->name, "JMP");
+         bool far = labs(diff) > 127;
+         bool back = operand->type == OT_LABEL_BACKWARD;
+
+         // JMP NEAR BACKWARD
+         if(jmp && !far && back)
+         {
+            c_set_opcode(&lexeme->data, JMP_NEAR);
+            c_set_imm(&lexeme->data, diff, 1);
+            return;
+         }
+
+         // JMP FAR BACKWARD/FORWARD
+         if(jmp && far)
+         {
+            c_set_opcode(&lexeme->data, JMP_FAR);
+            c_set_imm(&lexeme->data, diff, 4);
+            return;
+         }
+
+         // JMP NEAR FORWARD, FAR FORWARD
+         if(jmp)
+         {
+            c_set_opcode(&lexeme->data, JMP_NEAR);
+            diff = (((uint64_t)(diff + 3) & 0xFFU) << 24U) | 0x00909090U;
+            c_set_imm(&lexeme->data, diff, 4);
+            return;
+         }
+
+         // JMP NEAR BACKWARD
+         if(!far && back)
+         {
+            c_set_opcode(&lexeme->data, JNBE_NEAR);
+            c_set_imm(&lexeme->data, diff, 1);
+            return;
+         }
+
+         // JMP FAR BACKWARD/FORWARD
+         if(far)
+         {
+            c_set_prefix_exp(&lexeme->data);
+            c_set_opcode(&lexeme->data, JNBE_FAR);
+            c_set_imm(&lexeme->data, diff, 4);
+            return;
+         }
+
+         // JMP NEAR FORWARD, FAR FORWARD
+         c_set_opcode(&lexeme->data, JNBE_NEAR);
+         diff = (((uint64_t)(diff + 4) & 0xFFU) << 32U) | 0x0090909090U;
+         c_set_imm(&lexeme->data, diff, 5);
+         return;
+      }
+
+      // OPCODE
+      if(lexeme->info->ex_pr)
+         c_set_prefix_exp(&lexeme->data);
+      c_set_opcode(&lexeme->data, lexeme->info->opcode);
+
+      // MODRM AND SIB
+      if(lexeme->info->modrm_index != DEF_NO_MODRM)
+      {
+         // REG FIELD
+         if(lexeme->info->const_modrm != DEF_NO_MODRM)
+            c_set_reg_const(&lexeme->data, lexeme->info->const_modrm);
+         else if(lexeme->info->op_cnt != 1)
+         {
+            token_t* reg = NULL;
+            if(lexeme->info->modrm_index == 0)
+               reg = lexeme->operands_info[1].operand;
+            else
+               reg = lexeme->operands_info[0].operand;
+
+            if(reg->type == TT_REGISTER8 || reg->type == TT_REGISTER32)
+               c_set_reg(&lexeme->data, reg);
+         }
+
+         // RM FIELD
+         struct operand* rm = &lexeme->operands_info[lexeme->info->modrm_index];
+         if(rm->type == OT_MEM || rm->type == OT_MEM8 || rm->type == OT_MEM32)
+         {
+            // MEM
+            c_set_rm_m(&lexeme->data, rm->base, rm->index, rm->scale, rm->disp);
+         }
+         else
+         {
+            // REG
+            c_set_rm_reg(&lexeme->data, rm->operand);
+         }
+      }
+
+      // SEGMENT PREFIX / IMM
+      for(size_t i = 0; i < lexeme->operands_count; i++)
+      {
+         if (lexeme->operands_info[i].type == OT_IMM8)
+         {
+            int64_t val = t_num(lexeme->operands_info[i].operand) & 0xFF;
+            c_set_imm(&lexeme->data, val, 1);
+         }
+
+         if (lexeme->operands_info[i].type == OT_IMM32)
+         {
+            int64_t val = t_num(lexeme->operands_info[i].operand) & 0xFFFFFFFF;
+            c_set_imm(&lexeme->data, val, 4);
+         }
+
+         if (lexeme->operands_info[i].segment)
+         {
+            c_set_prefix_seg(&lexeme->data, lexeme->operands_info[i].segment);
+         }
+      }
+   }
 }
 
 //

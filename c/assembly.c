@@ -156,7 +156,19 @@ void a_first_pass(assembly_t* assembly)
       }
    }
    LEX_LP_END
+}
 
+//
+// a_second_pass()
+//
+void a_second_pass(assembly_t* assembly)
+{
+   LEX_LP_BEG
+   {
+      if(!lexeme->err)
+         l_get_bytes(lexeme, assembly);
+   };
+   LEX_LP_END
 }
 
 //
@@ -270,18 +282,6 @@ lexeme_t* a_get_lexeme_by_line(assembly_t* assembly, size_t line)
    LEX_LP_END
 
    return NULL;
-}
-
-//
-// a_second_pass()
-//
-void a_second_pass(assembly_t* assembly)
-{
-   LEX_LP_BEG
-   {
-
-   };
-   LEX_LP_END
 }
 
 //
