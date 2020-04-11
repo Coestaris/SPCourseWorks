@@ -40,6 +40,11 @@ public class Sentences {
             if (sentences.get(0).type.equals(TokenType.EndWord)) {
                 offset = 0;
             }
+
+            if (sentences.get(0).type.equals(TokenType.Unknown)){
+                offset = 0;
+                Error = true;
+            }
         }
     }
 

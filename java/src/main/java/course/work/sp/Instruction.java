@@ -358,9 +358,9 @@ public class Instruction {
 
     }
 
-    public void jmp(List<List<Token>> operands){
+    public void jmp(List<List<Token>> operands) {
         boolean isFind = false;
-        if(operands.size() == 1 && operands.get(0).size() == 1 && operands.get(0).get(0).type.equals(TokenType.Identifier)){
+        if (operands.size() == 1 && operands.get(0).size() == 1 && operands.get(0).get(0).type.equals(TokenType.Identifier)) {
             List<Identifier> tableIdentifier = FirstPass.TableIdentifier(FileParser.fileParser(Application.getFilepath()));
             for (Identifier identifier : tableIdentifier)
                 if (identifier.identifier == TokenType.Label && identifier.token.equals(operands.get(0).get(0).stringToken)) {
@@ -372,15 +372,13 @@ public class Instruction {
                         offset += 2;
                     }
                 }
-            if(!isFind) Error = false;
-        }else {
-            Error = false;
+            Error = !isFind;
         }
     }
 
     public void jnc(List<List<Token>> operands){
         boolean isFind = false;
-        if(operands.size() == 1 && operands.get(0).size() == 1 && operands.get(0).get(0).type.equals(TokenType.Identifier)){
+        if(operands.size() == 1 && operands.get(0).size() == 1 && operands.get(0).get(0).type.equals(TokenType.Identifier)) {
             List<Identifier> tableIdentifier = FirstPass.TableIdentifier(FileParser.fileParser(Application.getFilepath()));
             for (Identifier identifier : tableIdentifier)
                 if (identifier.identifier == TokenType.Label && identifier.token.equals(operands.get(0).get(0).stringToken)) {
@@ -392,11 +390,10 @@ public class Instruction {
                         offset += 2;
                     }
                 }
-            if(!isFind) Error = false;
-        }else {
-            Error = false;
         }
+        Error = !isFind;
     }
+
 
 
     public String toString() {

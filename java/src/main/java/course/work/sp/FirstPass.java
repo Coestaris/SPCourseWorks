@@ -122,6 +122,9 @@ public class FirstPass {
                 sentence.offset = sumOfsset;
             }else {
                 sumOfsset = 0;
+                if(!sentence.segmentEnd && !sentence.tokens.isEmpty() && (sentence.tokens.get(0).type.equals(TokenType.Instruction)
+                        || sentence.tokens.get(0).type.equals(TokenType.Identifier))) sentence.Error = true;
+                sentence.offset = 0;
             }
         }
 
@@ -167,8 +170,10 @@ public class FirstPass {
             pass.append(String.format(" %02d   ", sentence.indexOfString))
                     .append(" ")
                     .append(String.format("%08X  ", sentence.offset))
-                    .append(" ").append(sentence.thisSentences)
-                    .append("\n");
+                    .append(" ").append(sentence.thisSentences);
+            if(sentence.Error) pass.append("  Error");
+
+            pass.append("\n");
         }
 
         List<Identifier> identifiers = TableIdentifier(FileParser.fileParser(Application.getFilepath()), sentences);

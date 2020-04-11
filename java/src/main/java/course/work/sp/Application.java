@@ -5,7 +5,8 @@ import java.util.List;
 
 public class Application {
     public static String getFilepath(){
-        return "D:\\Repos\\sp_kurs\\java\\src\\main\\resources\\testFile.asm";
+        return  "D:\\LAB\\SP\\CourseWork\\start.asm";
+        // return "D:\\Repos\\sp_kurs\\java\\src\\main\\resources\\testFile.asm";
     }
 
     public static void main(String[] args) {
