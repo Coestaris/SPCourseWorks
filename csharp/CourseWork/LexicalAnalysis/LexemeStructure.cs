@@ -83,8 +83,19 @@ namespace CourseWork.LexicalAnalysis
                     operandInfo.SumOperand1 = operandInfo.OperandTokens[offset + 2];
                     operandInfo.SumOperand2 = operandInfo.OperandTokens[offset + 4];
 
-                    if (operandInfo.OperandTokens[offset + 1].StringValue != "[" &&
-                        operandInfo.OperandTokens[offset + 3].StringValue != "+" &&
+                    if(operandInfo.Token.Type != TokenType.Identifier)
+                    {
+                        return new Error(ErrorType.VariableExpected, operandInfo.Token);
+                    }
+
+                    if (operandInfo.SumOperand1.Type != TokenType.Register32 ||
+                        operandInfo.SumOperand2.Type != TokenType.Register32)
+                    {
+                        return new Error(ErrorType.Register32Expected, operandInfo.SumOperand1);
+                    }
+
+                    if (operandInfo.OperandTokens[offset + 1].StringValue != "[" ||
+                        operandInfo.OperandTokens[offset + 3].StringValue != "+" ||
                         operandInfo.OperandTokens[offset + 5].StringValue != "]")
                     {
                         return new Error(ErrorType.NotSupportedExpressionType, operandInfo.OperandTokens[offset]);
@@ -93,6 +104,7 @@ namespace CourseWork.LexicalAnalysis
                     var variable =
                         ParentLexeme.ParentAssembly.UserVariables.Find(p =>
                             p.Name.StringValue == operandInfo.Token.StringValue);
+
                     if(variable == null)
                         return new Error(ErrorType.UndefinedReference, operandInfo.Token);
 

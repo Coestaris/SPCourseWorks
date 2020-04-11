@@ -267,5 +267,14 @@ namespace CourseWork
             // Assign instruction infos to lexemes
             AssignInfos();
         }
+
+        public void SecondPass()
+        {
+            foreach (var lexeme in Lexemes)
+                if (lexeme.Error == null)
+                {
+                    lexeme.GetBytes();
+                }
+        }
     }
 }

@@ -40,8 +40,8 @@
   <ItemGroup>
     <Compile Include="Assembly.cs" />
     <Compile Include="AssemblySource.cs" />
-    <Compile Include="Bytes\ModRM.cs" />
-    <Compile Include="Bytes\SIB.cs" />
+    <Compile Include="Bytes\ByteStorage.cs" />
+    <Compile Include="Bytes\ModRMSIB.cs" />
     <Compile Include="DataStructures\Equ.cs" />
     <Compile Include="DataStructures\InstructionInfo.cs" />
     <Compile Include="DataStructures\OperandInfo.cs" />

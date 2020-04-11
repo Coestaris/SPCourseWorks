@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using CourseWork.Bytes;
 using CourseWork.DataStructures;
 using kurs.DataStructures;
 
@@ -17,6 +18,7 @@ namespace CourseWork.LexicalAnalysis
         public Assembly ParentAssembly { get; }
         public List<Token> Tokens { get; private set; }
         public LexemeStructure Structure { get; set; }
+        public ByteStorage Storage { get; private set; }
         public UserSegment Segment { get; internal set; }
         public InstructionInfo InstructionInfo { get; internal set; }
         public int Offset { get; internal set; }
@@ -258,91 +260,245 @@ namespace CourseWork.LexicalAnalysis
             }
         }
 
+        public void GetBytes()
+        {
+            if (Error != null) return;
+            if (!Structure.HasInstruction) return;
+            if (Size == 0) return;
+
+            Storage = new ByteStorage();
+
+            var instruction = Tokens[Structure.InstructionIndex];
+            if (instruction.Type == TokenType.Instruction)
+            {
+                // Hardcode JBE instruction because its weird....
+                if (InstructionInfo.Name == "jbe")
+                {
+                    var labelOperand = Structure.OperandInfos[0].Token;
+                    var labelLexeme =
+                        ParentAssembly.UserLabels.Find(p => p.StringValue == labelOperand.StringValue);
+
+                    var diff = labelLexeme.ParentLexeme.Offset - Offset - Size;
+
+                    var forward = labelLexeme.Line > labelOperand.Line;
+                    var far = Math.Abs(diff) >= 127;
+
+                    if (!far && !forward)
+                    {
+                        Storage.SetOpcode(0x76);
+                        Storage.SetIMM(ModRMSIB.ToBytes8(diff));
+                        return;
+                    }
+
+                    if (far)
+                    {
+                        Storage.SetExpPrefix();
+                        Storage.SetOpcode(0x86);
+                        Storage.SetIMM(ModRMSIB.ToBytes32(diff));
+                        return;
+                    }
+
+                    Storage.SetOpcode(0x76);
+                    var imm = ModRMSIB.ToBytes8(diff + 4).ToList();
+                    imm.AddRange(new List<byte> {0x90, 0x90, 0x90, 0x90});
+                    Storage.SetIMM(imm.ToArray());
+                    return;
+                }
+
+
+                // OPCODE
+                byte opcode;
+                if (InstructionInfo.OpCode2 != 0)
+                {
+                    Storage.SetExpPrefix();
+                    opcode = InstructionInfo.OpCode2;
+                }
+                else
+                {
+                    opcode = InstructionInfo.OpCode1;
+                }
+
+                Storage.SetOpcode(opcode);
+
+                if(InstructionInfo.PackedRegister)
+                    Storage.PackRegister(Structure.OperandInfos[0].Token);
+
+                // MODRM / SIB
+                if (InstructionInfo.HasModRM)
+                {
+                    // REG FIELD
+                    if(InstructionInfo.ConstantModRM != 0xFF)
+                        Storage.SetReg(InstructionInfo.ConstantModRM);
+                    else if (Structure.OperandInfos.Count != 1)
+                    {
+                        var dest = Structure.OperandInfos[InstructionInfo.SourceIndex == 0 ? 1 : 0];
+                        if (dest.Type == OperandType.Register8 || dest.Type == OperandType.Register32)
+                            Storage.SetReg(dest.Token);
+                    }
+
+                    // MODRM FIELD
+                    var source = Structure.OperandInfos[InstructionInfo.SourceIndex];
+                    if (source.Type == OperandType.Register8 || source.Type == OperandType.Register32)
+                    {
+                        // REGISTER
+                        Storage.SetRM(source.Token);
+                    }
+                    else
+                    {
+                        // MEM
+                        var variable =
+                            ParentAssembly.UserVariables.Find(p => p.Name.StringValue == source.Token.StringValue);
+
+                        // Used Variable from another segment. Switch it
+                        if(variable.Name.ParentLexeme.Segment.OpenToken.Line == Segment.OpenToken.Line)
+                            Storage.SetSegmentPrefix("cs");
+
+
+                        Storage.SetRM(source.SumOperand1, source.SumOperand2, variable.Name.ParentLexeme.Offset);
+                    }
+                }
+
+                // IMM / SEG PREFIX
+                var i = 0;
+                foreach (var info in Structure.OperandInfos)
+                {
+                    if (info.Type == OperandType.Constant8 || info.Type == OperandType.Constant32)
+                    {
+                        // We only care about stuff required by instruction
+                        if(InstructionInfo.AllowedTypes[i] == OperandType.Constant8)
+                            Storage.SetIMM(ModRMSIB.ToBytes8(info.Token.ToValue()));
+                        else
+                            Storage.SetIMM(ModRMSIB.ToBytes32(info.Token.ToValue()));
+                    }
+
+                    if(info.SegmentPrefix != null)
+                        Storage.SetSegmentPrefix(info.SegmentPrefix);
+
+                    i++;
+                }
+            }
+
+            var valueToken = Structure.HasOperands ? Structure.OperandInfos[0].Token : null;
+            // Memory directive
+
+            switch (instruction.Type)
+            {
+                // Could be string
+                case TokenType.DbDirective when valueToken.Type == TokenType.Text:
+                    Storage.SetIMM(valueToken.StringValue.Select(p => (byte)p).ToArray());
+                    return;
+
+                case TokenType.DbDirective:
+                {
+                    var value = valueToken.ToValue();
+                    Storage.SetIMM(ModRMSIB.ToBytes8(value));
+                    break;
+                }
+
+                case TokenType.DwDirective:
+                {
+                    var value = valueToken.ToValue();
+                    Storage.SetIMM(ModRMSIB.ToBytes16(value));
+                    break;
+                }
+
+                case TokenType.DdDirective:
+                {
+                    var value = valueToken.ToValue();
+                    Storage.SetIMM(ModRMSIB.ToBytes32(value));
+                    break;
+                }
+            }
+        }
+
         public int GetSize()
         {
             if (Error != null) return 0;
 
-            if (Structure.HasInstruction)
+            if (!Structure.HasInstruction) return 0;
+
+            var instruction = Tokens[Structure.InstructionIndex];
+            if (instruction.Type == TokenType.Instruction)
             {
-                var instruction = Tokens[Structure.InstructionIndex];
-                if (instruction.Type == TokenType.Instruction)
+                if (InstructionInfo.Name == "jbe")
                 {
-                    if (InstructionInfo.Name == "jbe")
-                    {
-                        var labelOperand = Structure.OperandInfos[0].Token;
-                        var labelLexeme =
-                            ParentAssembly.UserLabels.Find(p => p.StringValue == labelOperand.StringValue);
+                    var labelOperand = Structure.OperandInfos[0].Token;
+                    var labelLexeme =
+                        ParentAssembly.UserLabels.Find(p => p.StringValue == labelOperand.StringValue);
 
-                        var diff = labelLexeme.ParentLexeme.Offset - Offset;
+                    var diff = labelLexeme.ParentLexeme.Offset - Offset;
 
-                        var forward = labelLexeme.Line > labelOperand.Line;
-                        var far = Math.Abs(diff) >= 127;
+                    var forward = labelLexeme.Line > labelOperand.Line;
+                    var far = Math.Abs(diff) >= 127;
 
-                        if (!far && !forward)
-                            return 2;
-
-                        return 6;
-                    }
-
-                    var size = 0;
-
-                    // OPCODE
-                    size += 1;
-                    // EXP PREFIX
-                    if (InstructionInfo.OpCode2 != 0)
-                        size += 1;
-
-                    // MODRM BYTE
-                    if (InstructionInfo.HasModRM)
-                        size += 1;
-
-                    // IMM FIELD
-                    if (InstructionInfo.ConstantIMM != 0)
-                        size += InstructionInfo.ConstantIMM;
-
-                    // SEG PREFIX / SIB + DISP32
-                    foreach (var operandInfo in Structure.OperandInfos)
-                    {
-                        if (operandInfo.Type == OperandType.IndexedName8 ||
-                            operandInfo.Type == OperandType.IndexedName32)
-                        {
-                            size += 1; // SIB
-                            size += 4; // DISP32
-                        }
-
-                        if (operandInfo.SegmentPrefix != null && operandInfo.SegmentPrefix.StringValue != "ds")
-                            size += 1; // SEG PREFIX
-                    }
-
-                    return size;
-                }
-                else
-                {
-                    // Memory directive
-                    if (instruction.Type == TokenType.DbDirective)
-                    {
-                        // Could be string
-                        var operand = Structure.OperandInfos[0].Token;
-                        if (operand.Type == TokenType.Text)
-                            return operand.StringValue.Length;
-
-                        return 1;
-                    }
-
-                    if (instruction.Type == TokenType.DwDirective)
-                    {
+                    if (!far && !forward)
                         return 2;
-                    }
 
-                    if (instruction.Type == TokenType.DdDirective)
-                    {
-                        return 4;
-                    }
-
-                    // Some other directive
-                    return 0;
+                    return 6;
                 }
+
+                var size = 0;
+
+                // OPCODE
+                size++;
+                // EXP PREFIX
+                if (InstructionInfo.OpCode2 != 0)
+                    size++;
+
+                // MODRM BYTE
+                if (InstructionInfo.HasModRM)
+                    size++;
+
+                // IMM FIELD
+                if (InstructionInfo.ConstantIMM != 0)
+                    size += InstructionInfo.ConstantIMM;
+
+                // SEG PREFIX / SIB + DISP32
+                foreach (var operandInfo in Structure.OperandInfos)
+                {
+                    if (operandInfo.Type == OperandType.IndexedName8 ||
+                        operandInfo.Type == OperandType.IndexedName32)
+                    {
+                        // Check for segment automatic change
+                        var variable =
+                            ParentAssembly.UserVariables.Find(p => p.Name.StringValue == operandInfo.Token.StringValue);
+
+                        if (variable.Name.ParentLexeme.Segment.OpenToken.Line == Segment.OpenToken.Line)
+                            size++;
+
+                        size++; // SIB
+                        size += 4; // DISP32
+                    }
+
+                    if (operandInfo.SegmentPrefix != null && operandInfo.SegmentPrefix.StringValue != "ds")
+                        size++; // SEG PREFIX
+                }
+
+                return size;
             }
+
+            // Memory directive
+            if (instruction.Type == TokenType.DbDirective)
+            {
+                // Could be string
+                var operand = Structure.OperandInfos[0].Token;
+                if (operand.Type == TokenType.Text)
+                    return operand.StringValue.Length;
+
+                return 1;
+            }
+
+            if (instruction.Type == TokenType.DwDirective)
+            {
+                return 2;
+            }
+
+            if (instruction.Type == TokenType.DdDirective)
+            {
+                return 4;
+            }
+
+            // Some other directive
             return 0;
         }
     }

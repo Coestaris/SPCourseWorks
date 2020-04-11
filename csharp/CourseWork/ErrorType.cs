@@ -19,9 +19,10 @@
         SameEquAlreadyExists,
         SameVarAlreadyExists,
         UnknownInstruction,
-        WrongType,
         ExpectedNumberOrString,
         UndefinedReference,
-        UnexpectedToken
+        UnexpectedToken,
+        VariableExpected,
+        Register32Expected
     }
 }
