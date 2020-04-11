@@ -16,7 +16,7 @@ namespace CourseWork.LexicalAnalysis
         public int CharIndex { get; }
         public string StringValue { get; }
     
-        private string _shortName;
+        private readonly string _shortName;
 
         private static readonly  Dictionary<string, TokenType> _dictionary = new Dictionary<string, TokenType>()
         {
@@ -83,10 +83,10 @@ namespace CourseWork.LexicalAnalysis
             { "ends",    TokenType.EndsKeyword},
         };
 
-        private static readonly Regex _numberHexRegex = new Regex(@"^[0-9a-f]+h$");
-        private static readonly Regex _numberDecRegex = new Regex("^[0-9]+$");
-        private static readonly Regex _numberBinRegex = new Regex("^[01]+b$");
-        private static readonly Regex _identifierRegex = new Regex(@"^[a-z]\w*$");
+        private static readonly Regex _numberHexRegex = new Regex(@"^-?[0-9a-f]+h$");
+        private static readonly Regex _numberDecRegex = new Regex("^-?[0-9]+$");
+        private static readonly Regex _numberBinRegex = new Regex("^-?[01]+b$");
+        private static readonly Regex _identifierRegex = new Regex(@"^-?[a-z]\w*$");
 
         public Token(string stringValue, string file, int line, int charIndex, Lexeme lexeme, out Error error)
         {

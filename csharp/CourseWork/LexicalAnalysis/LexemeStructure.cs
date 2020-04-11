@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using CourseWork.DataStructures;
@@ -35,19 +36,29 @@ namespace CourseWork.LexicalAnalysis
                         switch (operandInfo.Token.Type)
                         {
                             case TokenType.Register8:
+                                operandInfo.Type = OperandType.Register8;
+                                break;
                             case TokenType.Register16:
                             case TokenType.Register32:
                             case TokenType.Text:
-                                operandInfo.Type = OperandType.Register;
+                                operandInfo.Type = OperandType.Register32;
                                 break;
                             case TokenType.BinNumber:
                             case TokenType.DecNumber:
                             case TokenType.HexNumber:
-                                operandInfo.Type = OperandType.Constant;
+                            {
+                                var value = operandInfo.Token.ToValue();
+                                if(Math.Abs(value) <= 255)
+                                    operandInfo.Type = OperandType.Constant8;
+                                else
+                                    operandInfo.Type = OperandType.Constant32;
                                 break;
+                            }
+
                             case TokenType.Label:
                                 operandInfo.Type = OperandType.Label;
                                 break;
+
                             default:
                                 return new Error(ErrorType.WrongTokenAsOperand, operandInfo.Token);
                         }
@@ -58,7 +69,6 @@ namespace CourseWork.LexicalAnalysis
                     if (operandInfo.OperandTokens.Count < 6)
                         return new Error(ErrorType.NotSupportedExpressionType, operandInfo.OperandTokens[0]);
 
-                    operandInfo.Type = OperandType.IndexedName;
                     var offset = 0;
                     if (operandInfo.OperandTokens[0].Type == TokenType.SegmentRegister)
                     {
@@ -86,7 +96,10 @@ namespace CourseWork.LexicalAnalysis
                     if(variable == null)
                         return new Error(ErrorType.UndefinedReference, operandInfo.Token);
 
-
+                    if(variable.Type.Type == TokenType.DbDirective)
+                        operandInfo.Type = OperandType.IndexedName8;
+                    else
+                        operandInfo.Type = OperandType.IndexedName32;
                 }
             }
 

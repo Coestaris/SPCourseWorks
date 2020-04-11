@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using CourseWork.DataStructures;
 using kurs.DataStructures;
 
@@ -13,19 +15,12 @@ namespace CourseWork.LexicalAnalysis
                                  Tokens.Count == 3 && Tokens[1].IsDirective() && Tokens[1].Type != TokenType.EquDirective;
 
         public Assembly ParentAssembly { get; }
-
         public List<Token> Tokens { get; private set; }
-
         public LexemeStructure Structure { get; set; }
-
         public UserSegment Segment { get; internal set; }
-
         public InstructionInfo InstructionInfo { get; internal set; }
-
         public int Offset { get; internal set; }
-
         public int Size { get; internal set; }
-
         public Error Error { get; set; }
 
         private void AssignUserSegmentsAndLabels(out Error error)
@@ -272,57 +267,51 @@ namespace CourseWork.LexicalAnalysis
                 var instruction = Tokens[Structure.InstructionIndex];
                 if (instruction.Type == TokenType.Instruction)
                 {
-                    // Regular instruction
-                    var size = 1; // OpCode
-                    if (InstructionInfo.OpCode2 != 0) size += 1; // 2 byte opCode
-
-                    if (InstructionInfo.HasModRM) size += 1; // Has ModRM byte
-                    if (InstructionInfo.ConstantIMM != 0) size += InstructionInfo.ConstantIMM;
-
-                    if (InstructionInfo.AllowedTypes.Contains(OperandType.IndexedName))
+                    if (InstructionInfo.Name == "jbe")
                     {
-                        size += 1; // SIB byte always exists when using base indexed
-                        size += 4; // + DSIP32
+                        var labelOperand = Structure.OperandInfos[0].Token;
+                        var labelLexeme =
+                            ParentAssembly.UserLabels.Find(p => p.StringValue == labelOperand.StringValue);
+
+                        var diff = labelLexeme.ParentLexeme.Offset - Offset;
+
+                        var forward = labelLexeme.Line > labelOperand.Line;
+                        var far = Math.Abs(diff) >= 127;
+
+                        if (!far && !forward)
+                            return 2;
+
+                        return 6;
                     }
 
+                    var size = 0;
+
+                    // OPCODE
+                    size += 1;
+                    // EXP PREFIX
+                    if (InstructionInfo.OpCode2 != 0)
+                        size += 1;
+
+                    // MODRM BYTE
+                    if (InstructionInfo.HasModRM)
+                        size += 1;
+
+                    // IMM FIELD
+                    if (InstructionInfo.ConstantIMM != 0)
+                        size += InstructionInfo.ConstantIMM;
+
+                    // SEG PREFIX / SIB + DISP32
                     foreach (var operandInfo in Structure.OperandInfos)
                     {
-                        if (operandInfo.SegmentPrefix != null)
-                            size += 1; // явная замена сегмента
-
-                        if (operandInfo.Type == OperandType.IndexedName)
+                        if (operandInfo.Type == OperandType.IndexedName8 ||
+                            operandInfo.Type == OperandType.IndexedName32)
                         {
-                            // Get variable
-                            var a = ParentAssembly.UserVariables.Find(p =>
-                                p.Name.StringValue == operandInfo.Token.StringValue);
-
-                            // If variable not in data segment - неявная замена сегмента
-                            if (a.Name.ParentLexeme.Segment.Index != 0)
-                                size += 1;
+                            size += 1; // SIB
+                            size += 4; // DISP32
                         }
-                    }
 
-                    // Size and Opcode of OR depends on size of constant
-                    if (instruction.StringValue == "or")
-                    {
-                        var operand = Structure.OperandInfos[1].Token;
-
-                        size -= InstructionInfo.ConstantIMM;
-                        size += operand.ByteCount();
-                    }
-
-                    // If jump goes forward we reserve 4 bytes instead of 1
-                    //+ 1 for another opcode
-                    if (instruction.StringValue == "jbe")
-                    {
-                        var operand = Structure.OperandInfos[0].Token;
-                        var label = ParentAssembly.UserLabels.Find(p => p.StringValue == operand.StringValue);
-
-                        if (label.Line > operand.Line) // jmp forward
-                        {
-                            size += 3; // + 3 reversing bytes
-                            size += 1; // for opcode
-                        }
+                        if (operandInfo.SegmentPrefix != null && operandInfo.SegmentPrefix.StringValue != "ds")
+                            size += 1; // SEG PREFIX
                     }
 
                     return size;
@@ -340,7 +329,6 @@ namespace CourseWork.LexicalAnalysis
                         return 1;
                     }
 
-
                     if (instruction.Type == TokenType.DwDirective)
                     {
                         return 2;
@@ -355,7 +343,6 @@ namespace CourseWork.LexicalAnalysis
                     return 0;
                 }
             }
-
             return 0;
         }
     }

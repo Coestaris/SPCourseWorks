@@ -16,7 +16,7 @@ namespace CourseWork
             var i = 0;
             var err = 0;
             Console.WriteLine(new string('=', 68));
-            Console.WriteLine(" #|  Cnt  | Offset |                      Souce                    |");
+            Console.WriteLine(" #|  Cnt  | Offset |                      Source                   |");
             Console.WriteLine(new string('=', 68));
 
             foreach (var lexeme in assembly.Lexemes)
@@ -30,7 +30,7 @@ namespace CourseWork
                     lexeme.ToTable(true),
                     lexeme.HasOffset ? lexeme.Offset.ToString("X").PadLeft(5, '0') : "-----",
                     i++, lexeme.Size);
-                Console.WriteLine(s.PadRight(67,' ') + "|");
+                Console.WriteLine(s.PadRight(67,' ') + "|" + lexeme.InstructionInfo ?? "");
                 if (lexeme.Error != null)
                 {
                     err++;

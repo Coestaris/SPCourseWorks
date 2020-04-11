@@ -8,7 +8,7 @@ namespace CourseWork.LexicalAnalysis
     {
         private static readonly List<char> tokenSplitCharacters = new List<char>
         {
-            '\t', ' ', '\n', '[', ']', '.', ',', '_','+', '-', ':',
+            '\t', ' ', '\n', '[', ']', '.', ',', '_', '+', ':',
         };
 
         private struct RawToken

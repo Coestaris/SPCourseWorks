@@ -19,32 +19,5 @@ namespace CourseWork.LexicalAnalysis
         public Token SegmentPrefix;
         public Token SumOperand1;
         public Token SumOperand2;
-
-        public int GetByteCount()
-        {
-            var c = 0;
-            switch (Type)
-            {
-                case OperandType.Register:
-                    if (Token.Type == TokenType.Register8)
-                        c = 1;
-                    else if (Token.Type == TokenType.Register16)
-                        c = 2;
-                    else if (Token.Type == TokenType.Register32)
-                        return 4;
-                    break;
-
-                case OperandType.Constant:
-                    c = Token.ByteCount();
-                    break;
-
-                case OperandType.IndexedName:
-                    break;
-                case OperandType.Label:
-                    break;
-            }
-
-            return c;
-        }
     }
 }

@@ -119,7 +119,7 @@ namespace CourseWork
 
                     else
                     {
-                        lexeme.Error = new Error(ErrorType.ConstantExpected, lexeme.Tokens[0]);
+                        lexeme.Error = new Error(ErrorType.IncorrectInstructionTypes, lexeme.Tokens[0]);
                         continue;
                     }
 
@@ -218,16 +218,14 @@ namespace CourseWork
                     var instruction = lexeme.Tokens[lexeme.Structure.InstructionIndex];
                     if (instruction.Type == TokenType.Instruction)
                     {
-
-                        if (!InstructionInfo.Match(lexeme, out var info))
+                        int error = 0;
+                        if ((error = InstructionInfo.Match(lexeme, out var info)) != 0)
                         {
-                            lexeme.Error = new Error(ErrorType.InstructionFormat, lexeme.Tokens[0]);
-                            continue;
-                        }
-
-                        if (info.Name == "bt" && lexeme.Structure.OperandInfos[1].Token.Type != TokenType.Register32)
-                        {
-                            lexeme.Error = new Error(ErrorType.WrongType, lexeme.Structure.OperandInfos[1].Token);
+                            lexeme.Error = new Error(
+                                error == 1 ?
+                                    ErrorType.UnknownInstruction :
+                                    ErrorType.IncorrectInstructionTypes,
+                                lexeme.Tokens[0]);
                             continue;
                         }
 
