@@ -354,7 +354,23 @@ namespace CourseWork.LexicalAnalysis
                             Storage.SetSegmentPrefix("cs");
 
 
-                        Storage.SetRM(source.SumOperand1, source.SumOperand2, variable.Name.ParentLexeme.Offset);
+                        var index = source.SumOperand2;
+                        var @base = source.SumOperand1;
+
+                        if (!ByteStorage.CheckRM(index, @base))
+                        {
+                            var tmp = index;
+                            index = @base;
+                            @base = tmp;
+
+                            if (!ByteStorage.CheckRM(index, @base))
+                            {
+                                Error = new Error(ErrorType.WrongRegisterAtIndex, index);
+                                return;
+                            }
+                        }
+
+                        Storage.SetRM(index, @base, variable.Name.ParentLexeme.Offset);
                     }
                 }
 

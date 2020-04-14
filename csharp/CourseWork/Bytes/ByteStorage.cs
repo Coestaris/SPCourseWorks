@@ -71,15 +71,24 @@ namespace CourseWork.Bytes
                 ModRMSIB.RegisterCodes[reg.StringValue]);
         }
 
-        public void SetRM(Token sum1, Token sum2, int disp)
+        public static bool CheckRM(Token index, Token @base)
+        {
+            if (index.StringValue == "ESP")
+                return false;
+            if (@base.StringValue == "EBP")
+                return false;
+            return true;
+        }
+
+        public void SetRM(Token index, Token @base, int disp)
         {
             if (!ModRM.HasValue) ModRM = 0;
             if (!SIB.HasValue) SIB = 0;
 
             ModRM |= ModRMSIB.GetModRegRM(ModRMSIB.ModDisp32, 0, ModRMSIB.RmSIB);
             SIB |= ModRMSIB.GetSIB(0,
-                ModRMSIB.RegisterCodes[sum2.StringValue],
-                ModRMSIB.RegisterCodes[sum1.StringValue]);
+                ModRMSIB.RegisterCodes[index.StringValue],
+                ModRMSIB.RegisterCodes[@base.StringValue]);
             Disp = ModRMSIB.ToBytes32(disp);
         }
 
