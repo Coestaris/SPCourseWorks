@@ -20,20 +20,42 @@ REG_CODES = {
     "ebp": 0b101,
     "esi": 0b110,
     "edi": 0b111,
-    "al":  0b000,
-    "cl":  0b001,
-    "dl":  0b010,
-    "bl":  0b011,
-    "ah":  0b100,
-    "ch":  0b101,
-    "dh":  0b110,
-    "bh":  0b111,
+    "al": 0b000,
+    "cl": 0b001,
+    "dl": 0b010,
+    "bl": 0b011,
+    "ah": 0b100,
+    "ch": 0b101,
+    "dh": 0b110,
+    "bh": 0b111,
 }
 
 MOD_REG = 0b11
 MOD_MEM_PLUS_DISP8 = 0b01
 MOD_MEM_PLUS_DISP32 = 0b10
 RM_SIB = 0b100
+
+
+def int32tobytes(value: int) -> List[int]:
+    return [
+        (value >> 24) & 0xFF,
+        (value >> 16) & 0xFF,
+        (value >> 8) & 0xFF,
+        value & 0xFF,
+    ]
+
+
+def int16tobytes(value: int) -> List[int]:
+    return [
+        (value >> 8) & 0xFF,
+        value & 0xFF
+    ]
+
+
+def int8tobytes(value: int) -> List[int]:
+    return [
+        value & 0xFF
+    ]
 
 
 def get_modregrm(mod: int, reg: int, rm: int) -> int:
@@ -91,6 +113,16 @@ class InstructionBytes:
         self.modrm |= get_modregrm(MOD_REG, 0, REG_CODES[dest.string_value])
         return None
 
+    @staticmethod
+    def are_modrm_dest_mem_operands_ok(index: 'Token', base: 'Token') -> bool:
+        # Base != EBP
+        # Index != ESP
+        if index.string_value == "esp":
+            return False
+        if base.string_value == "ebp":
+            return False
+        return True
+
     def set_modrm_dest_mem(self, var: 'Token', op1: 'Token', op2: 'Token') -> Optional[Error]:
         if self.modrm == -1:
             self.modrm = 0
@@ -100,10 +132,20 @@ class InstructionBytes:
         if op2.string_value not in REG_CODES:
             return Error("UnknownRegister", op2)
 
+        index = op1
+        base = op2
+        if not InstructionBytes.are_modrm_dest_mem_operands_ok(index, base):
+            # Try to swap them and check again
+            tmp = index
+            index = base
+            base = tmp
+            if not InstructionBytes.are_modrm_dest_mem_operands_ok(index, base):
+                return Error("UsingIllegalRegistersInIndex", index)
+
         variable = next((x for x in var.lexeme.program.variables if x.name.string_value == var.string_value), None)
 
         self.modrm |= get_modregrm(MOD_MEM_PLUS_DISP32, 0, RM_SIB)
-        self.sib = get_sib(0, REG_CODES[op2.string_value], REG_CODES[op1.string_value])
+        self.sib = get_sib(0, REG_CODES[index.string_value], REG_CODES[base.string_value])
         self.disp = int32tobytes(variable.name.lexeme.offset)
         return None
 
@@ -164,25 +206,3 @@ class InstructionBytes:
             result += "".join([to_hex(x, 2) for x in self.imm]) + " "
 
         return result
-
-
-def int32tobytes(value: int) -> List[int]:
-    return [
-        (value >> 24) & 0xFF,
-        (value >> 16) & 0xFF,
-        (value >> 8) & 0xFF,
-        value & 0xFF,
-    ]
-
-
-def int16tobytes(value: int) -> List[int]:
-    return [
-        (value >> 8) & 0xFF,
-        value & 0xFF
-    ]
-
-
-def int8tobytes(value: int) -> List[int]:
-    return [
-        value & 0xFF
-    ]
