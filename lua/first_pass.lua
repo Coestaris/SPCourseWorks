@@ -2,63 +2,71 @@ local first_pass = {}
 
 local pretty = require("pl.pretty")
 
+local types = require("types")
 local common = require("common")
 local error = require("error")
 
 local split_characters = { "\t", " ", '\n', '[', ']', '.', ',', '*', '+', ':' } 
 
-local directives = { "SEGMENT", "ENDS", "ASSUME", "END", "DB", "DW", "DD", "DB" }
-local instructions = { "STC", "PUSH", "MOV", "ADC", "SUB", "XOR", "JMP", "JC", "CMP" }
-local registers_8 = { "AL", "BL", "DL", "CL", "AH", "CH", "DH", "BH" }
-local registers_16 = { "AX", "BX", "DX", "CX", "SI", "DI", "SP", "BP" }
-local registers_32 = { "EAX", "EBX", "EDX", "ECX", "ESI", "EDI", "ESP", "EBP" }
-local registers_seg = { "CS", "DS", "ES", "FS", "GS", "SS" }
-local symbols = { ":", ",", "+", "-", "[", "]" }
-
-local tt_directive = 0
-local tt_instruction = 1
-local tt_identifier = 2
-local tt_symbol = 3
-local tt_reg8 = 4 
-local tt_reg16 = 5 
-local tt_reg32 = 6 
-local tt_number16 = 7 
-local tt_number10 = 8 
-local tt_number2 = 9
-local tt_string = 10 
-local tt_dword = 11
-local tt_byte = 12 
-local tt_word = 13
-local tt_ptr = 14
-local tt_segment_reg = 15 
-
-local tt_to_name = {
-    [tt_directive] = "DIRECTIVE",
-    [tt_instruction] = "INSTRUCTION",
-    [tt_identifier] = "IDENTIFIER",
-    [tt_symbol] = "SYMBOL",
-    [tt_reg8] = "REG8",
-    [tt_reg16] = "REG16",
-    [tt_reg32] = "REG32",
-    [tt_number2] = "NUMBER2",
-    [tt_number10] = "NUMBER10",
-    [tt_number16] = "NUMBER16",
-    [tt_string] = "STRING",
-    [tt_dword] = "DWORD",
-    [tt_byte] = "BYTE",
-    [tt_word] = "WORD",
-    [tt_ptr] = "PTR",
-    [tt_segment_reg] = "REG_SEG",
-}
-
-local number16_re = "-?[0-9]+h"
-local number10_re = "^-?[0-9]+$"
-local number2_re = "^-?[01]+b$"
-local id_re = "^-?[a-z]\\w*$"
-
-
 local global_fn = ""
 local global_storage = {}
+
+local function create_structure()
+    structure = {}
+    
+    structure.name = -1
+    structure.instruction = -1
+    structure.operand1 = {}
+    structure.operand1.index = -1
+    structure.operand1.len = -1
+    structure.operand2 = {}
+    structure.operand2.index = -1
+    structure.operand2.len = -1
+
+    function structure.has_name(self)
+        return self.name ~= -1
+    end
+
+    function structure.has_instruction(self)
+        return self.instruction ~= -1
+    end
+
+    function structure.has_operands(self)
+        return self.operand1.index ~= -1
+    end
+
+    function structure.print(self)
+        local operands = ""
+        local instruction = ""
+        local name = ""
+
+        if self:has_name() then
+            name = "1"
+        else
+            name = "--"
+        end
+
+        if self:has_instruction() then
+            instruction = string.format("%d %d | ", self.instruction, 1)
+
+            if self:has_operands() then
+                operands = operands .. string.format("%d %d", 
+                    self.operand1.index,
+                    self.operand1.len)
+                
+                if self.operand2.index ~= -1 then
+                    operands = operands .. string.format(" | %d %d", 
+                        self.operand2.index,
+                        self.operand2.len)
+                end
+            end
+        end
+
+        print(string.format("struct: %s | %s %s", name, instruction, operands))
+    end
+
+    return structure
+end
 
 --
 -- Redeclare compiler and source errors for current file
@@ -148,82 +156,86 @@ local function tokenize_line(line)
     return tokens
 end
 
-local function is_number_hex(token)
-    local match = token:match(number16_re)
-    print(match)
-    return match == token
-end
-
-local function is_number_bin(token)
-    return false
-end
-
-local function is_number_dec(token)
-    return false
-end
-
-local function is_identifier(token)
-    return false
-end
-
 --
 --
 --
-local function get_token_type(token)
-    assert(type(token) == "string")
-    
-    if common.has_value(directives, token) then
-        return tt_directive
-    elseif common.has_value(instructions, token) then
-        return tt_instruction
-    elseif common.has_value(registers_8, token) then
-        return tt_reg8
-    elseif common.has_value(registers_16, token) then
-        return tt_reg16
-    elseif common.has_value(registers_32, token) then
-        return tt_reg32
-    elseif common.has_value(registers_seg, token) then
-        return tt_segment_reg
-    elseif common.has_value(symbols, token) then
-        return tt_symbol
-    else 
-        if is_number_hex(token) then
-            return tt_number16
-        elseif is_number_dec(token) then
-            return tt_number10
-        elseif is_number_bin(token) then
-            return tt_number2
-        elseif is_identifier(token) then
-            return tt_identifier
-        else
-            return -1
-        end
-    end
-end
-
---
---
---
-local function proceed_line(line, line_id, storage)
+local function proceed_line(line, line_id, storage, et1_print)
     assert(type(line) == "string")
     assert(type(storage) == "table")
+    assert(type(et1_print) == "boolean")
 
     local tokens = tokenize_line(line)
-    local types = {}
+    local token_types = {}
 
     local output = ""
 
     for i, v in ipairs(tokens) do
-        types[i] = get_token_type(v)
-        if types[i] == -1 then
+        local type = types.get_token_type(v)
+
+        if type == -1 then
             source_error(line_id, i, string.format("Unknown token type of token %q", v))
             return
         else
-            output = output .. string.format("(%q : %s)", v, tt_to_name[types[i]]) .. " | "
+            output = output .. string.format("(%q : %s)", v, types.get_name(type)) .. " | "
         end
+
+        token_types[#token_types + 1] = type
     end
      
-    print("tokens: " .. output)
+    if et1_print then
+        print("tokens: " .. output)
+    end
+    
+    return token_types, tokens
+end
+
+local function get_structure(token_types, tokens)
+    assert(type(token_types) == "table")
+    assert(type(tokens) == "table")
+
+    local structure = create_structure()
+    
+    if #token_types == 0 then
+        return structure
+    end
+
+    local counter = 1
+
+    if token_types[1] == types.tt_identifier then
+        structure.name = 1
+        counter = 2
+        if #tokens == 2 and tokens[2] == ":" then
+            counter = 3
+        end    
+    end
+
+    if token_types[counter] == types.tt_directive or token_types[counter] == types.tt_instruction then
+        structure.instruction = counter
+        counter = counter + 1
+    end
+
+    if #token_types == counter - 1 then
+        return structure
+    end
+
+    local coma_index = -1
+    for i = counter, #token_types do
+        if tokens[i] == "," then 
+            coma_index = i
+            break
+        end
+    end
+
+    structure.operand1.index = counter
+    if coma_index == -1 then
+        structure.operand1.len = #tokens - counter + 1
+    else
+        structure.operand1.len = coma_index - counter 
+        structure.operand2.index = coma_index + 1
+        structure.operand2.len = #tokens - coma_index
+    end
+
+    return structure
 end
 
 --
@@ -239,11 +251,19 @@ function first_pass.proceed(filename, storage, et1_print)
 
     local lines = read_lines(filename)
     for i, line in pairs(lines) do
-        print("source :" .. line)
-        proceed_line(line, i, storage)
-        print()
+
+        if et1_print then
+            print("source :" .. line)
+        end
+        
+        local token_types, tokens = proceed_line(line, i, storage, true)
+        local structure = get_structure(token_types, tokens)
+        
+        if et1_print then
+            structure:print()
+            print()
+        end
     end
-    
 end
 
 --

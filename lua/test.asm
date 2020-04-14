@@ -1,5 +1,5 @@
 Data SEGMENT
-    Var1 DB 12h
+    Var1 DB 012h
     Var2 DW 232
     Var3 DD 0001110b
     String DB "Test string"
@@ -22,6 +22,6 @@ label1:
     jc label2
 
 label2:
-    cmp ax, 32h
+    cmp ax, 032h
 Code ENDS
 END
