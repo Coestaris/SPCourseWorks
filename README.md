@@ -8,12 +8,13 @@
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Implemented solutions:
-* [C# Version](https://github.com/Coestaris/SPCourseWorks/tree/master/csharp) - Developed by [Coestaris](https://github.com/Coestaris)
-* [Python version](https://github.com/Coestaris/SPCourseWorks/tree/master/python) - Ported from C# version by [Coestaris](https://github.com/Coestaris)
-* [GO verison](https://github.com/Coestaris/SPCourseWorks/tree/master/go) - Proted from Python version by [h0tw4t3r](https://github.com/h0tw4t3r)
-* [C++ Version](https://github.com/Coestaris/SPCourseWorks/tree/master/cpp) - Developed by [iVanyaVas](https://github.com/iVanyaVas)
-* [Java Version](https://github.com/Coestaris/SPCourseWorks/tree/master/java) - Developed by [Leshik_XXL](https://github.com/leshik-xxl)
-* [C Version](https://github.com/Coestaris/SPCourseWorks/tree/master/c) - Developed by [Coestaris](https://github.com/Coestaris)
+* [C# Version](https://github.com/Coestaris/SPCourseWorks/tree/master/csharp) (4 - Second Pass) - Developed by [Coestaris](https://github.com/Coestaris)
+* [Python version](https://github.com/Coestaris/SPCourseWorks/tree/master/python) (4 - Second Pass) - Ported from C# version by [Coestaris](https://github.com/Coestaris)
+* [GO verison](https://github.com/Coestaris/SPCourseWorks/tree/master/go) (3 - First Pass) - Proted from Python version by [h0tw4t3r](https://github.com/h0tw4t3r)
+* [C++ Version](https://github.com/Coestaris/SPCourseWorks/tree/master/cpp) (3 - First Pass) - Developed by [iVanyaVas](https://github.com/iVanyaVas)
+* [Java Version](https://github.com/Coestaris/SPCourseWorks/tree/master/java) (3 - First Pass) - Developed by [Leshik_XXL](https://github.com/leshik-xxl)
+* [C Version](https://github.com/Coestaris/SPCourseWorks/tree/master/c) (4 - Second Pass) - Developed by [Coestaris](https://github.com/Coestaris)
+* [LUA Version](https://github.com/Coestaris/SPCourseWorks/tree/master/c) (2 - Tokenizing pass) - Developed by [Coestaris](https://github.com/Coestaris)
 
 You can contribute your implementation to make this world better ❤️
 
