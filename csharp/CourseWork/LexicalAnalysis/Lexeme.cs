@@ -434,6 +434,7 @@ namespace CourseWork.LexicalAnalysis
                     if (!far && !forward)
                         return 2;
 
+                    //4 disp + opcode + prefix
                     return 6;
                 }
 

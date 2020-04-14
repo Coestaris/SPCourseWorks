@@ -70,6 +70,7 @@ namespace CourseWork.LexicalAnalysis
 
             { "movsb",   TokenType.Instruction },
             { "pop",     TokenType.Instruction },
+            { "push",     TokenType.Instruction },
             { "dec",     TokenType.Instruction },
             { "add",     TokenType.Instruction },
             { "cmp",     TokenType.Instruction },

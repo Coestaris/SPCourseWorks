@@ -28,6 +28,12 @@ namespace CourseWork.DataStructures
 
             new InstructionInfo
             {
+                Name = "push", OpCode1 = 0x50, AllowedTypes = new List<OperandType> {OperandType.Register32},
+                PackedRegister = true,
+            },
+
+            new InstructionInfo
+            {
                 Name = "pop", OpCode1 = 0x58, AllowedTypes = new List<OperandType> {OperandType.Register32},
                 PackedRegister = true,
             },
@@ -66,6 +72,18 @@ namespace CourseWork.DataStructures
             {
                 Name = "cmp", OpCode1 = 0x3B, AllowedTypes = new List<OperandType> {OperandType.Register32, OperandType.IndexedName32},
                 HasModRM = true, SourceIndex = 1,
+            },
+
+            new InstructionInfo
+            {
+                Name = "cmp", OpCode1 = 0x38, AllowedTypes = new List<OperandType> {OperandType.IndexedName8, OperandType.Register8},
+                HasModRM = true, SourceIndex = 0,
+            },
+
+            new InstructionInfo
+            {
+                Name = "cmp", OpCode1 = 0x39, AllowedTypes = new List<OperandType> {OperandType.IndexedName32, OperandType.Register32},
+                HasModRM = true, SourceIndex = 0,
             },
 
             new InstructionInfo
