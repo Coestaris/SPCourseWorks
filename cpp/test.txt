@@ -1,3 +1,4 @@
+Test:
 DATA1 SEGMENT
     P3 db 10010b
     PSTR db "New String"
@@ -5,10 +6,10 @@ DATA1 SEGMENT
     P2 dw 0ABh
     P4 dw 1b
     MACROP dw 1b
-DATA1 Ends
+DATA1 ENDS
 
 NOPAR MACRO
-    mov si,10
+	mov si,10
 endm
 
 WITHPAR MACRO VARIABLE
@@ -17,6 +18,7 @@ WITHPAR MACRO VARIABLE
 endm
 
 CODE SEGMENT
+   neg byte ptr [bp+si]
 METKA1:
     mov ax, 12h
     mov di, 2h
@@ -24,7 +26,7 @@ METKA1:
     inc ax
     NOPAR
     neg word ptr[bx+di]
-    aas 
+    aas
     or byte ptr GS:[bx+si],2
     bt di, ax
     cmp word ptr [bx+di],ax
@@ -37,6 +39,10 @@ METKA1:
     cmp word ptr [bx+si], dx
     jl METKA1
 METKA2:
-
+   cmp ax,[bx+si]
+   inc word ptr [bp+di]
 CODE ENDS
 END
+
+
+

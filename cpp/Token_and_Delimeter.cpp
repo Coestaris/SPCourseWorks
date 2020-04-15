@@ -176,6 +176,8 @@ void setupTokenTypeDict()
 	keyword["ends"] = EndsKeyword;
 	keyword["ax"] = Register16;
 	keyword["bx"] = Register16;
+	keyword["bp"] = Register16;
+	keyword["sp"] = Register16;
 	keyword["cx"] = Register16;
 	keyword["dx"] = Register16;
 	keyword["si"] = Register16;
@@ -345,6 +347,18 @@ void lexemeCreate(int line)
 		//needs to add a reiteration check of the segment names
 
 	}
+	if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][1].type == DbDirective)
+	{
+		lexems[line].hasName = true;
+	}
+	if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][1].type == DdDirective)
+	{
+		lexems[line].hasName = true;
+	}
+	if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][1].type == DwDirective)
+	{
+		lexems[line].hasName = true;
+	}
 	if (vectorOfTokens[line].size() == 2 && vectorOfTokens[line][0].type == Identifier &&
 		vectorOfTokens[line][1].token == ":")
 	{
@@ -364,7 +378,7 @@ void lexemeCreate(int line)
 		m.start = line;
 		m.start = line;
 
-		lexems[line].hasLabel = true;
+		lexems[line].hasName = true;
 		//lexems[line].hasMacro = true;
 
 		if (vectorOfTokens[line].size() != 2) // has parameters
@@ -386,153 +400,67 @@ void lexemeCreate(int line)
 	determineStructure(line);
 }
 
+bool instructionCheck(int offset, int line)
+{
+	for (int i = 0; i <= 10; i++)
+	{
+		if (vectorOfTokens[line][offset].type == instructionType[i])
+		{
+			return true;
+		}
+	}
+	return false;
+}
 // Determining tokens structure =3
 void determineStructure(int line)
 {
-	//has label
-	if (lexems[line].hasLabel)
+	int offset = 0;
+	if (lexems[line].hasName)
 	{
-		//lexems[line].hasName = true;
-		lexems[line].offset += 2;
-		if (vectorOfTokens[line].size() <= lexems[line].offset)
-		{
-			int counter = 0;
-			lexems[line].hasLabel = true;
-
-			if (vectorOfTokens[line].size() == 2 && vectorOfTokens[line][1].type ==
-				MacroKeyword)// check for MACRO instruction (macro init with no parameters)
-			{
-				lexems[line].hasInstruction = true;
-				lexems[line].instrIndex = 1;
-				return;
-			}
-
-			else
-			{
-				lexems[line].hasInstruction = false;
-				lexems[line].hasOperands = false;
-			}
-			return;
-		}
+		offset += 1;
 	}
-	if (vectorOfTokens[line].size() == 1 && vectorOfTokens[line][0].type == Identifier)
+	else if(lexems[line].hasLabel)
 	{
-		vectorOfTokens[line][0].type = MacroName;
-		lexems[line].hasLabel = false;
-		lexems[line].hasName = false;
-		lexems[line].hasInstruction = true;
-		lexems[line].instrIndex = 0;
-		lexems[line].hasOperands = false;
+		offset += 2;
+	}
+	if (vectorOfTokens[line].size() == offset)
+	{
 		return;
 	}
-	if (vectorOfTokens[line].size() == 2 && vectorOfTokens[line][0].type == Identifier && (vectorOfTokens[line][1].type == Register16 ||
-		vectorOfTokens[line][1].type ==
-		Register8))  // labels check for MACRO instruction (macro call)
-	{
-		vectorOfTokens[line][0].type = MacroName;
-		lexems[line].hasLabel = false;
-		lexems[line].hasName = false;
-		lexems[line].hasInstruction = true;
-		lexems[line].instrIndex = 0;
-		lexems[line].hasOperands = true;
-		lexems[line].operandIndices[1] = 1;
-		lexems[line].operandLengths[1] = 1;
-		return;
-	}
-	if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][0].type == MacroName &&
-		vectorOfTokens[line][1].type == MacroKeyword &&
-		vectorOfTokens[line][2].type == Identifier)//// check for MACRO instruction (macro init with 1 parameters)
-	{
-		// vectorOfTokens[line][0].type = MacroName;
-		lexems[line].hasInstruction = true;
-		lexems[line].instrIndex = 1;
-		lexems[line].hasOperands = true;
-		lexems[line].operandIndices[1] = 2;
-		lexems[line].operandLengths[1] = 1;
-		return;
-	}
-
-
-	int flag = 0;
-	//has name
-	if (vectorOfTokens[line][0].type == UserSegment && vectorOfTokens[line][1].type == EndsKeyword)
+	if (instructionCheck(offset, line))
 	{
 		lexems[line].hasInstruction = true;
-		lexems[line].instrIndex = 1;
-		lexems[line].hasOperands = false;
-		return;
-
+		lexems[line].instrIndex = offset;
 	}
-	if (vectorOfTokens[line][0].type == Identifier || vectorOfTokens[line][0].type == UserSegment)
+	else return;
+	offset += 1;
+	if (vectorOfTokens[line].size() == offset) return;
+	int comaposition = -1;
+	for (int i = offset; i<vectorOfTokens[line].size(); i++)
 	{
-		lexems[line].hasName = true;
-		lexems[line].offset += 1;
-
-	}
-	// instruction check
-	for (int i = 0; i <= 10; i++)
-	{
-		if (vectorOfTokens[line].size() == 1 && vectorOfTokens[line][0].type == Identifier)
+		if (vectorOfTokens[line][i].token == ",")
 		{
-			vectorOfTokens[line][0].type = MacroName;
-			lexems[line].hasInstruction = true;
-			flag = 1;
-			break;
-		}
-		if (vectorOfTokens[line][lexems[line].offset].type == instructionType[i])
-		{
-			lexems[line].hasInstruction = true;
-			flag = 1;
-			break;
+			comaposition = i;
 		}
 	}
-	//flag for instruction check
-	if (flag == 0)
+	lexems[line].hasOperands = true;
+	lexems[line].numberOfOperands = 1;
+	lexems[line].operandIndices[1] = offset;
+
+	if (comaposition != -1)
 	{
-		lexems[line].hasInstruction = false;
-		lexems[line].hasOperands = false;
-		return;
+		lexems[line].operandLengths[1] = comaposition - offset;
+		lexems[line].numberOfOperands = 2;
+		lexems[line].operandIndices[2] = comaposition+1;
+		lexems[line].operandLengths[2] = vectorOfTokens[line].size() - comaposition -1;
 	}
-	//if we have an instruction
-	else
-	{
-		lexems[line].instrIndex = lexems[line].offset;
+	else lexems[line].operandLengths[1] = vectorOfTokens[line].size() - offset ;
 
-		if (vectorOfTokens[line].size() <= lexems[line].offset + 1)
-		{
-			lexems[line].hasOperands = false;
-			return;
-		}
-		//if we have operands
-		else
-		{
-			lexems[line].offset += 1;
-			lexems[line].hasOperands = true;
+	
 
-			lexems[line].operandIndices[1] = (lexems[line].offset);
-			lexems[line].operandLengths[line] = 0;
-
-			vector<end_token>::iterator itr;
-			int i = (lexems[line].offset);
-
-			for (int j = i; j < vectorOfTokens[line].size(); j++)
-			{
-				if (vectorOfTokens[line][j].type == Symbol && vectorOfTokens[line][j].token == ",")
-				{
-					lexems[line].operandIndices[2] = lexems[line].operandLengths[lexems[line].numberOfOperands + 1] +
-						lexems[line].numberOfOperands + 1 + i;
-					lexems[line].numberOfOperands += 1;
-				}
-				else
-				{
-					lexems[line].operandLengths[lexems[line].numberOfOperands + 1] += 1;
-				}
-			}
-
-			return;
-		}
-	}
 }
+
+
 
 // Call cycle to create lexemes for each lines of tokens
 void proceedTokens()
@@ -614,12 +542,12 @@ void printTokenList()
 		cout << "TRANSCRIPT:(name field | mnemo | operand1| operand2|)" << "\n\n";
 		cout << "LEXEM:  ";
 		if (lexems[i].hasName || lexems[i].hasLabel) cout << "|" << "0" << "| ";
-		if (!lexems[i].hasName && !lexems[i].hasLabel) cout << "|" << "---" << "|";
+		else  cout << "|" << "---" << "|";
 		if (lexems[i].hasInstruction) cout << " " << lexems[i].instrIndex << " " << "1" << " | ";
-		if (!lexems[i].hasInstruction) cout << "|" << "---" << "|";
+		else  cout << "|" << "---" << "|";
 		if (lexems[i].hasOperands)
 		{
-			for (int k = 0; k <= lexems[i].numberOfOperands; k++)
+			for (int k = 0; k < lexems[i].numberOfOperands; k++)
 			{
 				cout << "  " << lexems[i].operandIndices[1 + k] << " " << lexems[i].operandLengths[1 + k] << " | ";
 			}

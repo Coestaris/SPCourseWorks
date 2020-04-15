@@ -145,6 +145,10 @@ void printLexemeList()
 		{
 			cout << "   ---- M ---  ";
 		}
+		else if (lexems[l].has_error)
+		{
+			cout << "ERROR \t     ";
+		}
 		else
 		{
 			if (currSegment)
@@ -247,8 +251,8 @@ void printLexemeList()
 		{
 			//label
 			type = "Near";
-			UserName* segment = getUserName(NT_Segment, name->begin);
-			value = segment->token.token + ":" + padTo(lexems[name->begin].offset, 4, '0', true);
+			//UserName* segment = getUserName(NT_Segment, name->begin);
+			value = "code:" + padTo(lexems[name->begin].offset, 4, '0', true);
 		}
 
 		cout
@@ -322,7 +326,7 @@ void analyzeOperandTypes()
 
 		const vector<end_token>& vector = vectorOfTokens[l];
 
-		for (int op = 0; op < lexems[l].numberOfOperands + 1; op++)
+		for (int op = 0; op < lexems[l].numberOfOperands; op++)
 		{
 			// Vector of tokens in current operand
 			int index = lexems[l].operandIndices[op + 1];
@@ -471,7 +475,7 @@ static bool check_parameters(Lexem& l, const end_token& token, initializer_list<
 	}
 	else
 	{
-		if (l.numberOfOperands + 1 != list.size())
+		if (l.numberOfOperands != list.size())
 		{
 			l.SetError("Wrong parameter count", token);
 			return false;
