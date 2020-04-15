@@ -19,13 +19,13 @@ import asmbytes
 #               CMP r8,    r/m8    3A      /r
 #               CMP r32,   r/m32   3B      /r
 # shl mem,reg
-#   [NOT USED]  SHL r/m8,  CL      D2      /4
+#               SHL r/m8,  CL      D2      /4
 #               SHL r/m32, CL      D3      /4
 # in reg,imm
 #               IN AL,     imm8    E4      ib
 #               IN EAX,    imm8    E5      ib
 # add mem,imm
-#   [NOT USED]  ADD r/m8,  imm8    80      /0 ib
+#               ADD r/m8,  imm8    80      /0 ib
 #               ADD r/m32, imm32   81      /0 id
 #               ADD r/m32, imm8    83      /0 ib
 # jnz label

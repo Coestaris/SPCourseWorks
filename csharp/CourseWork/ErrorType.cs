@@ -23,6 +23,7 @@
         UndefinedReference,
         UnexpectedToken,
         VariableExpected,
-        Register32Expected
+        Register32Expected,
+        WrongRegisterAtIndex
     }
 }

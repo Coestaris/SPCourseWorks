@@ -4,6 +4,7 @@ local pretty = require("pl.pretty")
 local error = require("error")
 local asm_storage = require("asmstorage")
 
+local first_pass = require("first_pass")
 
 -- Input file name
 local filename = "test.asm"
@@ -17,15 +18,12 @@ local function comp_error(msg)
     error.comp_error("main.lua", msg) 
 end
 
-local function source_error(line, char, msg) 
-    error.error(filename, line, char, msg)
-    table.insert(asm_storage.error_lines, line) 
-end
-
 --
 -- Returns true if file exists and accessible
 --
 local function is_file_exists(file)
+    assert(type(file) == "string")
+
     local f = io.open(file, "rb")
     if f then f:close() end
     return f ~= nil
@@ -35,6 +33,11 @@ end
 -- Main compiler routine
 --
 local function main()
+    if not is_file_exists(filename) then
+        comp_error(string.format("Unable to open file %q", filename))
+    end
+
+    first_pass.proceed(filename, asm_storage, true)
 end
 
 main()

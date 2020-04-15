@@ -710,6 +710,19 @@ void l_get_bytes(lexeme_t* lexeme, void* assembly_ptr)
          struct operand* rm = &lexeme->operands_info[lexeme->info->modrm_index];
          if(rm->type == OT_MEM || rm->type == OT_MEM8 || rm->type == OT_MEM32)
          {
+            // Base != EBP
+            // Index != ESP
+            if(!strcmp(rm->index->string, "ESP"))
+            {
+               T_SE(lexeme, "Index field cant be ESP register", 0);
+               return;
+            }
+            if(!strcmp(rm->base->string, "EBP"))
+            {
+               T_SE(lexeme, "Base field cant be EBP register", 0);
+               return;
+            }
+
             // MEM
             c_set_rm_m(&lexeme->data, rm->base, rm->index, rm->scale, rm->disp);
          }
