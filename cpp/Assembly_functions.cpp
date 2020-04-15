@@ -673,22 +673,22 @@ void calculateSize()
 					size = 1; // Just Opcode. Destination stored in opcode
 			}
 			else if (instruction.token == "neg") {
-				size = 3; // OPCODE + MORM + SIB
+				size = 2; // OPCODE + MORM 
 			}
 			else if (instruction.token == "bt") {
-				size = 3; // EXP PREF + MODRM + SIB
+				size = 3; // EXP PREF +OPCODE + MODRM   //there no SIB because of 16 build of processing 
 			}
 			else if (instruction.token == "and") {
-				size = 3; // OPCODE + MORM + SIB
+				size = 2; // OPCODE + MORM //there no SIB because of 16 build of processing 
 			}
 			else if (instruction.token == "cmp") {
-				size = 3; // OPCODE + MORM + SIB
+				size = 2; // OPCODE + MORM //there no SIB because of 16 build of processing 
 			}
 			else if (instruction.token == "mov") {
 				size = 3; // OPCODE (With packed register) + CONST16
 			}
 			else if (instruction.token == "or") {
-				size = 3; // OPCODE + MODRM + SIB
+				size = 2; // OPCODE + MODRM //there no SIB because of 16 build of processing 
 
 				// CONST SIZE
 				if (op2 == OT_Const8)
@@ -700,8 +700,8 @@ void calculateSize()
 				if (op1 == OT_LabelBack)
 					size = 2; // OPCODE + OFFSET
 				else
-					size = 6; // OPCODE + OFFSET + 
-					// + (possible 4 bytes for EXP PREFIX and far jump. Thats what TASM and MASM do, Idk...)
+					size = 4; // OPCODE + OFFSET + 
+					// + (possible 2 bytes for EXP PREFIX and far jump. Thats what TASM and MASM do, Idk...) because of 16 build of procesiing
 			}
 
 			if (lexems[l].has_segment_prefix)
