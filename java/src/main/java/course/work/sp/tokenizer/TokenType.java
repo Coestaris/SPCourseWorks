@@ -1,4 +1,4 @@
-package course.work.sp;
+package course.work.sp.tokenizer;
 
 public enum TokenType {
     DbDir,
@@ -50,4 +50,12 @@ public enum TokenType {
     Imm32,
 
     Unknown,
+
+    DS,
+    CS,
+    SS,
+    ES,
+    GS,
+    FS
+
 }

@@ -1,5 +1,8 @@
 package course.work.sp;
 
+import course.work.sp.tokenizer.Token;
+import course.work.sp.tokenizer.TokenType;
+
 import java.util.List;
 
 public class Identifier {
@@ -8,6 +11,7 @@ public class Identifier {
     public int offset = 0;
     public String token;
     public TokenType identifier;
+
     public Identifier(int index, List<Token> identifier){
         token = identifier.get(0).stringToken;
         this.index = index;

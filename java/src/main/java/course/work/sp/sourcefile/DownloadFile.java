@@ -1,4 +1,4 @@
-package course.work.sp;
+package course.work.sp.sourcefile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

@@ -1,5 +1,9 @@
 package course.work.sp;
 
+import course.work.sp.lexicalAndSyntaxisAnalysis.FileParser;
+import course.work.sp.tokenizer.Token;
+import course.work.sp.tokenizer.TokenType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,34 +38,34 @@ public class Instruction {
 
        if(token != null)
         switch (token){
-            case ( "STC"):
+            case ( "STC" ):
                 stc(operands);
                 break;
-            case ( "PUSH"):
+            case ( "PUSH" ):
                 push(operands);
                 break;
-            case ( "MOV"):
+            case ( "MOV" ):
                 mov(operands);
                 break;
-            case ( "SUB"):
+            case ( "SUB" ):
                 sub(operands);
                 break;
-            case ( "MUL"):
+            case ( "MUL" ):
                 mul(operands);
                 break;
-            case ( "XOR"):
+            case ( "XOR" ):
                 xor(operands);
                 break;
-            case ( "BTR"):
+            case ( "BTR" ):
                 btr(operands);
                 break;
-            case ( "ADC"):
+            case ( "ADC" ):
                 adc(operands);
                 break;
-            case ( "JMP"):
+            case ( "JMP" ):
                 jmp(operands);
                 break;
-            case ( "JNC"):
+            case ( "JNC" ):
                 jnc(operands);
                 break;
             default:
@@ -393,8 +397,6 @@ public class Instruction {
         }
         Error = !isFind;
     }
-
-
 
     public String toString() {
         return "Offset " + String.format("%08X", offset) + " |Index " + String.format("%02d", index) + " |Name " + token  + "\n";

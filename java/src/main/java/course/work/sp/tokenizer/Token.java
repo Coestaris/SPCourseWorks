@@ -1,4 +1,4 @@
-package course.work.sp;
+package course.work.sp.tokenizer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 
 public class Token {
 
-    public static final Map<String, TokenType> NAME_TO_TOKEN_TYPE_MAP;
+    private static final Map<String, TokenType> NAME_TO_TOKEN_TYPE_MAP;
     static {
-        NAME_TO_TOKEN_TYPE_MAP = new HashMap<String, TokenType>();
+        NAME_TO_TOKEN_TYPE_MAP = new HashMap<>();
         NAME_TO_TOKEN_TYPE_MAP.put("SEGMENT", TokenType.SegmentWord);
         NAME_TO_TOKEN_TYPE_MAP.put("DB", TokenType.DbDir);
         NAME_TO_TOKEN_TYPE_MAP.put("DW", TokenType.DwDir);
@@ -47,26 +47,49 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("AX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("DI", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("BP", TokenType.Reg16);
-        NAME_TO_TOKEN_TYPE_MAP.put("ES", TokenType.SegmentRegister);
-        NAME_TO_TOKEN_TYPE_MAP.put("CS", TokenType.SegmentRegister);
-        NAME_TO_TOKEN_TYPE_MAP.put("DS", TokenType.SegmentRegister);
-        NAME_TO_TOKEN_TYPE_MAP.put("FS", TokenType.SegmentRegister);
-        NAME_TO_TOKEN_TYPE_MAP.put("SS", TokenType.SegmentRegister);
-        NAME_TO_TOKEN_TYPE_MAP.put("GS", TokenType.SegmentRegister);
+        NAME_TO_TOKEN_TYPE_MAP.put("ES:", TokenType.SegmentRegister);
+        NAME_TO_TOKEN_TYPE_MAP.put("CS:", TokenType.SegmentRegister);
+        NAME_TO_TOKEN_TYPE_MAP.put("DS:", TokenType.SegmentRegister);
+        NAME_TO_TOKEN_TYPE_MAP.put("FS:", TokenType.SegmentRegister);
+        NAME_TO_TOKEN_TYPE_MAP.put("SS:", TokenType.SegmentRegister);
+        NAME_TO_TOKEN_TYPE_MAP.put("GS:", TokenType.SegmentRegister);
     }
 
-    private static Pattern numberHexRegex = Pattern.compile("^[0-9A-F]+H$");
-    private static Pattern numberDecRegex = Pattern.compile("^[0-9]+$");
-    private static Pattern numberBinRegex = Pattern.compile("^[01]+B$");
-    private static Pattern identifierRegex = Pattern.compile("^[A-Z]\\w*$");
+    private static final Pattern numberHexRegex = Pattern.compile("^[0-9A-F]+H$");
+    private static final Pattern numberDecRegex = Pattern.compile("^[0-9]+$");
+    private static final Pattern numberBinRegex = Pattern.compile("^[01]+B$");
+    private static final Pattern identifierRegex = Pattern.compile("^[A-Z]\\w*$");
+    private static final Pattern labelRegex = Pattern.compile("^[A-Z]\\w*+:$");
 
     public TokenType type;
     public String stringToken;
+
+    public TokenType getType() {
+        return type;
+    }
+
+    public void setType(TokenType type) {
+        this.type = type;
+    }
+
+    public String getStringToken() {
+        return stringToken;
+    }
+
+    public void setStringToken(String stringToken) {
+        this.stringToken = stringToken;
+    }
+
+    public Token(){
+        type = TokenType.Unknown;
+    }
 
     public Token(String string) {
         stringToken = string;
         if (NAME_TO_TOKEN_TYPE_MAP.containsKey(string)) {
             type = NAME_TO_TOKEN_TYPE_MAP.get(string);
+            if(type == TokenType.SegmentRegister)
+                stringToken = string.substring(0, string.length() - 1);
         } else if (numberHexRegex.matcher(string).matches()) {
             type = TokenType.HexNumber;
         } else if (numberDecRegex.matcher(string).matches()) {
@@ -75,6 +98,9 @@ public class Token {
             type = TokenType.BinNumber;
         } else if (identifierRegex.matcher(string).matches()) {
             type = TokenType.Identifier;
+        } else if (labelRegex.matcher(string).matches()) {
+            type = TokenType.Label;
+            stringToken = string.substring(0, string.length() - 1);
         } else if (string.trim().startsWith("\"") && string.trim().endsWith("\"")) {
             type = TokenType.Text;
         }else {
@@ -85,6 +111,9 @@ public class Token {
             stringToken = string.substring(1, string.length() - 1);
     }
 
+    public boolean equals(TokenType type) {
+        return type == this.type;
+    }
 
     @Override
     public String toString() {

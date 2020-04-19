@@ -1,15 +1,17 @@
 package course.work.sp;
 
+import course.work.sp.tokenizer.Token;
+import course.work.sp.tokenizer.TokenType;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class FileParser {
 
-    private static void createToken(List<Token> arrayToken, String string) {
-        string = string.trim();
-        if (!string.isEmpty()) {
-            arrayToken.add(new Token(string));
-        }
+    public static List<NewSentence> newFileParser(String filePath) {
+        List<NewSentence> newSentenceList = new ArrayList<>();
+        //TODO
+        return newSentenceList;
     }
 
     public static List<List<Token>> fileParser(String filePath) {
@@ -39,11 +41,18 @@ public class FileParser {
         return fileToken;
     }
 
+    private static void createToken(List<Token> arrayToken, String string) {
+        string = string.trim();
+        if (!string.isEmpty()) {
+            arrayToken.add(new Token(string));
+        }
+    }
+
     public static boolean contains(char ch) {
         return ch == ' ' || ch == '[' || ch == ']' || ch == '+' || ch == ',' || ch == ':';
     }
 
-    public static void lexicalAnalysis(List<List<Token>> fileToken/*, String [] line*/, int lineNumber) {
+    public static void lexicalAnalysis(List<List<Token>> fileToken, int lineNumber) {
         if(fileToken != null) {
             //for(int lineNumber = 0; lineNumber < fileToken.size(); lineNumber++) {
                 //System.out.println(line[lineNumber]);
@@ -62,7 +71,7 @@ public class FileParser {
         //}
     }
 
-    public static void syntaxAnalysis(List<List<Token>> fileToken/*,  String [] line*/, int lineNumber) {
+    public static void syntaxAnalysis(List<List<Token>> fileToken, int lineNumber) {
         boolean isMnemCode = false;
         if(fileToken != null) {
             //for(int lineNumber = 0; lineNumber < fileToken.size(); lineNumber++){
@@ -113,13 +122,10 @@ public class FileParser {
         }
     }
 
-    public static void LexicalAndSyntaxAnalysis(String filePath){
-        print(filePath, fileParser(filePath));
-    }
 
-    public static void print(String filePath, List<List<Token>> fileToken){
+    public static void LexicalAndSyntaxAnalysis(String filePath){
+        List<List<Token>> fileToken = FileParser.fileParser(filePath);
         String file = DownloadFile.downloadFile(filePath);
-        file = file.toUpperCase();
         String[] line = file.split("\n");
         for (int i = 0; i < line.length; i++){
             System.out.println("Source: " + line[i]);

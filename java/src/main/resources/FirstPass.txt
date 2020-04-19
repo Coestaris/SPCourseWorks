@@ -8,41 +8,37 @@ Index|  Offset |  Source
  06    0000000D   
  07    0000000D   DATA ENDS
  08    00000000   
- 09    00000000   MOV DX, SI  Error
- 10    00000000   LABEL3:  Error
- 11    00000000   DEC2    DW  12  Error
- 12    00000000   ASSUME CS:CODE, DS:DATA
- 13    00000000   CODE SEGMENT
- 14    00000000   
- 15    00000000   LABLE1:
- 16    00000000       STC
- 17    00000001       PUSH EBX
- 18    00000002       JMP LABLE2
- 19    00000007       JNC LABLE2
- 20    0000000D       MOV DX, SI
- 21    00000010       MUL DWORD PTR[EDX+ESI+2]
- 22    00000014       XOR ECX, DS:BIN2
- 23    0000001A       BTR ES:DEC2[BX+DI+1], AX
- 24    00000022       SUB EBX, 07
- 25    00000025       ADC BYTE PTR[BP+SI+8], 05
- 26    0000002A       JNC LABLE1
- 27    0000002C       JMP LABLE1
- 28    0000002E       JNE LABEL2  Error
- 29    0000002E       XOR ECX,[BP+SI]  Error
- 30    0000002E       SBB AL,89H  Error
- 31    0000002E   LABLE2:
- 32    0000002E   
- 33    0000002E   CODE ENDS
- 34    00000000   END
+ 09    00000000   ASSUME CS:CODE, DS:DATA, SS:LOL
+ 10    00000000   CODE SEGMENT
+ 11    00000000   
+ 12    00000000   LABLE1:
+ 13    00000000       STC
+ 14    00000001       PUSH EBX
+ 15    00000002       JMP LABLE2
+ 16    00000007       JNC LABLE2
+ 17    0000000D       MOV DX, SI
+ 18    00000010       MUL DWORD PTR[EDX+ESI+2]
+ 19    00000014       XOR ECX, DS:BIN2
+ 20    0000001A       BTR ES:DEC2[BX+DI+1], AX
+ 21    00000022       SUB EBX, 07
+ 22    00000025       ADC BYTE PTR[BP+SI+8], 05
+ 23    0000002A       JNC LABLE1
+ 24    0000002C       JMP LABLE1
+ 25    0000002E       JNE LABEL2  Error
+ 26    0000002E       XOR ECX,[BP+SI]  Error
+ 27    0000002E       SBB AL,89H  Error
+ 28    0000002E   LABLE2:
+ 29    0000002E   
+ 30    0000002E   CODE ENDS
+ 31    00000000   END
 
 Segment Register | Destination
-------------------------------
-DS               | DATA
-CS               | CODE
-SS               | Nothing
-ES               | Nothing
-GS               | Nothing
-FS               | Nothing
+DS    DATA
+CS    CODE
+ES    Nothing
+SS    LOL
+FS    Nothing
+GS    Nothing
 
 Segment name | Bit Depth | Size 
 DATA  32   0000000D
@@ -53,7 +49,5 @@ HEX1 | Dd | DATA | 00000000
 DEC2 | Dw | DATA | 00000001
 BIN2 | Dd | DATA | 00000003
 TXT3 | Dd | DATA | 00000007
-LABEL3 | Label | CODE | 00000000
-DEC2 | Dw | CODE | 00000000
 LABLE1 | Label | CODE | 00000000
 LABLE2 | Label | CODE | 0000002E

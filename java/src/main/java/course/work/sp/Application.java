@@ -1,24 +1,27 @@
 package course.work.sp;
 
-import java.util.ArrayList;
-import java.util.List;
+import course.work.sp.fileparser.NewFileParser;
+import course.work.sp.fileparser.NewSentence;
+import course.work.sp.lexicalAndSyntaxisAnalysis.FileParser;
 
 public class Application {
     public static String getFilepath(){
         return  "D:\\LAB\\SP\\CourseWork\\start.asm";
-        // return "D:\\Repos\\sp_kurs\\java\\src\\main\\resources\\testFile.asm";
+         //return "D:\\Repos\\sp_kurs\\java\\src\\main\\resources\\testFile.asm";
     }
 
     public static void main(String[] args) {
-        String filePath = getFilepath();
+        //String filePath = getFilepath();
         //filePath = "D:\\LAB\\SP\\CourseWork\\start.asm";
         //filePath = "D:\\LAB\\SP\\CourseWork\\start.asm";
         //FileParser.LexicalAndSyntaxAnalysis(filePath);
         //FirstPass.SegmentDestination(FileParser.fileParser(filePath));
         //FirstPass.firstPass(FileParser.fileParser(filePath), filePath);
+        for (NewSentence nw: NewFileParser.newFileParser(getFilepath()))
+            System.out.println(nw.toString());
 
        // FirstPass.TableOfInstructionAndIdentifier();
-        FirstPass.print();
-
+        //FirstPass.print();
+        //NewFileParser.newFileParser(getFilepath());
     }
 }

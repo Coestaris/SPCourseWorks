@@ -1,7 +1,10 @@
 package course.work.sp;
 
-import com.sun.corba.se.impl.oa.toa.TOA;
-import com.sun.javafx.logging.JFRInputEvent;
+import course.work.sp.lexicalAndSyntaxisAnalysis.FileParser;
+import course.work.sp.segmentRegister.SegmentRegisterStorage;
+import course.work.sp.sourcefile.DownloadFile;
+import course.work.sp.tokenizer.Token;
+import course.work.sp.tokenizer.TokenType;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,69 +14,8 @@ import java.util.List;
 public class FirstPass {
 
     public static String SegmentDestination(List<List<Token>> fileToken) {
-        boolean isAssume = false;
-        List<List<Token>> operand = new ArrayList<>();
-        for (List<Token> tokens : fileToken) {
-            for (int tokenNumber = 0; tokenNumber < tokens.size(); tokenNumber++) {
-                if (tokens.get(tokenNumber).type == TokenType.KeyWord) {
-                    operand = new ArrayList<>();
-                    List<Token> arrayOperand = new ArrayList<>();
-                    for (int numberOfOperands = tokenNumber + 1; numberOfOperands < tokens.size(); numberOfOperands++) {
-                        if (tokens.get(numberOfOperands).type != TokenType.Comma) {
-                            arrayOperand.add(tokens.get(numberOfOperands));
-                        } else {
-                            operand.add(arrayOperand);
-                            arrayOperand = new ArrayList<>();
-                        }
-                    }
-                    operand.add(arrayOperand);
-                    isAssume = true;
-                }
-            }
-        }
-        String DS = "Nothing";
-        String ES = "Nothing";
-        String FS = "Nothing";
-        String SS = "Nothing";
-        String GS = "Nothing";
-        String CS = "Nothing";
-
-        if (isAssume) {
-            for (List<Token> operands : operand) {
-                switch (operands.get(0).stringToken) {
-                    case ("DS"):
-                        DS = operands.get(2).stringToken;
-                        break;
-                    case ("ES"):
-                        ES = operands.get(2).stringToken;
-                        break;
-                    case ("FS"):
-                        FS = operands.get(2).stringToken;
-                        break;
-                    case ("SS"):
-                        SS = operands.get(2).stringToken;
-                        break;
-                    case ("CS"):
-                        CS = operands.get(2).stringToken;
-                        break;
-                    case ("GS"):
-                        GS = operands.get(2).stringToken;
-                        break;
-                    default:
-                        System.out.println("Unknown register");
-                        break;
-                }
-            }
-
-        }
-        return "Segment Register | Destination\n" +
-                "------------------------------\n" +
-                "DS               | " + DS + "\n" +
-                "CS               | " + CS + "\n" +
-                "SS               | " + SS + "\n" +
-                "ES               | " + ES + "\n" +
-                "GS               | " + GS + "\n" +
-                "FS               | " + FS + "\n";
+        SegmentRegisterStorage.getInstance().changeRegister(fileToken);
+        return SegmentRegisterStorage.getInstance().toString();
     }
 
 
@@ -123,7 +65,7 @@ public class FirstPass {
             }else {
                 sumOfsset = 0;
                 if(!sentence.segmentEnd && !sentence.tokens.isEmpty() && (sentence.tokens.get(0).type.equals(TokenType.Instruction)
-                        || sentence.tokens.get(0).type.equals(TokenType.Identifier))) sentence.Error = true;
+                        || sentence.tokens.get(0).type.equals(TokenType.Identifier))) sentence.error = true;
                 sentence.offset = 0;
             }
         }
@@ -148,7 +90,7 @@ public class FirstPass {
     }
 
     public static void TableOfInstructionAndIdentifier(){
-//        System.out.println("Instraction\n");
+//        System.out.println("Instruction\n");
 //        System.out.println(FirstPass.TableInstruction(FileParser.fileParser(Application.getFilepath())) + "\n");
 //        System.out.println("Identifier\n");
         System.out.println(FirstPass.TableIdentifier(FileParser.fileParser(Application.getFilepath())) + "\n");
@@ -171,7 +113,7 @@ public class FirstPass {
                     .append(" ")
                     .append(String.format("%08X  ", sentence.offset))
                     .append(" ").append(sentence.thisSentences);
-            if(sentence.Error) pass.append("  Error");
+            if(sentence.error) pass.append("  Error");
 
             pass.append("\n");
         }
