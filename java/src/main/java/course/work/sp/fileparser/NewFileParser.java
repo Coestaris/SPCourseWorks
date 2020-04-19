@@ -1,4 +1,4 @@
-package course.work.sp;
+package course.work.sp.fileparser;
 
 import course.work.sp.sourcefile.DownloadFile;
 import course.work.sp.tokenizer.Token;
@@ -51,20 +51,38 @@ public class NewFileParser {
     }
 
     private static NewSentence createSentence(List<Token> arrayToken, String string, int number){
-        Token identifier;
-        Token instruction;
-        List<Operand> operands;
-        boolean error = true;
+        Token identifier = new Token();
+        Token instruction = new Token();
+        List<Token> operand = new ArrayList<>();
+        List<Operand> operands = new ArrayList<>();
         for (int index = 0; index < arrayToken.size(); index++){
-            if(index == 0 && arrayToken.get(index).equals(TokenType.Label) ||
-                             arrayToken.get(index).equals(TokenType.Identifier)){
+            if(index == 0 && (arrayToken.get(index).equals(TokenType.Label) ||
+                             arrayToken.get(index).equals(TokenType.Identifier))){
                 identifier = arrayToken.get(index);
                 if(arrayToken.get(index).equals(TokenType.Label)) index++;
-            }else {
-                
+            }else{
+                if(arrayToken.get(index).equals(TokenType.Instruction) ||
+                        arrayToken.get(index).equals(TokenType.SegmentWord)||
+                        arrayToken.get(index).equals(TokenType.DbDir)||
+                        arrayToken.get(index).equals(TokenType.DwDir)||
+                        arrayToken.get(index).equals(TokenType.DdDir)||
+                        arrayToken.get(index).equals(TokenType.KeyWord)||
+                        arrayToken.get(index).equals(TokenType.EndWord)||
+                        arrayToken.get(index).equals(TokenType.EndsWord)||
+                        arrayToken.get(index).equals(TokenType.JmpWord)||
+                        arrayToken.get(index).equals(TokenType.JncWord)){
+                    instruction = arrayToken.get(index);
+                }else {
+                    if(arrayToken.get(index).equals(TokenType.Comma) || index == arrayToken.size() - 1){
+                        if(index == arrayToken.size() - 1) operand.add(arrayToken.get(index));
+                        operands.add(new Operand(operand));
+                        operand = new ArrayList<>();
+                    }else
+                    operand.add(arrayToken.get(index));
+                }
             }
         }
 
-        return null;
+        return new NewSentence(number, identifier, instruction, operands, string);
     }
 }

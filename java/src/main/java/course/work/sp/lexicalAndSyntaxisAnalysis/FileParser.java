@@ -1,5 +1,6 @@
-package course.work.sp;
+package course.work.sp.lexicalAndSyntaxisAnalysis;
 
+import course.work.sp.sourcefile.DownloadFile;
 import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
 
@@ -7,12 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileParser {
-
-    public static List<NewSentence> newFileParser(String filePath) {
-        List<NewSentence> newSentenceList = new ArrayList<>();
-        //TODO
-        return newSentenceList;
-    }
 
     public static List<List<Token>> fileParser(String filePath) {
         String file = DownloadFile.downloadFile(filePath);
@@ -27,6 +22,7 @@ public class FileParser {
                 if (!contains(c)) {
                     token.append(c);
                 } else {
+                    if(c == ':') token.append(c);
                     createToken(arrayToken, token.toString());
                     createToken(arrayToken, c + "");
                     token = new StringBuilder();
@@ -35,9 +31,6 @@ public class FileParser {
             createToken(arrayToken, token.toString());
             fileToken.add(arrayToken);
         }
-        //lexicalAnalysis(fileToken, lines);
-        //print(lines, fileToken);
-        //syntaxAnalysis(fileToken, lines);
         return fileToken;
     }
 
@@ -121,7 +114,6 @@ public class FileParser {
            // }
         }
     }
-
 
     public static void LexicalAndSyntaxAnalysis(String filePath){
         List<List<Token>> fileToken = FileParser.fileParser(filePath);

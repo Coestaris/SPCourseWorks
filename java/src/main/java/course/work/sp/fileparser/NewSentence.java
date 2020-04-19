@@ -1,6 +1,7 @@
-package course.work.sp;
+package course.work.sp.fileparser;
 
 import course.work.sp.tokenizer.Token;
+import course.work.sp.tokenizer.TokenType;
 
 import java.util.List;
 
@@ -11,7 +12,7 @@ public class NewSentence {
     private Token instruction;
     private List<Operand> operands;
     private String line;
-    private boolean error = true;
+    private boolean error = false;
 
     public boolean isError() {
         return error;
@@ -27,6 +28,14 @@ public class NewSentence {
         this.instruction = instruction;
         this.operands = operands;
         this.line = line;
+        if(identifier.equals(TokenType.Unknown) && instruction.equals(TokenType.Unknown) && operands.size() != 0)
+            error = true;
+
+        if(identifier.equals(TokenType.Identifier) && (instruction.equals(TokenType.Instruction) ||
+                instruction.equals(TokenType.KeyWord)||
+                instruction.equals(TokenType.JncWord)||
+                instruction.equals(TokenType.JmpWord)))
+            error = true;
     }
 
     public Token getIdentifier() {
@@ -67,5 +76,16 @@ public class NewSentence {
 
     public void setNumber(int number) {
         this.number = number;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder pass = new StringBuilder();
+        pass.append(line).append("\n");
+        pass.append(number).append("  ").append(identifier.getType()).append("  ").append(instruction.getType()).append("\n");
+        for (Operand op: operands)
+            pass.append(op.toString()).append("\n");
+        pass.append(error).append("\n");
+        return  pass.toString();
     }
 }

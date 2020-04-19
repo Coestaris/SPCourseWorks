@@ -1,4 +1,4 @@
-package course.work.sp;
+package course.work.sp.fileparser;
 
 import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
@@ -18,11 +18,11 @@ public class Operand {
         return tokens;
     }
 
-    public TokenType getOperandType() {
-        return operandType;
-    }
-
-    public void setOperandType(TokenType operandType) {
-        this.operandType = operandType;
+    @Override
+    public String toString() {
+        StringBuilder pass = new StringBuilder();
+        for (Token tk: tokens)
+        pass.append(tk.getType()).append(" | ");
+        return pass.toString();
     }
 }
