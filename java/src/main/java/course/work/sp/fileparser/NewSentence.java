@@ -36,6 +36,11 @@ public class NewSentence {
                 instruction.equals(TokenType.JncWord)||
                 instruction.equals(TokenType.JmpWord)))
             error = true;
+
+        if(operands != null)
+            for (Operand op: this.operands){
+                if(op.equalOperandType(TokenType.Unknown)) error = true;
+            }
     }
 
     public Token getIdentifier() {

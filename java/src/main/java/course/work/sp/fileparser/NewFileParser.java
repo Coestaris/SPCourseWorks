@@ -1,5 +1,6 @@
 package course.work.sp.fileparser;
 
+import course.work.sp.identifierstorage.IdentifierStore;
 import course.work.sp.sourcefile.DownloadFile;
 import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
@@ -35,7 +36,6 @@ public class NewFileParser {
             index++;
             //fileToken.add(arrayToken);
         }
-
         return newSentenceList;
     }
 
@@ -59,6 +59,7 @@ public class NewFileParser {
             if(index == 0 && (arrayToken.get(index).equals(TokenType.Label) ||
                              arrayToken.get(index).equals(TokenType.Identifier))){
                 identifier = arrayToken.get(index);
+                identifier.setType(IdentifierStore.getInstance().addIdentifierStore(arrayToken, number));
                 if(arrayToken.get(index).equals(TokenType.Label)) index++;
             }else{
                 if(arrayToken.get(index).equals(TokenType.Instruction) ||
@@ -82,7 +83,6 @@ public class NewFileParser {
                 }
             }
         }
-
         return new NewSentence(number, identifier, instruction, operands, string);
     }
 }

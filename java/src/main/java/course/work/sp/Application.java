@@ -2,6 +2,7 @@ package course.work.sp;
 
 import course.work.sp.fileparser.NewFileParser;
 import course.work.sp.fileparser.NewSentence;
+import course.work.sp.identifierstorage.IdentifierStore;
 import course.work.sp.lexicalAndSyntaxisAnalysis.FileParser;
 
 public class Application {
@@ -19,6 +20,7 @@ public class Application {
         //FirstPass.firstPass(FileParser.fileParser(filePath), filePath);
         for (NewSentence nw: NewFileParser.newFileParser(getFilepath()))
             System.out.println(nw.toString());
+        System.out.println(IdentifierStore.getInstance().toString());
 
        // FirstPass.TableOfInstructionAndIdentifier();
         //FirstPass.print();

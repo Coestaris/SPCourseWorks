@@ -1,4 +1,4 @@
-package course.work.sp.segmentRegister;
+package course.work.sp;
 
 import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
@@ -6,35 +6,36 @@ import course.work.sp.tokenizer.TokenType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SegmentRegisterStorage {
+public class AssumeRegisterStorage {
 
     private static final String NOTHING = "Nothing";
 
-    private static SegmentRegisterStorage instance;
+    private static AssumeRegisterStorage instance;
 
-    private List<SegmentRegister> segmentRegisterList;
 
-    private SegmentRegisterStorage() {
-        segmentRegisterList = new ArrayList<>();
-        segmentRegisterList.add(new SegmentRegister((byte) 0x3E, TokenType.DS, NOTHING));
-        segmentRegisterList.add(new SegmentRegister((byte) 0x2E, TokenType.CS, NOTHING));
-        segmentRegisterList.add(new SegmentRegister((byte) 0x26, TokenType.ES, NOTHING));
-        segmentRegisterList.add(new SegmentRegister((byte) 0x36, TokenType.SS, NOTHING));
-        segmentRegisterList.add(new SegmentRegister((byte) 0x64, TokenType.FS, NOTHING));
-        segmentRegisterList.add(new SegmentRegister((byte) 0x65, TokenType.GS, NOTHING));
+    private List<AssumeRegister> assumeRegisterList;
+
+    private AssumeRegisterStorage() {
+        assumeRegisterList = new ArrayList<>();
+        assumeRegisterList.add(new AssumeRegister((byte) 0x3E, TokenType.DS, NOTHING));
+        assumeRegisterList.add(new AssumeRegister((byte) 0x2E, TokenType.CS, NOTHING));
+        assumeRegisterList.add(new AssumeRegister((byte) 0x26, TokenType.ES, NOTHING));
+        assumeRegisterList.add(new AssumeRegister((byte) 0x36, TokenType.SS, NOTHING));
+        assumeRegisterList.add(new AssumeRegister((byte) 0x64, TokenType.FS, NOTHING));
+        assumeRegisterList.add(new AssumeRegister((byte) 0x65, TokenType.GS, NOTHING));
     }
 
     private void changeDestinationByTokenType(TokenType tokenType, String destination) {
-        for (SegmentRegister sg : segmentRegisterList) {
+        for (AssumeRegister sg : assumeRegisterList) {
             if (sg.getTokenType().equals(tokenType)) {
                 sg.setDestination(destination);
             }
         }
     }
 
-    public static SegmentRegisterStorage getInstance() {
+    public static AssumeRegisterStorage getInstance() {
         if (instance == null) {
-            instance = new SegmentRegisterStorage();
+            instance = new AssumeRegisterStorage();
         }
         return instance;
     }
@@ -90,11 +91,14 @@ public class SegmentRegisterStorage {
         }
     }
 
+    public List<AssumeRegister> getAssumeRegisterList() {
+        return assumeRegisterList;
+    }
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Segment Register | Destination\n");
-        for (SegmentRegister sr : segmentRegisterList){
+        for (AssumeRegister sr : assumeRegisterList){
             sb.append(sr.getTokenType()).append("    ").append(sr.getDestination()).append("\n");
         }
         return sb.toString();

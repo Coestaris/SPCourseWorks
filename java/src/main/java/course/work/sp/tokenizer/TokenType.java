@@ -4,9 +4,16 @@ public enum TokenType {
     DbDir,
     DwDir,
     DdDir,
+    DbIdentifier,
+    DwIdentifier,
+    DdIdentifier,
+    SegmentIdentifier,
+
+    //
     Db,
-    Dw,
+    Dw,  // must delete after newFirstPass
     Dd,
+    //
 
     Instruction,
     JmpWord,
@@ -44,10 +51,9 @@ public enum TokenType {
     Mem8,
     Mem16,
     Mem32,
+    Mem,
 
-    Imm8,
-    Imm16,
-    Imm32,
+    Imm,
 
     Unknown,
 

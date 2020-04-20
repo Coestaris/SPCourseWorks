@@ -1,5 +1,6 @@
-package course.work.sp;
+package course.work.sp.notGoodFirstPass;
 
+import course.work.sp.Application;
 import course.work.sp.lexicalAndSyntaxisAnalysis.FileParser;
 import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;

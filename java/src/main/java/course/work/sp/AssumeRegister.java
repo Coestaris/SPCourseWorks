@@ -1,14 +1,14 @@
-package course.work.sp.segmentRegister;
+package course.work.sp;
 
 import course.work.sp.tokenizer.TokenType;
 
-public class SegmentRegister {
+public class AssumeRegister {
 
     private byte prefixCode;
     private TokenType tokenType;
     private String destination;
 
-    public SegmentRegister(byte prefixCode, TokenType tokenType, String destination) {
+    public AssumeRegister(byte prefixCode, TokenType tokenType, String destination) {
         this.prefixCode = prefixCode;
         this.tokenType = tokenType;
         this.destination = destination;

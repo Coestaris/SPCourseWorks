@@ -34,6 +34,7 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put(",", TokenType.Comma);
         NAME_TO_TOKEN_TYPE_MAP.put("DWORD", TokenType.DwordPtr);
         NAME_TO_TOKEN_TYPE_MAP.put("PTR", TokenType.Ptr);
+        NAME_TO_TOKEN_TYPE_MAP.put("WORD", TokenType.WordPtr);
         NAME_TO_TOKEN_TYPE_MAP.put("BYTE", TokenType.BytePtr);
         NAME_TO_TOKEN_TYPE_MAP.put("EAX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("EBP", TokenType.Reg32);

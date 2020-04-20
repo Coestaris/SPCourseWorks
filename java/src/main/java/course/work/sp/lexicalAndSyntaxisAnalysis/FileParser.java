@@ -41,11 +41,11 @@ public class FileParser {
         }
     }
 
-    public static boolean contains(char ch) {
+    private static boolean contains(char ch) {
         return ch == ' ' || ch == '[' || ch == ']' || ch == '+' || ch == ',' || ch == ':';
     }
 
-    public static void lexicalAnalysis(List<List<Token>> fileToken, int lineNumber) {
+    private static void lexicalAnalysis(List<List<Token>> fileToken, int lineNumber) {
         if(fileToken != null) {
             //for(int lineNumber = 0; lineNumber < fileToken.size(); lineNumber++) {
                 //System.out.println(line[lineNumber]);
@@ -64,7 +64,7 @@ public class FileParser {
         //}
     }
 
-    public static void syntaxAnalysis(List<List<Token>> fileToken, int lineNumber) {
+    private static void syntaxAnalysis(List<List<Token>> fileToken, int lineNumber) {
         boolean isMnemCode = false;
         if(fileToken != null) {
             //for(int lineNumber = 0; lineNumber < fileToken.size(); lineNumber++){

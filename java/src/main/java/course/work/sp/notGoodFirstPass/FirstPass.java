@@ -1,7 +1,8 @@
-package course.work.sp;
+package course.work.sp.notGoodFirstPass;
 
+import course.work.sp.Application;
 import course.work.sp.lexicalAndSyntaxisAnalysis.FileParser;
-import course.work.sp.segmentRegister.SegmentRegisterStorage;
+import course.work.sp.AssumeRegisterStorage;
 import course.work.sp.sourcefile.DownloadFile;
 import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
@@ -14,8 +15,8 @@ import java.util.List;
 public class FirstPass {
 
     public static String SegmentDestination(List<List<Token>> fileToken) {
-        SegmentRegisterStorage.getInstance().changeRegister(fileToken);
-        return SegmentRegisterStorage.getInstance().toString();
+        AssumeRegisterStorage.getInstance().changeRegister(fileToken);
+        return AssumeRegisterStorage.getInstance().toString();
     }
 
 

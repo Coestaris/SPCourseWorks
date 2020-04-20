@@ -1,5 +1,7 @@
 package course.work.sp;
 
+import course.work.sp.firstpass.FirstPassSentence;
+
 public class SecondPassSentence {
 
     private FirstPassSentence firstPassSentence;
