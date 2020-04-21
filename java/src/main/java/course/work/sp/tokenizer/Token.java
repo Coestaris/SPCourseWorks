@@ -81,6 +81,9 @@ public class Token {
         this.stringToken = stringToken;
     }
 
+    public Token(boolean empty){
+        if (empty) type = TokenType.Empty;
+     }
     public Token(){
         type = TokenType.Unknown;
     }

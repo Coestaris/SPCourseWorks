@@ -88,18 +88,6 @@ public class Operand {
         return TokenType.Unknown;
     }
 
-    public boolean isSegmentReg() {
-        return segmentReg;
-    }
-
-    public boolean isSibRegIs16() {
-        return sibRegIs16;
-    }
-
-    public boolean isSibDisp() {
-        return isSibDisp;
-    }
-
     private boolean sibPlusDisp(int index){
         return (
                 (tokens.get(index).equals(TokenType.Reg16) && tokens.get(index + next).equals(TokenType.Reg16)) ||
@@ -111,6 +99,18 @@ public class Operand {
 
     private boolean sibRegTypeIs16(int index){
         return tokens.get(index).equals(TokenType.Reg16);
+    }
+
+    public boolean isSegmentReg() {
+        return segmentReg;
+    }
+
+    public boolean isSibRegIs16() {
+        return sibRegIs16;
+    }
+
+    public boolean isSibDisp() {
+        return isSibDisp;
     }
 
 

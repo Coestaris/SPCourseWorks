@@ -1,6 +1,5 @@
 package course.work.sp.identifierstorage;
 
-import course.work.sp.notGoodFirstPass.Identifier;
 import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
 
@@ -12,8 +11,8 @@ public class IdentifierStore {
     private List<Constant> constantList;
     private List<Label> labelList;
     private List<Segment> segmentList;
+
     private static IdentifierStore instance;
-    private static final int next = 1;
 
     private IdentifierStore(){
         constantList = new ArrayList<>();
@@ -30,6 +29,7 @@ public class IdentifierStore {
 
     public TokenType addIdentifierStore(List<Token> tokens, int number){
         int index = 0;
+        final int next = 1;
         if(tokens.get(index).equals(TokenType.Label)) {
             labelList.add(new Label(number, tokens.get(index).getStringToken()));
             return TokenType.Label;
