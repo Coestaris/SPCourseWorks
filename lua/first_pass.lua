@@ -62,7 +62,7 @@ local function create_structure()
             end
         end
 
-        print(string.format("struct: %s | %s %s", name, instruction, operands))
+        print(string.format("struct :| %s | %s %s", name, instruction, operands))
     end
 
     return structure
@@ -176,14 +176,14 @@ local function proceed_line(line, line_id, storage, et1_print)
             source_error(line_id, i, string.format("Unknown token type of token %q", v))
             return
         else
-            output = output .. string.format("(%q : %s)", v, types.get_name(type)) .. " | "
+            output = output .. string.format("(%q : %s : %i)", v, types.get_name(type), i) .. " | "
         end
 
         token_types[#token_types + 1] = type
     end
      
     if et1_print then
-        print("tokens: " .. output)
+        print("tokens :| " .. output)
     end
     
     return token_types, tokens
@@ -253,7 +253,7 @@ function first_pass.proceed(filename, storage, et1_print)
     for i, line in pairs(lines) do
 
         if et1_print then
-            print("source :" .. line)
+            print(string.format("line#%2i:| %s", i, line))
         end
         
         local token_types, tokens = proceed_line(line, i, storage, true)
