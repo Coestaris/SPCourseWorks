@@ -1,53 +1,53 @@
-Index|  Offset |  Source 
- 00    00000000   DATA SEGMENT
- 01    00000000   
- 02    00000000        HEX1    DB  21H
- 03    00000001        DEC2    DW  12
- 04    00000003        BIN2    DD  0111110B
- 05    00000007        TXT3    DB  "STRING"
- 06    0000000D   
- 07    0000000D   DATA ENDS
- 08    00000000   
- 09    00000000   ASSUME CS:CODE, DS:DATA, SS:LOL
- 10    00000000   CODE SEGMENT
- 11    00000000   
- 12    00000000   LABLE1:
- 13    00000000       STC
- 14    00000001       PUSH EBX
- 15    00000002       JMP LABLE2
- 16    00000007       JNC LABLE2
- 17    0000000D       MOV DX, SI
- 18    00000010       MUL DWORD PTR[EDX+ESI+2]
- 19    00000014       XOR ECX, DS:BIN2
- 20    0000001A       BTR ES:DEC2[BX+DI+1], AX
- 21    00000022       SUB EBX, 07
- 22    00000025       ADC BYTE PTR[BP+SI+8], 05
- 23    0000002A       JNC LABLE1
- 24    0000002C       JMP LABLE1
- 25    0000002E       JNE LABEL2  Error
- 26    0000002E       XOR ECX,[BP+SI]  Error
- 27    0000002E       SBB AL,89H  Error
- 28    0000002E   LABLE2:
- 29    0000002E   
- 30    0000002E   CODE ENDS
- 31    00000000   END
+index| Offset|        Source
+00  00000000 Data Segment
+01  00000000      Hex1    db  21h
+02  00000001      Dec2    dw  12
+03  00000003      Bin2    dd  0111110b
+04  00000007      Txt3    db  "string"
+05  0000000D Data ends
+06  00000000 
+07  00000000 Assume cs:Code, ds:Data
+08  00000000 Code Segment
+09  00000000 
+10  00000000 lable1:
+11  00000000     stc
+12  00000001     push ebx
+13  00000002     jmp lable2
+14  00000007     lable1: ERROR ):
+15  00000007     jnc lable2
+16  0000000D     Mov dx, si
+17  00000010     mul dword ptr[edx+esi+2]
+18  00000014     Xor ecx, DS:BIN2
+19  0000001A     Btr ES:Dec2[bx+di+1], ax
+20  00000022     Sub ebx, 07
+21  00000025     Adc byte ptr[bp+si + 2], 05
+22  0000002A     Jnc lable1
+23  0000002C     jmp lable1
+24  0000002E 
+25  0000002E lable2:
+26  0000002E 
+27  0000002E Code ends
+28  00000000 END
+
+
+ NAME |   TYPE  |  SEG | VALUE 
+LABLE1| Label   | CODE | 00000000 
+LABLE2| Label   | CODE | 0000002E 
+HEX1  | DbIdentifier | DATA | 00000000 
+DEC2  | DwIdentifier | DATA | 00000001 
+BIN2  | DdIdentifier | DATA | 00000003 
+TXT3  | DbIdentifier | DATA | 00000007 
+
+
+Segment name| Bit Depth| Size
+DATA |          32     | 0000000D  
+CODE |          32     | 0000002E  
+
 
 Segment Register | Destination
 DS    DATA
 CS    CODE
 ES    Nothing
-SS    LOL
+SS    Nothing
 FS    Nothing
 GS    Nothing
-
-Segment name | Bit Depth | Size 
-DATA  32   0000000D
-CODE  32   0000002E
-
-NAME  | Type  |  seg  | Value
-HEX1 | Dd | DATA | 00000000
-DEC2 | Dw | DATA | 00000001
-BIN2 | Dd | DATA | 00000003
-TXT3 | Dd | DATA | 00000007
-LABLE1 | Label | CODE | 00000000
-LABLE2 | Label | CODE | 0000002E

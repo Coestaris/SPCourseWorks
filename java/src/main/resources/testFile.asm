@@ -12,15 +12,17 @@ lable1:
     stc
     push ebx
     jmp lable2
+    lable1:
     jnc lable2
     Mov dx, si
     mul dword ptr[edx+esi+2]
     Xor ecx, DS:BIN2
-    Btr ES:dec2[bx+di+1], ax
+    Btr ES:Dec2[bx+di+1], ax
     Sub ebx, 07
-    Adc byte ptr[bp+si+8], 05
+    Adc byte ptr[bp+si + 2], 05
     Jnc lable1
     jmp lable1
+
 lable2:
 
 Code ends

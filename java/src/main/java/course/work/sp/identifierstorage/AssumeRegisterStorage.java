@@ -1,6 +1,6 @@
-package course.work.sp;
+package course.work.sp.identifierstorage;
 
-import course.work.sp.tokenizer.Token;
+import course.work.sp.fileparser.Operand;
 import course.work.sp.tokenizer.TokenType;
 
 import java.util.ArrayList;
@@ -40,60 +40,39 @@ public class AssumeRegisterStorage {
         return instance;
     }
 
-    public void changeRegister(List<List<Token>> fileToken) {
-        boolean isAssume = false;
-        List<List<Token>> operand = new ArrayList<>();
-        for (List<Token> tokens : fileToken) {
-            for (int tokenNumber = 0; tokenNumber < tokens.size(); tokenNumber++) {
-                if (tokens.get(tokenNumber).type == TokenType.KeyWord) {
-                    operand = new ArrayList<>();
-                    List<Token> arrayOperand = new ArrayList<>();
-                    for (int numberOfOperands = tokenNumber + 1; numberOfOperands < tokens.size(); numberOfOperands++) {
-                        if (tokens.get(numberOfOperands).type != TokenType.Comma) {
-                            arrayOperand.add(tokens.get(numberOfOperands));
-                        } else {
-                            operand.add(arrayOperand);
-                            arrayOperand = new ArrayList<>();
-                        }
-                    }
-                    operand.add(arrayOperand);
-                    isAssume = true;
-                }
-            }
-        }
-
-        if (isAssume) {
-            for (List<Token> operands : operand) {
-                switch (operands.get(0).stringToken) {
+    public void changeRegister(Operand operand) {
+        int index = 0;
+        int next = 1;
+                switch (operand.getTokens().get(index).getStringToken()) {
                     case ("DS"):
-                        changeDestinationByTokenType(TokenType.DS, operands.get(2).stringToken);
+                        changeDestinationByTokenType(TokenType.DS, operand.getTokens().get(index + next).getStringToken());
                         break;
                     case ("ES"):
-                        changeDestinationByTokenType(TokenType.ES, operands.get(2).stringToken);
+                        changeDestinationByTokenType(TokenType.ES, operand.getTokens().get(index + next).getStringToken());
                         break;
                     case ("FS"):
-                        changeDestinationByTokenType(TokenType.FS, operands.get(2).stringToken);
+                        changeDestinationByTokenType(TokenType.FS, operand.getTokens().get(index + next).getStringToken());
                         break;
                     case ("SS"):
-                        changeDestinationByTokenType(TokenType.SS, operands.get(2).stringToken);
+                        changeDestinationByTokenType(TokenType.SS, operand.getTokens().get(index + next).getStringToken());
                         break;
                     case ("CS"):
-                        changeDestinationByTokenType(TokenType.CS, operands.get(2).stringToken);
+                        changeDestinationByTokenType(TokenType.CS, operand.getTokens().get(index + next).getStringToken());
                         break;
                     case ("GS"):
-                        changeDestinationByTokenType(TokenType.GS, operands.get(2).stringToken);
+                        changeDestinationByTokenType(TokenType.GS, operand.getTokens().get(index + next).getStringToken());
                         break;
                     default:
                         System.out.println("Unknown register");
                         break;
                 }
-            }
-        }
+        
     }
 
     public List<AssumeRegister> getAssumeRegisterList() {
         return assumeRegisterList;
     }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

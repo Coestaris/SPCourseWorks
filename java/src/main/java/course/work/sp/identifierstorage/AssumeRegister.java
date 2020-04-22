@@ -1,4 +1,4 @@
-package course.work.sp;
+package course.work.sp.identifierstorage;
 
 import course.work.sp.tokenizer.TokenType;
 
