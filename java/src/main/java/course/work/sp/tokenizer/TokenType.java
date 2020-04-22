@@ -56,6 +56,8 @@ public enum TokenType {
     Imm,
 
     Unknown,
+    Empty,
+    EmptyString,
 
     DS,
     CS,
