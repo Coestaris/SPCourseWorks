@@ -3,8 +3,8 @@ program Hello;
 uses tokenizer;
 
 const 
-    InputFile : string = 'test.asm';
-    OutputFile : string = 'output.log';
+    InputFile : string = 'bin/test.asm';
+    OutputFile : string = 'bin/output.log';
 
 begin
    Tokenize(InputFile, OutputFile, true);
