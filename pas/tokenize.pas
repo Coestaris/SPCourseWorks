@@ -24,14 +24,28 @@ end;
 
 
 type Lexeme = record
+
+    // General fields
     tokensLen : integer;
     tokens : array[1..20] of Token;
     lexemeLine : string;
     lexemeLineIndex : integer;
     
+    // Structure fields
+    hasName : boolean;
+    hasMnem : boolean;
+    mnemIndex : integer;
+    opCount : integer;
+    op1Index : integer;
+    op1Len   : integer;
+    op2Index : integer;
+    op2Len   : integer;
+
+    // Error fields
     hasError : boolean;
     errorToken : integer;
     errorMessage : string;
+
 end;
 
 
@@ -56,6 +70,11 @@ begin
     l.lexemeLineIndex := lineIndex;
     l.lexemeLine := lexeme;
     l.tokensLen := 0;
+
+    l.hasName := false;
+    l.hasMnem := false;
+    l.opCount := 0;
+
     l.hasError := false;
 
     for i := 1 to length(lexeme) do
@@ -198,7 +217,7 @@ end;
 
 function IsIdentifier(token : string) : boolean;
 var 
-    start, i : integer;
+    i : integer;
     ok : boolean;
 
 begin
@@ -251,6 +270,7 @@ begin
     else if tokenType = NumberBin then result := 'NumberBin'
     else if tokenType = NumberDec then result := 'NumberDec'
     else if tokenType = NumberHex then result := 'NumberHex'
+    else if tokenType = RegisterSeg then result := 'RegisterSeg'
     else result := 'lol';
 end;
 
@@ -267,6 +287,7 @@ begin
     else if IsInstruction(token.token) then result := Instruction
     else if IsRegister16(token.token) then result := Register16
     else if IsRegister32(token.token) then result := Register32
+    else if IsRegisterSegment(token.token) then result := RegisterSeg
     else if IsNumberBin(token.token) then result := NumberBin
     else if IsNumberDec(token.token) then result := NumberDec
     else if IsNumberHex(token.token) then result := NumberHex
@@ -275,19 +296,137 @@ begin
     else result := Unknown;
 end;
 
-procedure PrintTokens(lexeme : Lexeme);
-var i : integer;
+type PLexeme = ^Lexeme;
+procedure SetError(lexeme : PLexeme; error : string; tokenIndex : integer);
 begin
-    for i := 1 to lexeme.tokensLen do
-    begin
-        write(' ( "', lexeme.tokens[i].token, '" | ', TokenTypeToName(lexeme.tokens[i].tokenType), ' ) ,');
-    end; 
-    writeln;
+    lexeme.hasError := true;
+    lexeme.errorMessage := error;
+    lexeme.errorToken := tokenIndex;
 end;
 
-procedure Lexemize(fileName : string);
+function IsInstructionToken(token : Token) : boolean;
+var t : TType;
+begin
+    t := token.tokenType;
+    IsInstructionToken := 
+        (t = ModelDirective) or (t = DataDirective) or (t = CodeDirective) or
+        (t = EndDirective) or (t = DbDirective) or (t = DwDirective) or 
+        (t = DdDirective) or (t = Instruction);
+end;
+
+procedure DetermineStructure(lexeme : PLexeme);
+var offset, comaIndex, i: integer;
+begin
+    offset := 1;
+    if lexeme.tokensLen = 0 then
+        exit;
+    
+    if lexeme.tokens[1].tokenType = Identifier then
+    begin
+        offset := 2;
+        lexeme.hasName := true;
+        if (lexeme.tokensLen = 2) and (lexeme.tokens[2].token = ':') then
+        begin
+            offset := 3;
+        end; 
+    end; 
+
+    if lexeme.tokensLen = offset - 1 then
+    begin
+        if offset = 2 then
+        begin
+              SetError(lexeme, 'Name without instruction or directive', offset);
+        end;
+        exit;        
+    end;
+
+    if not IsInstructionToken(lexeme.tokens[offset]) then
+    begin
+        SetError(lexeme, 'Expected instruction or directive', offset);
+        exit;        
+    end;
+
+    lexeme.hasMnem := true;
+    lexeme.mnemIndex := offset;
+    offset := offset + 1;
+
+    if lexeme.tokensLen = offset - 1 then
+        exit;      
+
+    comaIndex := 0;
+    for i := offset to lexeme.tokensLen do
+        if lexeme.tokens[i].token = ',' then 
+        begin
+            comaIndex := i;
+            break;
+        end; 
+
+    lexeme.op1Index := offset;
+    if comaIndex = 0 then 
+    begin
+        lexeme.opCount := 1;
+        lexeme.op1Len := lexeme.tokensLen - offset + 1
+    end 
+        else 
+    begin
+        lexeme.opCount := 2;
+        lexeme.op1Len := comaIndex - offset;
+        lexeme.op2Index := comaIndex + 1;
+        lexeme.op2Len := lexeme.tokensLen - comaIndex;
+    end;    
+end;
+
+procedure PrintError(lexeme : Lexeme; var outFile : TextFile);
+begin
+    if lexeme.hasError then 
+    begin
+        if lexeme.errorToken <= lexeme.tokensLen then
+            writeln(outFile, 'Error: ', lexeme.errorMessage, ' near token "', lexeme.tokens[lexeme.errorToken].token, '"')
+        else
+            writeln(outFile, 'Error: ', lexeme.errorMessage, '');
+    end;
+end;
+
+procedure PrintTokens(lexeme : Lexeme; var outFile : TextFile);
+var 
+    i : integer;
+    structure : string;
+
+begin
+    writeln(outFile, 'source: ', lexeme.lexemeLine);
+
+    write(outFile, 'tokens: ');
+    for i := 1 to lexeme.tokensLen do
+    begin
+        write(outFile, 
+            ' ( "', lexeme.tokens[i].token, '" | ', TokenTypeToName(lexeme.tokens[i].tokenType), ' | ', i, ' ), ');
+        
+    end; 
+    writeln(outFile);
+
+    if lexeme.hasName then structure := ' 1 | '
+    else structure := ' -- | ' ;
+
+    write(outFile, 'struct:  |' , structure);
+
+    if lexeme.hasMnem then
+    begin
+        write(outFile, lexeme.mnemIndex, '  1 | ');
+
+        if lexeme.opCount >= 1 then 
+            write(outFile, lexeme.op1Index, '  ', lexeme.op1Len, ' | ');
+        if lexeme.opCount > 1 then
+            write(outFile, lexeme.op2Index, '  ', lexeme.op2Len, ' | ');
+    end;
+
+    writeln(outFile);
+    writeln(outFile);
+end;
+
+procedure Lexemize(fileName : string; var outFile : TextFile);
 var 
     f : TextFile;
+    t : TType;
     lineCounter, i : integer;
     line : string;
     currentLexeme : Lexeme;
@@ -306,17 +445,33 @@ begin
         currentLexeme := TokenizeLexeme(line, lineCounter);
         
         for i := 1 to currentLexeme.tokensLen do 
-            currentLexeme.tokens[i].tokenType := DetermineTokenType(currentLexeme.tokens[i]);
+        begin
+            t := DetermineTokenType(currentLexeme.tokens[i]);
+            if t = Unknown then
+                SetError(@currentLexeme, 'Unkown token type', i)
+            else 
+                currentLexeme.tokens[i].tokenType := t;
+        end;
             
-        PrintTokens(currentLexeme);
+        if not currentLexeme.hasError then
+            DetermineStructure(@currentLexeme);
+        
+        PrintTokens(currentLexeme, outFile);
+        PrintError(currentLexeme, outFile);
     end;
     
     CloseFile(f);
 end;
 
 procedure Tokenize(InputFile : string; OutputFile : string; output : boolean);
+var f : TextFile;
 begin
-    Lexemize(InputFile);
+    AssignFile(f, OutputFile);
+    Rewrite(f);
+    
+    Lexemize(InputFile, f);
+
+    CloseFile(f);
 end;
 
 end.
