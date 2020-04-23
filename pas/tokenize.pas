@@ -2,59 +2,17 @@ unit tokenizer;
 
 interface
 
-procedure Tokenize(InputFile : string; OutputFile : string; output : boolean);
+procedure Tokenize(InputFile : string; var outFile : TextFile; output : boolean);
 
 implementation
 
-uses Sysutils;
-
-type TType = (
-    ModelDirective, DataDirective, CodeDirective, EndDirective,
-    DbDirective, DwDirective, DdDirective,
-    Register8, Register16, Register32, RegisterSeg,
-    Instruction,
-    Identifier, Unknown, Symbol,
-    NumberBin, NumberDec, NumberHex);
-
-
-type Token = record
-    token : string;
-    tokenType : TType; 
-end;
-
-
-type Lexeme = record
-
-    // General fields
-    tokensLen : integer;
-    tokens : array[1..20] of Token;
-    lexemeLine : string;
-    lexemeLineIndex : integer;
-    
-    // Structure fields
-    hasName : boolean;
-    hasMnem : boolean;
-    mnemIndex : integer;
-    opCount : integer;
-    op1Index : integer;
-    op1Len   : integer;
-    op2Index : integer;
-    op2Len   : integer;
-
-    // Error fields
-    hasError : boolean;
-    errorToken : integer;
-    errorMessage : string;
-
-end;
-
+uses base;
 
 function IsSplitter(c : char) : boolean;
 begin
     IsSplitter := (c = ' ') or (c = '\n') or (c = ',') or (c = '\t') or (c = '[') or
         (c = ']') or (c = ':') or (c = '*');
 end;
-
 
 function TokenizeLexeme(lexeme : string; lineIndex : integer) : Lexeme;
 var 
@@ -296,13 +254,6 @@ begin
     else result := Unknown;
 end;
 
-type PLexeme = ^Lexeme;
-procedure SetError(lexeme : PLexeme; error : string; tokenIndex : integer);
-begin
-    lexeme.hasError := true;
-    lexeme.errorMessage := error;
-    lexeme.errorToken := tokenIndex;
-end;
 
 function IsInstructionToken(token : Token) : boolean;
 var t : TType;
@@ -423,7 +374,7 @@ begin
     writeln(outFile);
 end;
 
-procedure Lexemize(fileName : string; var outFile : TextFile);
+procedure Tokenize(InputFile : string; var outFile : TextFile; output : boolean);
 var 
     f : TextFile;
     t : TType;
@@ -434,7 +385,7 @@ var
 begin
     lineCounter := 0;
 
-    AssignFile(f, fileName);
+    AssignFile(f, InputFile);
     Reset(f);
     
     while not eof(f) do
@@ -460,17 +411,6 @@ begin
         PrintError(currentLexeme, outFile);
     end;
     
-    CloseFile(f);
-end;
-
-procedure Tokenize(InputFile : string; OutputFile : string; output : boolean);
-var f : TextFile;
-begin
-    AssignFile(f, OutputFile);
-    Rewrite(f);
-    
-    Lexemize(InputFile, f);
-
     CloseFile(f);
 end;
 

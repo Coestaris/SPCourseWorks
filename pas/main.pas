@@ -3,9 +3,17 @@ program Hello;
 uses tokenizer;
 
 const 
-    InputFile : string = 'bin/test.asm';
-    OutputFile : string = 'bin/output.log';
+    InputFileName : string = 'bin/test.asm';
+    OutputFileName : string = 'bin/output.log';
+
+var    
+    outputFile : TextFile;
 
 begin
-   Tokenize(InputFile, OutputFile, true);
+    AssignFile(outputFile, OutputFileName);
+    Rewrite(outputFile);
+
+    Tokenize(InputFileName, OutputFile, true);
+
+    CloseFile(outputFile);
 end.
