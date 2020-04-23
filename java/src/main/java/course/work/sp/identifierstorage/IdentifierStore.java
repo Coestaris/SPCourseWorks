@@ -31,6 +31,9 @@ public class IdentifierStore {
         int index = 0;
         final int next = 1;
         if(tokens.get(index).equals(TokenType.Label)) {
+            for(Label lbl : labelList){
+                if(lbl.getLabel().equals(tokens.get(index).getStringToken())) return TokenType.Unknown;
+            }
             labelList.add(new Label(number, tokens.get(index).getStringToken()));
             return TokenType.Label;
         }
@@ -79,15 +82,19 @@ public class IdentifierStore {
     @Override
     public String toString() {
         StringBuilder pass = new StringBuilder();
-        pass.append("labelList\n");
+        pass.append("\n\n");
+        pass.append(" NAME |").append("   TYPE  | ").append(" SEG |").append(" VALUE ").append("\n");
         for (Label lb: labelList)
             pass.append(lb);
-        pass.append("constantList\n");
         for (Constant cost: constantList)
             pass.append(cost);
-        pass.append("segmentList\n");
+        pass.append("\n\n");
+        pass.append("Segment name|").append(" Bit Depth|").append(" Size").append("\n");
         for (Segment sql: segmentList)
             pass.append(sql);
+
+        pass.append("\n\n");
+        pass.append(AssumeRegisterStorage.getInstance().toString());
 
         return pass.toString();
     }

@@ -7,6 +7,10 @@ import course.work.sp.identifierstorage.IdentifierStore;
 import course.work.sp.lexicalAndSyntaxisAnalysis.FileParser;
 import course.work.sp.firstpass.FirstPass;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+
 public class Application {
     public static String getFilepath(){
         //return  "D:\\LAB\\SP\\CourseWork\\start.asm";
@@ -20,14 +24,19 @@ public class Application {
         //FileParser.LexicalAndSyntaxAnalysis(filePath);
         //FirstPass.SegmentDestination(FileParser.fileParser(filePath));
         //FirstPass.firstPass(FileParser.fileParser(filePath), filePath);
-        NewFileParser fileParser = new NewFileParser();
-//        for (NewSentence nw: fileParser.newFileParser(getFilepath()))
-//            System.out.println(nw.toString());
-        FirstPass fp = new FirstPass();
-        for (FirstPassSentence fps: fp.firstPass(fileParser.newFileParser(getFilepath())))
-            System.out.println(fps.toString());
+        String firstPass = new FirstPass(new NewFileParser(getFilepath()).getNewSentenceList()).toString();
+        try(FileWriter writer = new FileWriter("D:\\Repos\\sp_kurs\\java\\src\\main\\resources\\FirstPass.txt", false)) {
+            // запись всей строки
+            writer.write(String.valueOf(firstPass));
+            writer.flush();
+        }
+        catch(IOException ex){
+            System.out.println(ex.getMessage());
+        }
+        //            System.out.println(nw.toString());
 
-        System.out.println(IdentifierStore.getInstance().toString());
+
+
 
 
         // FirstPass.TableOfInstructionAndIdentifier();

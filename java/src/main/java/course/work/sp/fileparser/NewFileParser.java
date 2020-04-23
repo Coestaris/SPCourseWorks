@@ -10,9 +10,11 @@ import java.util.List;
 
 public class NewFileParser {
 
-    public List<NewSentence> newFileParser(String filePath) {
+    private List<NewSentence> newSentenceList;
+
+    public NewFileParser(String filePath) {
+        newSentenceList = new ArrayList<>();
         List<Token> arrayToken;
-        List<NewSentence> newSentenceList = new ArrayList<>();
         String file = DownloadFile.downloadFile(filePath);
         String[] lines = file.split("\n");
         int index = 0;
@@ -36,6 +38,9 @@ public class NewFileParser {
             index++;
             //fileToken.add(arrayToken);
         }
+    }
+
+    public List<NewSentence> getNewSentenceList() {
         return newSentenceList;
     }
 
@@ -62,6 +67,7 @@ public class NewFileParser {
                         arrayToken.get(index).equals(TokenType.Identifier))) {
                     identifier = arrayToken.get(index);
                     identifier.setType(IdentifierStore.getInstance().addIdentifierStore(arrayToken, number));
+                    if(identifier.equals(TokenType.Unknown)) return new NewSentence(number, identifier, instruction, operands, string);
                     if (arrayToken.get(index).equals(TokenType.Label)) index++;
                 } else {
                     if (arrayToken.get(index).equals(TokenType.Instruction) ||

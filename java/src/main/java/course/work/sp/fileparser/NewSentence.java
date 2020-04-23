@@ -31,6 +31,9 @@ public class NewSentence {
         if(identifier.equals(TokenType.Unknown) && instruction.equals(TokenType.Unknown) && operands.size() != 0)
             error = true;
 
+        if(identifier.equals(TokenType.Unknown))
+            error = true;
+
         if(identifier.equals(TokenType.Identifier) && (instruction.equals(TokenType.Instruction) ||
                 instruction.equals(TokenType.KeyWord)||
                 instruction.equals(TokenType.JncWord)||

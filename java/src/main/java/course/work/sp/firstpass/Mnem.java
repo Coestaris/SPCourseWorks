@@ -1,10 +1,11 @@
 package course.work.sp.firstpass;
 
-import com.sun.org.apache.bcel.internal.classfile.Unknown;
+import course.work.sp.identifierstorage.AssumeRegisterStorage;
 import course.work.sp.fileparser.Operand;
 import course.work.sp.identifierstorage.Constant;
 import course.work.sp.identifierstorage.IdentifierStore;
 import course.work.sp.identifierstorage.Label;
+import course.work.sp.identifierstorage.Segment;
 import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
 
@@ -45,6 +46,7 @@ public class  Mnem {
                 case ("JNC"):
                     return jnc(operands, number);
                 case ("ASSUME"):
+                    return assume(operands);
                 case ("SEGMENT"):
                 case ("ENDS"):
                 case ("END"):
@@ -56,14 +58,14 @@ public class  Mnem {
         return 0;
     }
 
-    public int stc(List<Operand> operands){
+    private int stc(List<Operand> operands){
         int size = 1;
         if(operands.size() == 0)
             return size;
         return error;
     }
 
-    public int push(List<Operand> operands){
+    private int push(List<Operand> operands){
         int size = 1;
         if(operands.size() == 1){
             if(operands.get(index).equalOperandType(TokenType.Reg32) || operands.get(index).equalOperandType(TokenType.Reg16)){
@@ -74,7 +76,7 @@ public class  Mnem {
         return error;
     }
 
-    public int mov(List<Operand> operands){
+    private int mov(List<Operand> operands){
         int size = 2;
         if(operands.size() == 2){
             Operand operand = operands.get(index);
@@ -87,7 +89,7 @@ public class  Mnem {
         return error;
     }
 
-    public int sub(List<Operand> operands){
+    private int sub(List<Operand> operands){
         int size = 3;
         if(operands.size() == 2){
             if((operands.get(index).equalOperandType(TokenType.Reg32) || operands.get(index).equalOperandType(TokenType.Reg16))
@@ -100,7 +102,7 @@ public class  Mnem {
         return error;
     }
 
-    public int mul(List<Operand> operands){
+    private int mul(List<Operand> operands){
         int size = 2;
         if(operands.size() == 1){
             Operand operand = operands.get(index);
@@ -110,7 +112,7 @@ public class  Mnem {
         return error;
     }
 
-    public int xor(List<Operand> operands){
+    private int xor(List<Operand> operands){
         int size = 2;
         if(operands.size() == 2){
             if(operands.get(index).equalOperandType(TokenType.Reg32) || operands.get(index).equalOperandType(TokenType.Reg16)){
@@ -118,26 +120,29 @@ public class  Mnem {
             }else return error;
             Operand operand = operands.get(index+next);
             if(mem(operand) < 0) return error;
+            if(isTypeMemRegGood(operand, operands.get(index)))
             return size + mem(operand);
         }
         return error;
     }
 
-    public int btr(List<Operand> operands){
+    private int btr(List<Operand> operands){
         int size = 2;
         if(operands.size() == 2){
             Operand operand = operands.get(index);
+            Operand operand2 = operands.get(index + next);
             if(mem(operand) < 0) return error;
             size+= mem(operand);
-            if(operands.get(index+next).equalOperandType(TokenType.Reg32) || operands.get(index+next).equalOperandType(TokenType.Reg16)){
-                if(operands.get(index+next).equalOperandType(TokenType.Reg16)) size++;
+            if(operand2.equalOperandType(TokenType.Reg32) || operand2.equalOperandType(TokenType.Reg16)){
+                if(operand2.equalOperandType(TokenType.Reg16)) size++;
             }else return error;
-            return size;
+            if(isTypeMemRegGood(operand, operand2))
+                return size;
         }
         return error;
     }
 
-    public int adc(List<Operand> operands){
+    private int adc(List<Operand> operands){
         int size = 2;
         int number = index;
         if(operands.size() == 2){
@@ -152,7 +157,7 @@ public class  Mnem {
         return error;
     }
 
-    public int jmp(List<Operand> operands, int number){
+    private int jmp(List<Operand> operands, int number){
         int labelNumber = 0;
         int size = 1;
         boolean isLabel = false;
@@ -174,7 +179,7 @@ public class  Mnem {
         return error;
     }
 
-    public int jnc(List<Operand> operands, int number){
+    private int jnc(List<Operand> operands, int number){
         int labelNumber = 0;
         int size = 1;
         boolean isLabel = false;
@@ -196,7 +201,7 @@ public class  Mnem {
         return error;
     }
 
-    public int dbDir(List<Operand> operands){
+    private int dbDir(List<Operand> operands){
         int size = 1;
         if(operands.size() == 1){
             if(operands.get(index).equalOperandType(TokenType.Imm) || operands.get(index).equalOperandType(TokenType.Text)){
@@ -207,7 +212,7 @@ public class  Mnem {
         return error;
     }
 
-    public int ddDir(List<Operand> operands){
+    private int ddDir(List<Operand> operands){
         int size = 4;
         if(operands.size() == 1){
             if(operands.get(index).equalOperandType(TokenType.Imm)){
@@ -217,7 +222,7 @@ public class  Mnem {
         return error;
     }
 
-    public int dwDir(List<Operand> operands){
+    private int dwDir(List<Operand> operands){
         int size = 2;
         if(operands.size() == 1){
             if(operands.get(index).equalOperandType(TokenType.Imm)){
@@ -227,8 +232,33 @@ public class  Mnem {
         return error;
     }
 
+    private boolean isTypeMemRegGood(Operand mem, Operand reg){
+        return ((mem.equalOperandType(TokenType.DwIdentifier) ||
+                mem.equalOperandType(TokenType.Mem) ||
+                mem.equalOperandType(TokenType.Mem16)) && reg.equalOperandType(TokenType.Reg16)) ||
+                ((mem.equalOperandType(TokenType.DdIdentifier) ||
+                        mem.equalOperandType(TokenType.Mem) ||
+                        mem.equalOperandType(TokenType.Mem16)) && reg.equalOperandType(TokenType.Reg32));
+    }
+    private int assume(List<Operand> operands){
+        boolean isError = true;
+        for (Operand operand: operands){
+            isError = true;
+            if(operand.getTokens().size() != 2 ||
+                    !(operand.getTokens().get(index).equals(TokenType.SegmentRegister) && operand.getTokens().get(index + next).equals(TokenType.Identifier))) return error;
+            for (Segment segment: IdentifierStore.getInstance().getSegmentList()){
+                if(segment.equalSegment(operand.getTokens().get(index + next).getStringToken())){
+                    AssumeRegisterStorage.getInstance().changeRegister(operand);
+                    isError = false;
+                }
+            }
+            if(isError) return error;
+        }
+        if(!isError) return 0;
+        return error;
+    }
 
-    public int mem(Operand operand){
+    private int mem(Operand operand){
         int size = 0;
         int segIndex = index;
         boolean isConstant = false;
@@ -236,7 +266,9 @@ public class  Mnem {
                 operand.equalOperandType(TokenType.Mem8) ||
                 operand.equalOperandType(TokenType.Mem16) ||
                 operand.equalOperandType(TokenType.Mem32) ||
-                operand.equalOperandType(TokenType.Identifier)){
+                operand.equalOperandType(TokenType.DbIdentifier) ||
+                operand.equalOperandType(TokenType.DdIdentifier) ||
+                operand.equalOperandType(TokenType.DwIdentifier)){
 
             if(operand.isSegmentReg()){
                 if(!operand.getTokens().get(segIndex).getStringToken().equals("DS")) {
@@ -247,7 +279,9 @@ public class  Mnem {
             }
 
 
-            if(operand.equalOperandType(TokenType.Identifier)){
+            if(operand.equalOperandType(TokenType.DbIdentifier) ||
+                    operand.equalOperandType(TokenType.DdIdentifier) ||
+                    operand.equalOperandType(TokenType.DwIdentifier)){
                 for (Constant cst : IdentifierStore.getInstance().getConstantList()){
                     isConstant = cst.getConstant().equals(operand.getTokens().get(segIndex).getStringToken());
                     if(isConstant) break;
@@ -257,7 +291,7 @@ public class  Mnem {
                     if(operand.isSibDisp()){
                         size++;
                         if (operand.isSibRegIs16()) {
-                            size--;
+                            size --;
                         }
                     }
                 }else return error;
@@ -271,21 +305,12 @@ public class  Mnem {
             return size;
 
         }
+
+
         return error;
     }
 
-    public int reg(Operand operand){
-        int size = 1;
-        if (operand.equalOperandType(TokenType.Reg16)){
-            size++;
-            return size;
-        }else if (operand.equalOperandType(TokenType.Reg32)){
-            return size;
-        }
-        return error;
-    }
-
-    public int imm(Operand operand){
+    private int imm(Operand operand){
         int size = 0;
         if(operand.equalOperandType(TokenType.Imm)) return size + 1;
         return error;

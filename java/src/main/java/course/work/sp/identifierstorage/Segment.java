@@ -8,6 +8,7 @@ public class Segment {
     private TokenType type;
     private int indexStart;
     private int indexFinish;
+    private int offSet;
     private boolean error = true;
 
     public Segment(String segment, TokenType type, int indexStart) {
@@ -37,6 +38,14 @@ public class Segment {
         error = false;
     }
 
+    public int getOffSet() {
+        return offSet;
+    }
+
+    public void setOffSet(int offSet) {
+        this.offSet = offSet;
+    }
+
     public boolean isError() {
         return error;
     }
@@ -48,7 +57,7 @@ public class Segment {
     @Override
     public String toString() {
         StringBuilder pass = new StringBuilder();
-        pass.append(error).append(" ").append(indexStart).append("-").append(indexFinish).append(" ").append(type).append(" ").append(segment).append("\n");
+        pass.append(segment).append(" |          32   ").append(String.format("  | %08X  ", offSet)).append("\n");
         return pass.toString();
     }
 }

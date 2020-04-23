@@ -46,6 +46,7 @@ public class Operand {
 
     private TokenType createOperandType() {
         int index = 0;
+
         if (tokens.size() == 1 && !tokens.get(index).equals(TokenType.Identifier)) {
             if (tokens.get(index).equals(TokenType.Reg8)) return TokenType.Reg8;
             if (tokens.get(index).equals(TokenType.Reg16)) return TokenType.Reg16;
@@ -61,12 +62,14 @@ public class Operand {
             }
             if(sibPlusDisp(index)){
                 sibRegIs16 = sibRegTypeIs16(index);
+                if(sibRegIs16 && isSibDisp16Error(index)) return TokenType.Unknown;
                 isSibDisp = true;
                 return TokenType.Mem;
             }else if (tokens.get(index).equals(TokenType.DwordPtr) || tokens.get(index).equals(TokenType.WordPtr) || tokens.get(index).equals(TokenType.BytePtr)){
                 if(tokens.size() > 3){
                     if(sibPlusDisp(index + next)) {
                         sibRegIs16 = sibRegTypeIs16(index + next);
+                        if(sibRegIs16 && isSibDisp16Error(index)) return TokenType.Unknown;
                         isSibDisp = true;
                         if(tokens.get(index).equals(TokenType.DwordPtr)) return TokenType.Mem32;
                         if(tokens.get(index).equals(TokenType.WordPtr)) return TokenType.Mem16;
@@ -79,6 +82,7 @@ public class Operand {
                 if(tokens.size() > 3) {
                     if (sibPlusDisp(index + next)) {
                         sibRegIs16 = sibRegTypeIs16(index + next);
+                        if(sibRegIs16 && isSibDisp16Error(index)) return TokenType.Unknown;
                         isSibDisp = true;
                         return TokenType.Identifier;
                     } else return TokenType.Identifier;
@@ -111,6 +115,11 @@ public class Operand {
 
     public boolean isSibDisp() {
         return isSibDisp;
+    }
+
+    public boolean isSibDisp16Error(int index){
+        return (tokens.get(index).getStringToken().equals("BP") || tokens.get(index).getStringToken().equals("BX")) &&
+                (tokens.get(index).getStringToken().equals("DI") || tokens.get(index).getStringToken().equals("SI"));
     }
 
 

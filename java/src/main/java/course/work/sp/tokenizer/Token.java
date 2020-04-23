@@ -85,7 +85,7 @@ public class Token {
         if (empty) type = TokenType.Empty;
      }
     public Token(){
-        type = TokenType.Unknown;
+        type = TokenType.Empty;
     }
 
     public Token(String string) {
