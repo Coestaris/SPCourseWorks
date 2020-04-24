@@ -1,4 +1,4 @@
-package course.work.sp;
+package course.work.sp.secondpass;
 
 import course.work.sp.firstpass.FirstPassSentence;
 

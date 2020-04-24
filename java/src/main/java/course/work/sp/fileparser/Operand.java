@@ -34,10 +34,10 @@ public class Operand {
                 index--;
             }
         }
-        if(!error){
+        if (!error) {
             operandType = createOperandType();
 
-        }else {
+        } else {
             operandType = TokenType.Unknown;
         }
 
@@ -55,53 +55,53 @@ public class Operand {
             if (tokens.get(index).equals(TokenType.DecNumber)) return TokenType.Imm;
             if (tokens.get(index).equals(TokenType.HexNumber)) return TokenType.Imm;
             if (tokens.get(index).equals(TokenType.BinNumber)) return TokenType.Imm;
-        }else{
-            if(tokens.get(index).equals(TokenType.SegmentRegister)){
+        } else {
+            if (tokens.get(index).equals(TokenType.SegmentRegister)) {
                 segmentReg = true;
                 index++;
             }
-            if(sibPlusDisp(index)){
+            if (sibPlusDisp(index)) {
                 sibRegIs16 = sibRegTypeIs16(index);
-                if(sibRegIs16 && isSibDisp16Error(index)) return TokenType.Unknown;
+                if (sibRegIs16 && isSibDisp16Error(index)) return TokenType.Unknown;
                 isSibDisp = true;
                 return TokenType.Mem;
-            }else if (tokens.get(index).equals(TokenType.DwordPtr) || tokens.get(index).equals(TokenType.WordPtr) || tokens.get(index).equals(TokenType.BytePtr)){
-                if(tokens.size() > 3){
-                    if(sibPlusDisp(index + next)) {
+            } else if (tokens.get(index).equals(TokenType.DwordPtr) || tokens.get(index).equals(TokenType.WordPtr) || tokens.get(index).equals(TokenType.BytePtr)) {
+                if (tokens.size() > 3) {
+                    if (sibPlusDisp(index + next)) {
                         sibRegIs16 = sibRegTypeIs16(index + next);
-                        if(sibRegIs16 && isSibDisp16Error(index)) return TokenType.Unknown;
+                        if (sibRegIs16 && isSibDisp16Error(index)) return TokenType.Unknown;
                         isSibDisp = true;
-                        if(tokens.get(index).equals(TokenType.DwordPtr)) return TokenType.Mem32;
-                        if(tokens.get(index).equals(TokenType.WordPtr)) return TokenType.Mem16;
-                        if(tokens.get(index).equals(TokenType.BytePtr)) return TokenType.Mem8;
-                    }else{
+                        if (tokens.get(index).equals(TokenType.DwordPtr)) return TokenType.Mem32;
+                        if (tokens.get(index).equals(TokenType.WordPtr)) return TokenType.Mem16;
+                        if (tokens.get(index).equals(TokenType.BytePtr)) return TokenType.Mem8;
+                    } else {
                         return TokenType.Unknown;
                     }
                 }
-            }else if(tokens.get(index).equals(TokenType.Identifier)){
-                if(tokens.size() > 3) {
+            } else if (tokens.get(index).equals(TokenType.Identifier)) {
+                if (tokens.size() > 3) {
                     if (sibPlusDisp(index + next)) {
                         sibRegIs16 = sibRegTypeIs16(index + next);
-                        if(sibRegIs16 && isSibDisp16Error(index)) return TokenType.Unknown;
+                        if (sibRegIs16 && isSibDisp16Error(index)) return TokenType.Unknown;
                         isSibDisp = true;
                         return TokenType.Identifier;
                     } else return TokenType.Identifier;
-                }else return TokenType.Identifier;
+                } else return TokenType.Identifier;
             }
         }
         return TokenType.Unknown;
     }
 
-    private boolean sibPlusDisp(int index){
+    private boolean sibPlusDisp(int index) {
         return (
                 (tokens.get(index).equals(TokenType.Reg16) && tokens.get(index + next).equals(TokenType.Reg16)) ||
-                (tokens.get(index).equals(TokenType.Reg32) && tokens.get(index + next).equals(TokenType.Reg32))
-                                                    ) && (tokens.get(index + next + next).equals(TokenType.DecNumber) ||
-                                                         tokens.get(index + next + next).equals(TokenType.HexNumber) ||
-                                                         tokens.get(index + next + next).equals(TokenType.BinNumber));
+                        (tokens.get(index).equals(TokenType.Reg32) && tokens.get(index + next).equals(TokenType.Reg32))
+        ) && (tokens.get(index + next + next).equals(TokenType.DecNumber) ||
+                tokens.get(index + next + next).equals(TokenType.HexNumber) ||
+                tokens.get(index + next + next).equals(TokenType.BinNumber));
     }
 
-    private boolean sibRegTypeIs16(int index){
+    private boolean sibRegTypeIs16(int index) {
         return tokens.get(index).equals(TokenType.Reg16);
     }
 
@@ -117,7 +117,7 @@ public class Operand {
         return isSibDisp;
     }
 
-    public boolean isSibDisp16Error(int index){
+    public boolean isSibDisp16Error(int index) {
         return (tokens.get(index).getStringToken().equals("BP") || tokens.get(index).getStringToken().equals("BX")) &&
                 (tokens.get(index).getStringToken().equals("DI") || tokens.get(index).getStringToken().equals("SI"));
     }
@@ -132,7 +132,7 @@ public class Operand {
     }
 
     public boolean equalOperandType(TokenType operandType) {
-       return operandType == this.operandType;
+        return operandType == this.operandType;
     }
 
     public List<Token> getTokens() {
@@ -142,11 +142,12 @@ public class Operand {
     @Override
     public String toString() {
         StringBuilder pass = new StringBuilder();
-        if(segmentReg) pass.append("SEGREG ( ").append(segmentReg).append(" )");
-        if(isSibDisp) pass.append(" isSib ( ").append(isSibDisp).append(" ) is16Sib (").append(sibRegIs16).append(" ) ");
+        if (segmentReg) pass.append("SEGREG ( ").append(segmentReg).append(" )");
+        if (isSibDisp)
+            pass.append(" isSib ( ").append(isSibDisp).append(" ) is16Sib (").append(sibRegIs16).append(" ) ");
         pass.append(operandType).append(": ");
-        for (Token tk: tokens)
-        pass.append(tk.getType()).append(" | ");
+        for (Token tk : tokens)
+            pass.append(tk.getType()).append(" | ");
         return pass.toString();
     }
 }

@@ -18,16 +18,8 @@ public class Label {
         return index;
     }
 
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
     public String getLabel() {
         return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
     }
 
     public int getOffset() {

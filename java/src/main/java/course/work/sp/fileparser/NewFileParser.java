@@ -13,6 +13,10 @@ public class NewFileParser {
     private List<NewSentence> newSentenceList;
 
     public NewFileParser(String filePath) {
+        parsingFile(filePath);
+    }
+
+    private void parsingFile(String filePath) {
         newSentenceList = new ArrayList<>();
         List<Token> arrayToken;
         String file = DownloadFile.downloadFile(filePath);
@@ -27,7 +31,7 @@ public class NewFileParser {
                 if (!contains(c)) {
                     token.append(c);
                 } else {
-                    if(c == ':') token.append(c);
+                    if (c == ':') token.append(c);
                     createToken(arrayToken, token.toString());
                     createToken(arrayToken, c + "");
                     token = new StringBuilder();
@@ -36,7 +40,6 @@ public class NewFileParser {
             createToken(arrayToken, token.toString());
             newSentenceList.add(createSentence(arrayToken, lines[index], index));
             index++;
-            //fileToken.add(arrayToken);
         }
     }
 
@@ -44,30 +47,31 @@ public class NewFileParser {
         return newSentenceList;
     }
 
-    private  boolean contains(char ch) {
+    private boolean contains(char ch) {
         return ch == ' ' || ch == '[' || ch == ']' || ch == '+' || ch == ',' || ch == ':';
     }
 
-    private  void createToken(List<Token> arrayToken, String string) {
+    private void createToken(List<Token> arrayToken, String string) {
         string = string.trim();
         if (!string.isEmpty()) {
             arrayToken.add(new Token(string));
         }
     }
 
-    private  NewSentence createSentence(List<Token> arrayToken, String string, int number){
+    private NewSentence createSentence(List<Token> arrayToken, String string, int number) {
 
-            Token identifier = new Token();
-            Token instruction = new Token();
-            List<Token> operand = new ArrayList<>();
-            List<Operand> operands = new ArrayList<>();
-        if(arrayToken.size() > 0) {
+        Token identifier = new Token();
+        Token instruction = new Token();
+        List<Token> operand = new ArrayList<>();
+        List<Operand> operands = new ArrayList<>();
+        if (arrayToken.size() > 0) {
             for (int index = 0; index < arrayToken.size(); index++) {
                 if (index == 0 && (arrayToken.get(index).equals(TokenType.Label) ||
                         arrayToken.get(index).equals(TokenType.Identifier))) {
                     identifier = arrayToken.get(index);
                     identifier.setType(IdentifierStore.getInstance().addIdentifierStore(arrayToken, number));
-                    if(identifier.equals(TokenType.Unknown)) return new NewSentence(number, identifier, instruction, operands, string);
+                    if (identifier.equals(TokenType.Unknown))
+                        return new NewSentence(number, identifier, instruction, operands, string);
                     if (arrayToken.get(index).equals(TokenType.Label)) index++;
                 } else {
                     if (arrayToken.get(index).equals(TokenType.Instruction) ||
@@ -91,7 +95,7 @@ public class NewFileParser {
                     }
                 }
             }
-        }else {
+        } else {
             return new NewSentence(number, new Token(true), new Token(true), operands, string);
         }
         return new NewSentence(number, identifier, instruction, operands, string);
