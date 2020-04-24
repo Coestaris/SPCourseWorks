@@ -8,36 +8,43 @@ import (
 
 const expansionCode = 0x0F
 
-const (
-	al = 0b000
-	cl = 0b001
-	dl = 0b010
-	bl = 0b011
-	ah = 0b100
-	ch = 0b101
-	dh = 0b110
-	bh = 0b111
+var segPrefixes = map[string]byte {
+	"es": 0x26,
+	"cs": 0x2E,
+	"ss": 0x36,
+	"ds": 0x3E,
+	"fs": 0x64,
+	"gs": 0x65,
+}
 
-	ax = al
-	cx = cl
-	dx = dl
-	bx = bl
-	sp = ah
-	bp = ch
-	si = dh
-	di = bh
+var regCodes = map[string]byte {
+	"al": 0b000,
+	"cl": 0b001,
+	"dl": 0b010,
+	"bl": 0b011,
+	"ah": 0b100,
+	"ch": 0b101,
+	"dh": 0b110,
+	"bh": 0b111,
 
-	eax = al
-	ecx = cl
-	edx = dl
-	ebx = bl
-	esp = ah
-	ebp = ch
-	esi = dh
-	edi = bh
+	"ax": 0b000,
+	"cx": 0b001,
+	"dx": 0b010,
+	"bx": 0b011,
+	"sp": 0b100,
+	"bp": 0b101,
+	"si": 0b110,
+	"di": 0b111,
 
-	sib = 0b100
-)
+	"eax": 0b000,
+	"ecx": 0b001,
+	"edx": 0b010,
+	"ebx": 0b011,
+	"esp": 0b100,
+	"ebp": 0b101,
+	"esi": 0b110,
+	"edi": 0b111,
+}
 
 type instruction struct {
 	// x86 Instruction Format
@@ -106,6 +113,25 @@ func (i *instruction) setMod(mod, reg, rm byte) error {
 	}
 	i.modRM = mod << 6 | reg << 3 | rm
 	return nil
+}
+
+func (i *instruction) PackReg(packedReg types.Token) error {
+	if i.packedRegister {
+		regNotFound := true
+		for reg, val := range regCodes {
+			if packedReg.GetValue() == reg {
+				regNotFound = false
+				i.opCode |= val
+				break
+			}
+		}
+
+		if regNotFound {
+			return fmt.Errorf("unkown register %s", packedReg.GetValue())
+		}
+		return nil
+	}
+	return fmt.Errorf("instruction not marked as having packed opCode")
 }
 
 func (i *instruction) GetName() string {
