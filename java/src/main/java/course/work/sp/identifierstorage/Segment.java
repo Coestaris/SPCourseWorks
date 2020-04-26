@@ -1,6 +1,5 @@
 package course.work.sp.identifierstorage;
 
-import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
 
 public class Segment {
@@ -19,10 +18,6 @@ public class Segment {
 
     public String getSegment() {
         return segment;
-    }
-
-    public void setSegment(String segment) {
-        this.segment = segment;
     }
 
     public int getIndexStart() {
@@ -50,7 +45,7 @@ public class Segment {
         return error;
     }
 
-    public boolean equalSegment(String string){
+    public boolean equalSegment(String string) {
         return string.equals(segment);
     }
 
