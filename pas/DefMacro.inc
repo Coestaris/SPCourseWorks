@@ -1,0 +1,4 @@
+{$MACRO ON}
+{$define MAX_TOKENS:=20}
+{$define MAX_LEXEMES:=200}
+{$define MAX_USERNAMES:=200}

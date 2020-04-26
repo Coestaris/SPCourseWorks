@@ -1,12 +1,14 @@
 unit tokenizer;
 
+{$I DefMacro.inc}
+
 interface
 
-procedure Tokenize(InputFile : string; var outFile : TextFile; output : boolean);
+uses base;
+
+function Tokenize(InputFile : string; var outFile : TextFile; output : boolean) : ASMStorage;
 
 implementation
-
-uses base;
 
 function IsSplitter(c : char) : boolean;
 begin
@@ -42,6 +44,12 @@ begin
         begin
             if length(token) <> 0 then
             begin
+                if tokens = MAX_TOKENS then
+                begin
+                    SetError(@l, 'Line is too long. Increase MAX_TOKENS to allow longer lines', tokens - 1);
+                    exit(l);
+                end;
+        
                 tokens := tokens + 1;
                 l.tokens[tokens].token := LowerCase(token);
                 l.tokensLen := tokens;
@@ -52,6 +60,12 @@ begin
                 SetLength(token, 1);
                 token[1] := c;
                 
+                if tokens = MAX_TOKENS then
+                begin
+                    SetError(@l, 'Line is too long. Increase MAX_TOKENS to allow longer lines', tokens - 1);
+                    exit(l);
+                end;
+
                 tokens := tokens + 1;
                 l.tokens[tokens].token := token;
                 l.tokensLen := tokens;
@@ -68,6 +82,13 @@ begin
 
     if length(token) <> 0 then
     begin
+        
+        if tokens = MAX_TOKENS then
+        begin
+            SetError(@l, 'Line is too long. Increase MAX_TOKENS to allow longer lines', tokens - 1);
+            exit(l);
+        end;
+
         tokens := tokens + 1;
         l.tokens[tokens].token := LowerCase(token);
         l.tokensLen := tokens;
@@ -286,7 +307,7 @@ begin
     begin
         if offset = 2 then
         begin
-              SetError(lexeme, 'Name without instruction or directive', offset);
+            SetError(lexeme, 'Name without instruction or directive', offset);
         end;
         exit;        
     end;
@@ -327,17 +348,6 @@ begin
     end;    
 end;
 
-procedure PrintError(lexeme : Lexeme; var outFile : TextFile);
-begin
-    if lexeme.hasError then 
-    begin
-        if lexeme.errorToken <= lexeme.tokensLen then
-            writeln(outFile, 'Error: ', lexeme.errorMessage, ' near token "', lexeme.tokens[lexeme.errorToken].token, '"')
-        else
-            writeln(outFile, 'Error: ', lexeme.errorMessage, '');
-    end;
-end;
-
 procedure PrintTokens(lexeme : Lexeme; var outFile : TextFile);
 var 
     i : integer;
@@ -374,15 +384,21 @@ begin
     writeln(outFile);
 end;
 
-procedure Tokenize(InputFile : string; var outFile : TextFile; output : boolean);
+function Tokenize(InputFile : string; var outFile : TextFile; output : boolean) : ASMStorage;
 var 
     f : TextFile;
     t : TType;
     lineCounter, i : integer;
     line : string;
     currentLexeme : Lexeme;
+    storage : ASMStorage;
 
 begin
+    storage.lexemesLen := 0;
+    storage.codeSegmentIndex := 0;
+    storage.dataSegmentIndex := 0;
+    storage.userNamesLen := 0;
+
     lineCounter := 0;
 
     AssignFile(f, InputFile);
@@ -397,6 +413,9 @@ begin
         
         for i := 1 to currentLexeme.tokensLen do 
         begin
+            if currentLexeme.hasError then
+                continue;
+            
             t := DetermineTokenType(currentLexeme.tokens[i]);
             if t = Unknown then
                 SetError(@currentLexeme, 'Unkown token type', i)
@@ -407,11 +426,23 @@ begin
         if not currentLexeme.hasError then
             DetermineStructure(@currentLexeme);
         
-        PrintTokens(currentLexeme, outFile);
-        PrintError(currentLexeme, outFile);
+     
+        
+        if lineCounter >= MAX_LEXEMES then
+        begin
+            writeln('Too many lexemes =c');
+            continue;
+        end;
+        storage.lexemes[lineCounter] := currentLexeme;
+
+        if output then
+            PrintTokens(currentLexeme, outFile);
     end;
     
+    storage.lexemesLen := lineCounter;
+
     CloseFile(f);
+    Tokenize := storage;
 end;
 
 end.

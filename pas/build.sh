@@ -1,8 +1,8 @@
 #!/bin/bash
 
 OUTDIR="bin"
-FILE_LIST="main.pas"
-OUT_FILE="main"
+FILE_LIST="Main.pas"
+OUT_FILE="Main"
 
 clear=0
 build=1
