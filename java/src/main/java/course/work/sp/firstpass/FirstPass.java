@@ -89,4 +89,12 @@ public class FirstPass {
         pass.append(IdentifierStore.getInstance().toString());
         return pass.toString();
     }
+
+    public String toStringTest(){
+        StringBuilder pass = new StringBuilder();
+        for (FirstPassSentence fps : firstPassSentenceList)
+            pass.append(fps.toStringTest()).append("\n\n");
+
+        return pass.toString();
+    }
 }

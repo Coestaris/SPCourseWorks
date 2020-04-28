@@ -41,6 +41,7 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("EBX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("EDX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("ESI", TokenType.Reg32);
+        NAME_TO_TOKEN_TYPE_MAP.put("EDI", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("ECX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("DX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("SI", TokenType.Reg16);

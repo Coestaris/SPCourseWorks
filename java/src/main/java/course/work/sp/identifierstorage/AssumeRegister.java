@@ -18,16 +18,8 @@ public class AssumeRegister {
         return prefixCode;
     }
 
-    public void setPrefixCode(byte prefixCode) {
-        this.prefixCode = prefixCode;
-    }
-
     public TokenType getTokenType() {
         return tokenType;
-    }
-
-    public void setTokenType(TokenType tokenType) {
-        this.tokenType = tokenType;
     }
 
     public String getDestination() {

@@ -1,38 +1,38 @@
 index| Offset|        Source
 00  00000000 Data Segment
-01  00000000      Hex1    db  21h
-02  00000001      Dec2    dw  12
-03  00000003      Bin2    dd  0111110b
-04  00000007      Txt3    db  "string"
-05  0000000D Data ends
-06  00000000 
-07  00000000 Assume cs:Code, ds:Data
-08  00000000 Code Segment
-09  00000000 
-10  00000000 lable1:
-11  00000000     stc
-12  00000001     push ebx
-13  00000002     jmp lable2
-14  00000007     lable1: ERROR ):
-15  00000007     jnc lable2
-16  0000000D     Mov dx, si
-17  00000010     mul dword ptr[edx+esi+2]
-18  00000014     Xor ecx, DS:BIN2
-19  0000001A     Btr ES:Dec2[bx+di+1], ax
-20  00000022     Sub ebx, 07
-21  00000025     Adc byte ptr[bp+si + 2], 05
-22  0000002A     Jnc lable1
-23  0000002C     jmp lable1
-24  0000002E 
-25  0000002E lable2:
-26  0000002E 
-27  0000002E Code ends
+01  00000000 
+02  00000000      Hex1    db  21h
+03  00000001      Dec2    dw  12
+04  00000003      Bin2    dd  0111110b
+05  00000007      Txt3    db  "string"
+06  0000000D 
+07  0000000D Data ends
+08  00000000 
+09  00000000 Assume cs:Code, ds:Data
+10  00000000 Code Segment
+11  00000000 
+12  00000000 lable1:
+13  00000000     stc
+14  00000001     push ebx
+15  00000002     jmp lable2
+16  00000007     jnc lable2
+17  0000000D     Mov dx, si
+18  00000010     mul bin2 ERROR ):
+19  00000010     Xor ecx, DS:BIN2
+20  00000016     Btr ES:dec2[bx+di+1], ax
+21  0000001E     Sub ebx, 07
+22  00000021     Adc byte ptr[bp+si+8], 05
+23  00000026     Jnc lable1
+24  00000028     jmp lable1
+25  0000002A lable2:
+26  0000002A 
+27  0000002A Code ends
 28  00000000 END
 
 
  NAME |   TYPE  |  SEG | VALUE 
 LABLE1| Label   | CODE | 00000000 
-LABLE2| Label   | CODE | 0000002E 
+LABLE2| Label   | CODE | 0000002A 
 HEX1  | DbIdentifier | DATA | 00000000 
 DEC2  | DwIdentifier | DATA | 00000001 
 BIN2  | DdIdentifier | DATA | 00000003 
@@ -41,7 +41,7 @@ TXT3  | DbIdentifier | DATA | 00000007
 
 Segment name| Bit Depth| Size
 DATA |          32     | 0000000D  
-CODE |          32     | 0000002E  
+CODE |          32     | 0000002A  
 
 
 Segment Register | Destination

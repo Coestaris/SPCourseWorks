@@ -67,6 +67,10 @@ public class NewSentence {
         return number;
     }
 
+    public Token getIdentifier() {
+        return identifier;
+    }
+
     @Override
     public String toString() {
         StringBuilder pass = new StringBuilder();

@@ -24,6 +24,7 @@ public class Operand {
             if (tokens.get(index).equals(TokenType.BytePtr) || tokens.get(index).equals(TokenType.WordPtr) || tokens.get(index).equals(TokenType.DwordPtr)) {
                 if (tokens.get(++index).equals(TokenType.Ptr)) {
                     this.tokens.remove(index);
+                    index --;
                 } else {
                     error = true;
                     break;
@@ -42,7 +43,6 @@ public class Operand {
         }
 
     }
-
 
     private TokenType createOperandType() {
         int index = 0;
@@ -137,6 +137,10 @@ public class Operand {
 
     public List<Token> getTokens() {
         return tokens;
+    }
+
+    public String getStringTokenByIndex(int indexToken){
+        return tokens.get(indexToken).getStringToken();
     }
 
     @Override

@@ -106,6 +106,9 @@ public class  Mnem {
         int size = 2;
         if(operands.size() == 1){
             Operand operand = operands.get(index);
+            if(operand.equalOperandType(TokenType.DwIdentifier) ||
+                    operand.equalOperandType(TokenType.DdIdentifier)||
+                    operand.equalOperandType(TokenType.DbIdentifier))return error;
             if(mem(operand) < 0) return error;
             return size + mem(operand);
             }

@@ -6,6 +6,7 @@ import course.work.sp.firstpass.FirstPassSentence;
 import course.work.sp.identifierstorage.IdentifierStore;
 import course.work.sp.lexicalAndSyntaxisAnalysis.FileParser;
 import course.work.sp.firstpass.FirstPass;
+import course.work.sp.secondpass.SecondPass;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,29 +19,19 @@ public class Application {
     }
 
     public static void main(String[] args) {
-        //String filePath = getFilepath();
-        //filePath = "D:\\LAB\\SP\\CourseWork\\start.asm";
-        //filePath = "D:\\LAB\\SP\\CourseWork\\start.asm";
         //FileParser.LexicalAndSyntaxAnalysis(filePath);
-        //FirstPass.SegmentDestination(FileParser.fileParser(filePath));
-        //FirstPass.firstPass(FileParser.fileParser(filePath), filePath);
-        String firstPass = new FirstPass(new NewFileParser(getFilepath()).getNewSentenceList()).toString();
-        try(FileWriter writer = new FileWriter("D:\\Repos\\sp_kurs\\java\\src\\main\\resources\\FirstPass.txt", false)) {
-            // запись всей строки
-            writer.write(String.valueOf(firstPass));
-            writer.flush();
-        }
-        catch(IOException ex){
-            System.out.println(ex.getMessage());
-        }
-        //            System.out.println(nw.toString());
+        FirstPass firstPass = new FirstPass(new NewFileParser(getFilepath()).getNewSentenceList());
+//        try(FileWriter writer = new FileWriter("D:\\Repos\\sp_kurs\\java\\src\\main\\resources\\FirstPass.txt", false)) {
+//            // запись всей строки
+//            writer.write(String.valueOf(firstPass.toString()));
+//            writer.flush();
+//        }
+//        catch(IOException ex){
+//            System.out.println(ex.getMessage());
+//        }
+        //System.out.println(firstPass.toStringTest());
+        SecondPass secondPass = new SecondPass(firstPass.getFirstPassSentenceList());
+        System.out.println(secondPass.toString());
 
-
-
-
-
-        // FirstPass.TableOfInstructionAndIdentifier();
-        //FirstPass.print();
-        //NewFileParser.newFileParser(getFilepath());
     }
 }

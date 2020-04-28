@@ -69,6 +69,36 @@ public class AssumeRegisterStorage {
         
     }
 
+    public byte getSegmentRegisterByte(String segmentReg){
+        TokenType typeReg = TokenType.Unknown;
+        switch (segmentReg) {
+            case ("DS"):
+                typeReg = TokenType.DS;
+                break;
+            case ("ES"):
+                typeReg = TokenType.ES;
+                break;
+            case ("FS"):
+                typeReg = TokenType.FS;
+                break;
+            case ("SS"):
+                typeReg = TokenType.SS;
+                break;
+            case ("CS"):
+                typeReg = TokenType.CS;
+                break;
+            case ("GS"):
+                typeReg = TokenType.GS;
+                break;
+            default:
+                break;
+        }
+        for (AssumeRegister asr: assumeRegisterList){
+            if(asr.getTokenType().equals(typeReg)) return asr.getPrefixCode();
+        }
+        return 0;
+    }
+
     public List<AssumeRegister> getAssumeRegisterList() {
         return assumeRegisterList;
     }
