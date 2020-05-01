@@ -22,7 +22,7 @@ begin
 
     DoFirstPass(@storage);
 
-    
+    PrintUserNames(outputFile, @storage);
     for i := 1 to storage.lexemesLen do 
     begin
        PrintError(storage.lexemes[i], outputFile);

@@ -35,6 +35,9 @@ begin
     l.hasMnem := false;
     l.opCount := 0;
 
+    l.offset := 0;
+    l.size := 0;
+
     l.hasError := false;
 
     for i := 1 to length(lexeme) do
