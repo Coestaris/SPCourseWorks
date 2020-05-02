@@ -35,6 +35,7 @@ begin
     l.hasMnem := false;
     l.opCount := 0;
 
+    l.b32mode := false;
     l.offset := 0;
     l.size := 0;
 

@@ -15,18 +15,13 @@ var
     i : integer;
 
 begin
+    AllocInstructions();
+
     AssignFile(outputFile, OutputFileName);
     Rewrite(outputFile);
 
     storage := Tokenize(InputFileName, OutputFile, false);
-
-    DoFirstPass(@storage);
-
-    PrintUserNames(outputFile, @storage);
-    for i := 1 to storage.lexemesLen do 
-    begin
-       PrintError(storage.lexemes[i], outputFile);
-    end;
+    DoFirstPass(@storage, OutputFile, true);
 
     CloseFile(outputFile);
 end.

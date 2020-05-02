@@ -5,8 +5,7 @@ interface
 
 uses Base;
 
-procedure DoFirstPass(storage : PASMStorage);
-procedure PrintUserNames(var outfile : TextFile; storage : PASMStorage);
+procedure DoFirstPass(storage : PASMStorage; var outfile : TextFile; output : boolean);
 
 implementation
 
@@ -50,6 +49,27 @@ begin
     GetLexemeType := LUnknown;
 end;
 
+procedure PrintSegmentTables(var outfile : TextFile; storage : PASMStorage);
+var codeLexeme, dataLexeme : Plexeme;
+begin
+    codeLexeme := @storage.lexemes[storage.lexemesLen-1];
+    dataLexeme := @storage.lexemes[storage.codeSegmentIndex - 1];
+
+    writeln(outfile, '# |  Name      | Bt | Line  | Size');
+    writeln(outfile, '1 |   data_seg | 16 | ', storage.dataSegmentIndex:5, ' | ', IntToHex(dataLexeme.offset,4));
+    writeln(outfile, '2 |   code_seg | 16 | ', storage.codeSegmentIndex:5, ' | ', IntToHex(codeLexeme.offset,4));
+
+    writeln(outfile);
+    writeln(outfile, '# |   reg      |   segment  ');
+    writeln(outfile, '1 |         cs |     code_seg');
+    writeln(outfile, '2 |         ds |     data_seg');
+    writeln(outfile, '3 |         fs | nothing');
+    writeln(outfile, '4 |         es | nothing');
+    writeln(outfile, '5 |         ss | nothing');
+    writeln(outfile, '6 |         gs | nothing');
+
+end;
+
 procedure PrintUserNames(var outfile : TextFile; storage : PASMStorage);
 var i : integer;
     t : string;
@@ -57,6 +77,7 @@ var i : integer;
     nameLex : PLexeme;
     currSeg : TType;
 begin
+    writeln(outfile, '# |  Name      | Type  | Line  | Value');
     for i := 1 to storage.userNamesLen do 
     begin
         nameLex := @storage.lexemes[storage.usernames[i].lexemeIndex];
@@ -79,7 +100,7 @@ begin
         write(outfile, i, ' | ', storage.usernames[i].symbolName:10, ' | ');
         write(outfile, t : 5, ' | ');
         write(outfile, storage.usernames[i].lexemeIndex:5, ' | ');
-        writeln(outfile, s, ':', nameLex.offset);
+        writeln(outfile, s, ':', IntToHex(nameLex.offset, 4));
     end;
 end;
 
@@ -190,6 +211,7 @@ begin
                     // Variable
                     varLexeme := @storage.Lexemes[un.lexemeIndex]; 
                     co.directIndex := true;
+                    co.hasSegmentReg := false;
                     
                     if varLexeme.tokens[2].tokenType = DbDirective then
                         co.operandType := mem8
@@ -238,8 +260,9 @@ begin
                 end;
                 offset := 2;
                 co.hasSegmentReg := true;
-                co.segmentreg := lexeme.tokens[start + 2];
-            end;
+                co.segmentreg := lexeme.tokens[start];
+            end
+            else co.hasSegmentReg := false;
 
             if len - offset <> 6 then
             begin
@@ -264,7 +287,7 @@ begin
                 exit;
             end;
 
-            co.directIndex := true;
+            co.directIndex := false;
             co.base := lexeme.tokens[start + offset + 2];
             co.scale := lexeme.tokens[start + offset + 4];
 
@@ -294,8 +317,171 @@ begin
     end;    
 end;
 
-procedure DoFirstPass(storage : PASMStorage);
-var i : integer;
+function MatchInstruction(lexeme : PLexeme; var error : integer) : PInstructionInfo;
+var 
+    i, j: integer;
+    b : boolean;
+begin
+    error := 0;
+    for i := 1 to MAX_INSTRUCTIONS do
+    begin
+        if instructions[i].mnem = lexeme.tokens[1].token then
+        begin
+            if lexeme.opCount <> instructions[i].opCount then
+            begin 
+                error := 3;
+                break;
+            end;
+
+            b := false;
+            for j := 1 to lexeme.opCount do
+                if lexeme.operandInfos[j].operandType <> instructions[i].operands[j] then
+                begin
+                    if lexeme.b32mode then
+                    begin
+                        // assume that mem32 is mem16 is b32 mode, same as reg32 is reg16
+                        if (lexeme.operandInfos[j].operandType = mem32) and (instructions[i].operands[j] = mem16)
+                            then continue;
+
+                        if (lexeme.operandInfos[j].operandType = reg32) and (instructions[i].operands[j] = reg16)
+                            then continue;
+                    end;
+                
+                    error := j;
+                    b := true;
+                    break;
+                end;
+            
+            if b then
+                continue;
+
+            exit(@(instructions[i]));
+        end;
+    end;
+
+    if error = 0 then
+        error := 4;
+    
+    MatchInstruction := nil;
+end;
+
+function CalculateSizeInstruction(lexeme : PLexeme; storage : PASMStorage) : integer;
+var 
+    i : integer;
+    jmp, fwd, nr : boolean;
+    diff : longint;
+    un : PUserName;
+begin
+
+    if (lexeme.tokens[1].token = 'jns') or (lexeme.tokens[1].token = 'jmp')  then
+    begin
+        un := GetUserNameByName(storage, false, lexeme.tokens[2].token);
+        if un = nil then exit(0);
+        
+        diff := storage.lexemes[un.lexemeIndex].offset - lexeme.offset;
+
+        jmp := lexeme.tokens[1].token = 'jmp';
+        fwd := lexeme.operandInfos[1].operandType = LabelF;
+        nr := abs(diff) < 127;
+
+        if jmp then
+        begin
+            if fwd then exit(3);
+            if not fwd and not nr then exit(3);        
+            if not fwd and nr then exit(2);
+        end 
+        else
+        begin
+            if fwd then exit(4);
+            if not fwd and not nr then exit(4);        
+            if not fwd and nr then exit(2);
+        end;
+
+        exit(0);
+    end;
+
+    writeln(lexeme.lexemeLine);
+    result := 1; // opcode
+
+    // exp prefix
+    if lexeme.instr.expPrefix then
+    begin
+        writeln('exp');
+        result := result + 1;
+    end;
+
+    // modrm
+    if (lexeme.instr.modrm <> 0) and not lexeme.instr.packedReg then
+    begin
+        writeln('modrm');
+        result := result + 1;    
+    end;
+    //imm
+
+    if lexeme.instr.imm <> 0 then
+    begin
+        writeln('imm', lexeme.instr.imm);
+        if lexeme.b32mode and (lexeme.instr.imm = 2) then
+            result := result + 4
+        else 
+            result := result + lexeme.instr.imm;
+    end;
+
+    // segment change prefix
+    // index change prefix
+    for i := 1 to lexeme.opCount do
+    begin
+        // If operation has indirect mem destination/src
+        if  (lexeme.operandInfos[i].operandType = Mem8) or 
+            (lexeme.operandInfos[i].operandType = Mem16) or 
+            (lexeme.operandInfos[i].operandType = Mem32) then
+        begin
+       
+            if lexeme.operandInfos[i].hasSegmentReg and 
+                (lexeme.operandInfos[i].segmentreg.token <> 'ds') then
+            begin
+                writeln('segReg');
+                result := result + 1;
+            end;
+
+            if lexeme.operandInfos[i].directIndex then
+            begin
+                result := result + 2; // disp16
+                writeln('disp16');
+                continue;
+            end;
+
+            result := result + 4; // disp32
+            writeln('disp32');
+
+            result := result + 1; // sib
+            result := result + 1; // index change
+            writeln('sib');
+            writeln('indexChange');
+        end; 
+    end;
+
+    // data change prefix
+    if lexeme.b32mode then
+    begin
+        writeln('dataChange');
+        result := result + 1;
+    end;
+end;
+
+function CalculateSizeData(lexeme : PLexeme) : integer;
+begin
+    if lexeme.tokens[2].tokenType = DbDirective then
+        exit(1);
+    if lexeme.tokens[2].tokenType = DwDirective then
+        exit(2);
+    if lexeme.tokens[2].tokenType = DdDirective then
+        exit(4);
+end;
+
+procedure DoFirstPass(storage : PASMStorage; var outfile : TextFile; output : boolean);
+var 
+    offset, i, j, error : integer;
     l : PLexeme;
     un : PUserName;
     currSeg : TType;
@@ -373,7 +559,7 @@ begin
             end;
         end;
 
-          // check for labels
+        // check for labels
         if l.lexemeType = LabelDefinition then
         begin
             un := GetUserNameByName(storage, false, l.tokens[1].token);
@@ -492,9 +678,77 @@ begin
                 continue;  
             end;
         end;
+
+        for j := 1 to l.opCount do
+        begin
+            if (l.operandInfos[j].operandType = Reg32) or (l.operandInfos[j].operandType = Mem32)
+                then l.b32mode := true; 
+        end;
+    end;
+
+    // Assign infstruction infos
+    for i := 1 to storage.lexemesLen do 
+    begin
+        l := @storage.lexemes[i];
+
+        if l.hasError then
+            continue;
+
+        if l.lexemeType <> InstructionLexeme then
+            continue;
+
+        l.instr := MatchInstruction(l, error);
+        if l.instr = nil then
+        begin
+            if error = 1 then
+                SetError(l, 'Unable to match instruction: First operand mismacth', l.op1Index)
+            else if error = 2 then
+                SetError(l, 'Unable to match instruction: Second operand mismacth', l.op2Index)
+            else if error = 3 then
+                SetError(l, 'Unable to match instruction: Operands count mismatch', 1)
+            else 
+                SetError(l, 'Unable to match instruction: Unkown instruction or other error', 1);
+
+            continue;  
+        end;
     end;
 
     // Calculate size
+    for i := 1 to storage.lexemesLen do 
+    begin
+        l := @storage.lexemes[i];
+
+        if l.hasError then
+            continue;
+
+        if (l.lexemeType = CodeSpecifier) or (l.lexemeType = DataSpecifier) then
+            offset := 0;
+
+        if l.lexemeType = InstructionLexeme then
+            l.size := CalculateSizeInstruction(l, storage)
+        else if l.lexemeType = VarDefinition then
+            l.size := CalculateSizeData(l);
+
+        l.offset := offset;
+        offset := offset + l.size;
+    end;
+    
+    // Output
+    if output then
+    begin
+        writeln(outfile, ' # |  Off | Size | Lex');
+        for i := 1 to storage.lexemesLen do 
+        begin
+            l := @storage.lexemes[i];
+
+            writeln(outfile, i:2, ' | ', IntToHex(longint(l.offset), 4), ' | ', IntToHex(longint(l.size), 4), ' | ',l.lexemeLine);
+            PrintError(storage.lexemes[i], outfile);
+        end;
+        writeln(outfile);
+        PrintUserNames(outfile, storage);
+        writeln(outfile);
+        PrintSegmentTables(outfile, storage);
+    end;
 end;
 
 end.

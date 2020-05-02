@@ -32,12 +32,14 @@ type Token = record
     tokenType : TType; 
 end;
 
+
 type TOperandType = (
     Mem8, Mem16, Mem32,
     Reg8, Reg16, Reg32,
     ImmSmall, ImmBig,
     LabelF, LabelB
 );
+
 
 type OperandInfo = record
     operandType : TOperandType;
@@ -53,6 +55,25 @@ type OperandInfo = record
     // For imm
     number : longint;
 end;
+
+
+type InstructionInfo = record
+    mnem : string;
+    opCount : integer;
+    operands : array[1..2] of TOperandType;
+
+    opcode : byte;
+    expPrefix : boolean;
+    packedReg : boolean;
+
+    modrm : integer;
+    imm : integer;
+    regOpcode : integer;
+end;
+
+
+type PInstructionInfo = ^InstructionInfo;
+
 
 type Lexeme = record
     // General fields
@@ -79,6 +100,8 @@ type Lexeme = record
     errorMessage : string;
 
     // Bytes stuff
+    b32mode : boolean;
+    instr : PInstructionInfo;
     offset : integer;
     size : integer;
 end;
@@ -107,13 +130,106 @@ type PASMStorage = ^ASMStorage;
 type PUserName = ^UserName;
 type POperandInfo = ^OperandInfo;
 
+
 procedure SetError(lexeme : PLexeme; error : string; tokenIndex : integer);
 procedure PrintError(lexeme : Lexeme; var outFile : TextFile);
 function GetUserNameByName(storage : PASMStorage; variable : boolean; n : string) : PUserName;
 function GetUserNameByLine(storage : PASMStorage; variable : boolean; n : integer) : PUserName;
 function GetLexemeSegment(storage : PASMStorage; lexemeIndex : integer) : TType;
+procedure AllocInstructions();
+
+var instructions : array[1..MAX_INSTRUCTIONS] of InstructionInfo;
 
 implementation
+
+var instrCounter : integer;
+
+function Instr(
+    mnem : string; opCount : integer; op1 : TOperandType; op2 : TOperandType; 
+    opcode : byte; expPrefix : boolean; modrm : integer; imm : integer; 
+    regOpcode : integer; packedReg : boolean) : InstructionInfo;
+var info : InstructionInfo; 
+begin
+    info.mnem := mnem; 
+    info.opCount := opCount;
+    info.operands[1] := op1;
+    info.operands[2] := op2;
+    info.opcode := opcode;
+    info.expPrefix := expPrefix;
+    info.modrm := modrm;
+    info.imm := imm;
+    info.regOpcode := regOpcode;
+    info.packedReg := packedReg;
+
+    instrCounter := instrCounter + 1;
+
+    if instrCounter >= MAX_INSTRUCTIONS then 
+    begin
+        writeln('Instruction overflow =c');
+        exit;
+    end;
+
+    instructions[instrCounter] := info;
+
+    Instr := info;
+end;
+
+//9E            SAHF
+
+//D0 /7         SAR r/m8,  1
+//D1 /7         SAR r/m16, 1
+
+// F6 /3        NEG r/m8
+// F7 /3        NEG r/m16
+
+// 0F A3        BT r/m16, r16
+
+// 0F AF /r     IMUL r16, r/m16
+
+// 84 /r        TEST r/m8, r8
+// 85 /r        TEST r/m16, r16
+
+// B0+rb        MOV reg8, imm8 
+// B8+rw        MOV reg16, imm16
+
+// 80 /6 ib     XOR r/m8, imm8
+// 83 /6 ib     XOR r/m16, imm8
+// 81 /6 wb     XOR r/m16, imm16
+
+// JNS  79          OF 89 c
+// JMP  EB          E9
+
+procedure AllocInstructions();
+begin
+    instrCounter := 0;
+    //  mnem opCount op1 op2 opcode expPrefix modrm imm regOpcode packedReg 
+    Instr('sahf', 0, reg8, reg8,     $9E, false, 0, 0, -1, false);
+
+    Instr('sar', 2, reg8,  immSmall, $D0, false, 1, 0, 7, false);
+    Instr('sar', 2, reg16, immSmall, $D1, false, 1, 0, 7, false);
+
+    Instr('neg', 1, mem8, reg8,      $F6, false, 1, 0, 3, false);
+    Instr('neg', 1, mem16, reg8,     $F7, false, 1, 0, 3, false);
+    
+    Instr('bt', 2, reg16, reg16,     $A3, true, 1, 0, -1, false);
+
+    Instr('imul', 2, reg16, mem16,   $AF, true, 2, 0, -1, false);
+
+    Instr('test', 2, mem8, reg8,     $84, false, 1, 0, -1, false);
+    Instr('test', 2, mem16, reg16,   $85, false, 1, 0, -1, false);
+
+    Instr('mov', 2, reg8, immSmall,  $84, false, 1, 1, -1, true);
+    Instr('mov', 2, reg16, immBig,   $88, false, 1, 2, -1, true);
+
+    Instr('xor', 2, mem8,  immSmall, $80, false, 1, 1, 6, false);
+    Instr('xor', 2, mem16, immSmall, $83, false, 1, 1, 6, false);
+    Instr('xor', 2, mem16, immBig,   $80, false, 1, 2, 6, false);
+
+    Instr('jns', 1, labelF, reg8,    $0, false, 0, 0, 0, false);
+    Instr('jns', 1, labelB, reg8,    $0, false, 0, 0, 0, false);
+    Instr('jmp', 1, labelF, reg8,    $0, false, 0, 0, 0, false);
+    Instr('jmp', 1, labelB, reg8,    $0, false, 0, 0, 0, false);
+end;
 
 function GetLexemeSegment(storage : PASMStorage; lexemeIndex : integer) : TType;
 begin
@@ -158,8 +274,6 @@ end;
 procedure PrintError(lexeme : Lexeme; var outFile : TextFile);
 var i : integer;
 begin
-    writeln(outfile, lexeme.lexemeLine);
-    
     if lexeme.hasError then 
     begin
         if lexeme.errorToken <= lexeme.tokensLen then
@@ -167,9 +281,6 @@ begin
         else
             writeln(outFile, 'Error: ', lexeme.errorMessage, '');
     end
-    else if lexeme.lexemeType = InstructionLexeme then
-            for i := 1 to lexeme.opCount do
-                writeln(outfile, lexeme.operandInfos[i].operandType);
 end;
 
 end.
