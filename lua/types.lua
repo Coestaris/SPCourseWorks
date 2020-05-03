@@ -10,6 +10,24 @@ local registers_32 = { "EAX", "EBX", "EDX", "ECX", "ESI", "EDI", "ESP", "EBP" }
 local registers_seg = { "CS", "DS", "ES", "FS", "GS", "SS" }
 local symbols = { ":", ",", "+", "-", "[", "]" }
 
+types.ot_imm_small = 0
+types.ot_imm_big = 1
+types.ot_reg_small = 2
+types.ot_reg_big = 3
+types.ot_mem_small = 4
+types.ot_mem_big = 5
+types.ot_mem_undef = 6
+types.ot_label_f = 7
+types.ot_label_b = 8
+
+types.ut_segment = 0
+types.ut_label = 1
+types.ut_var = 2
+
+types.ut_vt_db = 0
+types.ut_vt_dw = 1
+types.ut_vt_dd = 2
+
 types.lt_segment_def = 0
 types.lt_segment_end = 1
 types.lt_var_def = 2
@@ -17,7 +35,8 @@ types.lt_assume = 3
 types.lt_label = 4
 types.lt_instruction = 5
 types.lt_end = 6
-types.lt_wrong = 7
+types.lt_blank = 7
+types.lt_wrong = 8
 
 types.tt_directive = 0
 types.tt_instruction = 1
