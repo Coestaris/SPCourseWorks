@@ -18,3 +18,5 @@ python/log\.dat
 c/tests/
 
 python/tests/
+
+lua/\.vscode/settings\.json

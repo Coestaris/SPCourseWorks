@@ -4,6 +4,7 @@ local pretty = require("pl.pretty")
 local error = require("error")
 local asm_storage = require("asmstorage")
 
+local tokenize = require("tokenize")
 local first_pass = require("first_pass")
 
 -- Input file name
@@ -37,7 +38,9 @@ local function main()
         comp_error(string.format("Unable to open file %q", filename))
     end
 
-    first_pass.proceed(filename, asm_storage, true)
+    tokenize.proceed(
+        filename, asm_storage, false, 
+        first_pass.do_first_pass, true)
 end
 
 main()

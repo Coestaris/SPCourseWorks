@@ -10,6 +10,15 @@ local registers_32 = { "EAX", "EBX", "EDX", "ECX", "ESI", "EDI", "ESP", "EBP" }
 local registers_seg = { "CS", "DS", "ES", "FS", "GS", "SS" }
 local symbols = { ":", ",", "+", "-", "[", "]" }
 
+types.lt_segment_def = 0
+types.lt_segment_end = 1
+types.lt_var_def = 2
+types.lt_assume = 3
+types.lt_label = 4
+types.lt_instruction = 5
+types.lt_end = 6
+types.lt_wrong = 7
+
 types.tt_directive = 0
 types.tt_instruction = 1
 types.tt_identifier = 2

@@ -1,5 +1,5 @@
 Data SEGMENT
-    Var1 DB 012h
+    3Var1 DB 012h
     Var2 DW 232
     Var3 DD 0001110b
     String DB "Test string"
