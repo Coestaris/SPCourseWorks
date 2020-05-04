@@ -487,9 +487,12 @@ var
     currSeg : TType;
     wrongOperands : boolean;
     wrongConstant : boolean;
+    codeSegmentMet : boolean;
     imm : longint;
 begin
     // Determine lexeme types
+    codeSegmentMet := false;
+    
     for i := 1 to storage.lexemesLen do 
     begin
         l := @storage.lexemes[i];
@@ -502,6 +505,16 @@ begin
         begin
             SetError(l, 'Unkown lexeme type', MAX_TOKENS);
             continue;
+        end;
+
+        if l.lexemeType = CodeSpecifier then 
+            codeSegmentMet := true;
+        
+        if (not codeSegmentMet) and 
+            ((l.lexemeType = LabelDefinition) or (l.lexemeType = InstructionLexeme)) then
+        begin
+            SetError(l, 'Instruction or label out of .code segment', 1);
+            continue;  
         end;
     end;
 
@@ -636,7 +649,7 @@ begin
                         continue;  
                     end;
         end;
-
+        
         // Check for mem16|reg32, etc. cases...
         wrongOperands := false;
         wrongConstant := false;

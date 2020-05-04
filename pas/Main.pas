@@ -6,8 +6,8 @@ uses
     FirstPass;
 
 const 
-    InputFileName : string = 'bin/test.asm';
-    OutputFileName : string = 'bin/output.log';
+    InputFileName : string = 'bin/test1.asm';
+    OutputFileName : string = 'bin/output1.log';
 
 var    
     outputFile : TextFile;

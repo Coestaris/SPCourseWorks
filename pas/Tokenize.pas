@@ -132,6 +132,9 @@ end;
 function IsNumberBin(token : string) : boolean;
 var start, i : integer;
 begin
+     if length(token) < 2 then
+        exit(false);
+        
     IsNumberBin := true;
 
     if token[length(token)] <> 'b' then 
@@ -176,6 +179,9 @@ var
     ok : boolean;
 
 begin
+    if length(token) < 2 then
+        exit(false);
+
     IsNumberHex := true;
 
     if token[length(token)] <> 'h' then 
@@ -204,6 +210,9 @@ var
     ok : boolean;
 
 begin
+    if length(token) > 8 then
+        exit(false);
+    
     IsIdentifier := true;
 
     for i := 1 to length(token) do 
