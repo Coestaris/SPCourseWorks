@@ -14,7 +14,7 @@ Implemented solutions:
 * [C++ Version](https://github.com/Coestaris/SPCourseWorks/tree/master/cpp) (3 - First Pass) - Developed by [iVanyaVas](https://github.com/iVanyaVas)
 * [Java Version](https://github.com/Coestaris/SPCourseWorks/tree/master/java) (4 - Second Pass) - Developed by [Leshik_XXL](https://github.com/leshik-xxl)
 * [C Version](https://github.com/Coestaris/SPCourseWorks/tree/master/c) (4 - Second Pass) - Developed by [Coestaris](https://github.com/Coestaris)
-* [LUA Version](https://github.com/Coestaris/SPCourseWorks/tree/master/lua) (2 - Tokenizing pass) - Developed by [Coestaris](https://github.com/Coestaris)
+* [LUA Version](https://github.com/Coestaris/SPCourseWorks/tree/master/lua) (3 - First pass) - Developed by [Coestaris](https://github.com/Coestaris)
 * [Pascal Version](https://github.com/Coestaris/SPCourseWorks/tree/master/pas) (3 - First pass) - Developed by [Coestaris](https://github.com/Coestaris)
 
 You can contribute your implementation to make this world better ❤️
