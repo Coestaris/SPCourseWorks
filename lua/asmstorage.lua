@@ -28,11 +28,9 @@ function asm_storage.create_instruction_info(nmem)
     info.mnem = mnem
     info.op_count = 0
 
-    info.seg_reg = ""
-
     info.op1 = {}
     info.op2 = {}
-
+    
     return info
 end
 

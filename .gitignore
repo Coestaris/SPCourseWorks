@@ -20,3 +20,5 @@ c/tests/
 python/tests/
 
 lua/\.vscode/settings\.json
+
+lua/tests/

@@ -27,4 +27,10 @@ function common.has_value(tab, val)
     return false
 end
 
+function common.padleft(s, l, c)
+    s = string.format('%X', s)
+    local res = string.rep(c or ' ', l - #s) .. s
+    return res
+end
+
 return common

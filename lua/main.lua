@@ -8,7 +8,7 @@ local tokenize = require("tokenize")
 local first_pass = require("first_pass")
 
 -- Input file name
-local filename = "test.asm"
+local filename = "tests/test.asm"
 -- Object storing all asm information
 local asm_storage = asm_storage.create_asm_storage()
 
@@ -37,6 +37,8 @@ local function main()
     if not is_file_exists(filename) then
         comp_error(string.format("Unable to open file %q", filename))
     end
+
+    first_pass.register_instructions()
 
     tokenize.proceed(
         filename, asm_storage, false, 

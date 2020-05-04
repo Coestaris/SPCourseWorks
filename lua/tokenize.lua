@@ -269,7 +269,7 @@ function tokenize.proceed(filename, storage, et1_print, next_et_function, et2_pr
     local lines = read_lines(filename)
     for i, line in pairs(lines) do
 
-        if et1_print or et2_print then
+        if et1_print then
             print(string.format("line#%2i:| %s", i, line))
         end
         
@@ -284,10 +284,20 @@ function tokenize.proceed(filename, storage, et1_print, next_et_function, et2_pr
             structure:print()
             print()
         end
-
+        
         if not storage:has_error(i) then
             next_et_function(filename, i, line, tokens, token_types, structure, storage, et2_print)
         end        
+        
+        if et2_print then
+            if storage.offsets[i] ~= nil then
+                print(string.format("%2i:| %s | %s | %s", i, 
+                    common.padleft(storage.offsets[i][2], 4, '0'), 
+                    common.padleft(storage.offsets[i][1], 4, '0'), line))
+            else
+                print(string.format("%2i:|  --  |  --  | %s", i, line))
+            end
+        end
     end
 
     if et2_print then
