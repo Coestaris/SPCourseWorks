@@ -342,34 +342,27 @@ void lexemeCreate(int line)
 		(vectorOfTokens[line][1].type == SegmentKeyword || vectorOfTokens[line][1].type == EndsKeyword))
 	{
 		vectorOfTokens[line][0].type = UserSegment;
-		//lexems[line].tokens[line].type = UserSegment;
 		lexems[line].hasName = true;
-		//needs to add a reiteration check of the segment names
-
-	}
-	if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][1].type == DbDirective)
+	} 
+	else if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][1].type == DbDirective)
 	{
 		lexems[line].hasName = true;
 	}
-	if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][1].type == DdDirective)
+	else if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][1].type == DdDirective)
 	{
 		lexems[line].hasName = true;
 	}
-	if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][1].type == DwDirective)
+	else if (vectorOfTokens[line].size() == 3 && vectorOfTokens[line][1].type == DwDirective)
 	{
 		lexems[line].hasName = true;
 	}
-	if (vectorOfTokens[line].size() == 2 && vectorOfTokens[line][0].type == Identifier &&
+	else if (vectorOfTokens[line].size() == 2 && vectorOfTokens[line][0].type == Identifier &&
 		vectorOfTokens[line][1].token == ":")
 	{
 		vectorOfTokens[line][0].type = Label;
-		//lexems[line].tokens[line].type = Label;
 		lexems[line].hasLabel = true;
-
-	}
-
-	// Macro declaration
-	if (vectorOfTokens[line].size() >= 2 && vectorOfTokens[line][0].type == Identifier &&
+	} 
+	else if (vectorOfTokens[line].size() >= 2 && vectorOfTokens[line][0].type == Identifier &&
 		vectorOfTokens[line][1].type == MacroKeyword)
 	{
 		struct macro m;
@@ -379,7 +372,6 @@ void lexemeCreate(int line)
 		m.start = line;
 
 		lexems[line].hasName = true;
-		//lexems[line].hasMacro = true;
 
 		if (vectorOfTokens[line].size() != 2) // has parameters
 		{
@@ -391,12 +383,21 @@ void lexemeCreate(int line)
 	}
 	else if (vectorOfTokens[line].size() == 1 && vectorOfTokens[line][0].type == EndmKeyword)
 	{
-		// End of the macro
-	   // lexems[line].hasLabel = true;
 		listeningMacro.end = line;
 		macro.push_back(listeningMacro);
 	}
-
+	else if (vectorOfTokens[line][0].type == Identifier)
+	{
+		// It also could be a macro name
+		struct macro* m = hasMacro(vectorOfTokens[line]);
+		if (!m || m->name.token != vectorOfTokens[line][0].token)
+			lexems[line].hasName = true;
+	}
+	else if (vectorOfTokens[line][0].type != EndKeyword && vectorOfTokens[line][0].type != Instruction)
+	{
+		lexems[line].SetError("Unkown lexeme type", vectorOfTokens[line][0]);
+		return;
+	}
 	determineStructure(line);
 }
 
@@ -423,18 +424,41 @@ void determineStructure(int line)
 	{
 		offset += 2;
 	}
+	
 	if (vectorOfTokens[line].size() == offset)
 	{
+		// It also could be a macro name
+		if (offset == 1 && !hasMacro(vectorOfTokens[line])) 
+		{
+			lexems[line].SetError("Name without instruction", vectorOfTokens[line][0]);
+		}
 		return;
 	}
+
 	if (instructionCheck(offset, line))
 	{
+		if (offset == 1 && vectorOfTokens[line][offset].type == Instruction)
+		{
+			lexems[line].SetError("Named instruction", vectorOfTokens[line][1]);
+			return;
+		}
 		lexems[line].hasInstruction = true;
 		lexems[line].instrIndex = offset;
 	}
-	else return;
+	else
+	{
+		// It also could be a macro name
+		struct macro* m = hasMacro(vectorOfTokens[line]);
+		if (!m || m->name.token != vectorOfTokens[line][offset].token)
+		{
+			lexems[line].SetError("Exptected instruction or directive", vectorOfTokens[line][0]);
+			return;
+		}
+	}
+
 	offset += 1;
 	if (vectorOfTokens[line].size() == offset) return;
+	
 	int comaposition = -1;
 	for (int i = offset; i<vectorOfTokens[line].size(); i++)
 	{
@@ -455,9 +479,6 @@ void determineStructure(int line)
 		lexems[line].operandLengths[2] = vectorOfTokens[line].size() - comaposition -1;
 	}
 	else lexems[line].operandLengths[1] = vectorOfTokens[line].size() - offset ;
-
-	
-
 }
 
 
@@ -477,6 +498,8 @@ void proceedTokens()
 	 // MACROROSZIRENNYA
 	for (int i = 0; i < vectorOfTokens.size(); i++)
 	{
+		if (lexems[i].has_error) continue;
+
 		// lexeme have macro
 		struct macro* m = hasMacro(vectorOfTokens[i]);
 		if (!m) continue;
