@@ -1,26 +1,39 @@
-#ifdef __GNUC__
-#pragma implementation "coding.h"
+#if __linux__
+	#ifdef __GNUC__
+	#pragma implementation "coding.h"
+	#endif
+#else
+#define _CRT_SECURE_NO_WARNINGS
 #endif
+
 #include "coding.h"
 
 #include <string.h>
 
 #include "errors.h"
 
+// Means that field is not defined 
 #define EMPTY ((uint8_t)-1)
+
+// REG mod field
 #define MOD_REG 0b11
+// SIB + DISP8 mod field
 #define MOD_MEM_PLUS_DISP8  0b01
+// SIB + DISP8 mod field
 #define MOD_MEM_PLUS_DISP32 0b10
-
+// SIB rm field
 #define RM_SIB 0b100
-
+// Expansion prefix constant
 #define EXP_PREFIX 0x0F
 
+// Pair of Name:Value to implement some kind of dictionary...
 struct code_elem
 {
    const char* name;
    uint8_t code;
-} SEG_CODES[] =
+}
+// Segment change prefix codes
+SEG_CODES[] =
 {
    {"ES", 0x26 },
    {"CS", 0x2E },
@@ -30,6 +43,7 @@ struct code_elem
    {"GS", 0x65 },
 };
 
+// 8/32 Register codes
 struct code_elem REG_CODES[] =
 {
    {"EAX", 0b000 },
@@ -50,6 +64,7 @@ struct code_elem REG_CODES[] =
    {"BH",  0b111 },
 };
 
+// Returns seg prefix code that corresponds to a given token
 static uint8_t get_seg_code(token_t* t)
 {
    for(size_t i = 0; i < 6; i++)
@@ -58,6 +73,7 @@ static uint8_t get_seg_code(token_t* t)
    return EMPTY;
 }
 
+// Returns register code that corresponds to a given token
 static uint8_t get_reg_code(token_t* t)
 {
    for(size_t i = 0; i < 16; i++)
@@ -66,21 +82,25 @@ static uint8_t get_reg_code(token_t* t)
    return EMPTY;
 }
 
+// Assembles modregrm byte from separate fields
 static uint8_t get_modrm(uint8_t mod, uint8_t reg, uint8_t rm)
 {
    return (mod & 0b11U) << 6U | (reg & 0b111U) << 3U | (rm & 0b111U);
 }
 
+// Assembles sib byte from separate fields
 static uint8_t get_sib(uint8_t scale, uint8_t index, uint8_t base)
 {
    return (scale & 0b11U) << 6U | (index & 0b111U) << 3U | (base & 0b111U);
 }
 
+// Useful function for joining strings
 static void c_append_string(char* ptr, size_t len, const char* str)
 {
    strncat(ptr, str, len);
 }
 
+// Useful function for joining padded converted numbers to a string
 static void c_append_hex(char* ptr, size_t len, size_t value, int8_t value_len)
 {
    char buff[30];
@@ -297,6 +317,3 @@ bool c_set_imm(coding_t* c, uint64_t imm, uint8_t size)
    c->imm_size = size;
    return false;
 }
-
-
-

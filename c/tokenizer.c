@@ -1,6 +1,11 @@
-#ifdef __GNUC__
-#pragma implementation "tokenizer.h"
+#if __linux__
+	#ifdef __GNUC__
+	#pragma implementation "tokenizer.h"
+	#endif
+#else
+#define _CRT_SECURE_NO_WARNINGS
 #endif
+
 #include "tokenizer.h"
 
 #include <stdio.h>
@@ -11,6 +16,7 @@
 #include <ctype.h>
 
 #include "lexeme.h"
+#include "list.h"
 #include "errors.h"
 
 // Converts string to integer with specified base
@@ -198,7 +204,11 @@ static token_t t_create(char* string, size_t line)
    e_assert(string, "Passed NULL argument");
 
    token_t t;
-   t.string = strdup(string);
+
+   // Copy string_value to a new token
+   t.string = malloc(strlen(string) + 1);
+   strcpy(t.string, string);
+
    t.type = TT_UNKNOWN;
 
    // Determining token type

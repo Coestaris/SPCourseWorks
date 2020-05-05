@@ -5,6 +5,10 @@
 
 #include "lexeme.h"
 
+#define MAX_LABELS 100
+#define MAX_SEGMENTS 5
+#define MAX_VARIABLES 10
+
 // Stores all necessary information about assembly file
 typedef struct _assembly
 {
@@ -12,43 +16,52 @@ typedef struct _assembly
    list_t* lexemes;
 
    // User defined labels
-   size_t  labels_cnt;
+   size_t labels_cnt;
    struct label
    {
+	  // Label defenition line
       size_t line;
+	  // Pointer to label's nane
       token_t* label;
 
-   } labels[100];
+   } labels[MAX_LABELS];
 
    // User defined segments
    size_t segments_cnt;
    struct segment
    {
       token_t* name;
+
+	  // Segment's size
       size_t size;
 
+	  // SEGMENT keyword line
       size_t line_start;
+	  // ENDS keyword line
       size_t line_end;
 
-   }  segments[5];
+   }  segments[MAX_SEGMENTS];
 
    // User defined variables
    size_t variables_cnt;
    struct variable
    {
+	  // Variable definition line
       size_t line;
+
+	  // Pointers to a variable defenition tokens
       token_t* name;
       token_t* type;
       token_t* value;
 
-   }  variable[10];
+   } variable[MAX_VARIABLES];
 
 } assembly_t;
 
-// Allocates new assembly object
+// Allocates a new assembly object
 assembly_t* a_create();
 
-// Frees assembly object and all its resources
+// Frees assembly object and all it's resources
 void a_free(assembly_t* assembly);
 
 // Prints errors

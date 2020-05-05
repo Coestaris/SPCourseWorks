@@ -1,7 +1,11 @@
-// Taken from DeepCars =3
-#ifdef __GNUC__
-#pragma implementation "list.h"
+#if __linux__
+	#ifdef __GNUC__
+	#pragma implementation "list.h"
+	#endif
+#else
+#define _CRT_SECURE_NO_WARNINGS
 #endif
+
 #include "list.h"
 
 #include <string.h>
@@ -12,7 +16,7 @@
 //
 // list_push()
 //
-inline void list_push(list_t* list, void* object)
+void list_push(list_t* list, void* object)
 {
    e_assert(list, "Passed NULL argument");
    e_assert(object, "Passed NULL argument");
@@ -33,7 +37,10 @@ inline void list_push(list_t* list, void* object)
       {
          size_t new_len = (int) ((float) list->max_size * LIST_SIZE_INCREASE);
          list->collection = realloc(list->collection, sizeof(void*) * new_len);
-         list->max_size = new_len;
+
+		 e_assert(list->collection, "Unable to reallocate collection");
+         
+		 list->max_size = new_len;
       }
    }
    list->collection[list->count++] = object;
@@ -81,6 +88,9 @@ void list_remove(list_t* list, void* object)
 list_t* list_create()
 {
    list_t* list = malloc(sizeof(list_t));
+
+   e_assert(list, "Unable to allocate list");
+   
    list->count = 0;
    list->max_size = LIST_BOOTSTRAP_SIZE;
    list->collection = list->bootstrap;

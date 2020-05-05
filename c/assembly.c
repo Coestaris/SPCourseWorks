@@ -1,6 +1,11 @@
-#ifdef __GNUC__
-#pragma implementation "assembly.h"
+#if __linux__
+	#ifdef __GNUC__
+	#pragma implementation "assembly.h"
+	#endif
+#else
+#define _CRT_SECURE_NO_WARNINGS
 #endif
+
 #include "assembly.h"
 
 #include <malloc.h>
@@ -22,6 +27,9 @@
 assembly_t* a_create()
 {
    assembly_t* assembly = malloc(sizeof(assembly_t));
+
+   e_assert(assembly, "Unable to allocate assembly");
+   
    memset(assembly, 0, sizeof(assembly_t));
    return assembly;
 }
@@ -61,6 +69,7 @@ void a_first_pass(assembly_t* assembly)
    {
       if(!lexeme->err)
       {
+         // Proceed segment definition
          if (lexeme->type == LT_SEGMENT_DEFINITION)
          {
             struct segment* seg = a_get_segment(assembly, lexeme->tokens[0].string);
@@ -74,6 +83,7 @@ void a_first_pass(assembly_t* assembly)
             seg->name = &lexeme->tokens[0];
             seg->line_start = lexeme->line;
          }
+         // Proceed segment ending
          else if (lexeme->type == LT_SEGMENT_END)
          {
             struct segment* seg = a_get_segment(assembly, lexeme->tokens[0].string);
@@ -84,6 +94,7 @@ void a_first_pass(assembly_t* assembly)
             }
             seg->line_end = lexeme->line;
          }
+		 // Proceed label definition
          else if (lexeme->type == LT_VAR_DEFINITION)
          {
             struct variable* var = a_get_variable(assembly, lexeme->tokens[0].string);
@@ -99,6 +110,7 @@ void a_first_pass(assembly_t* assembly)
             var->type = &lexeme->tokens[1];
             var->value = &lexeme->tokens[2];
          }
+		 // Proceed label definition (or instruction with label)
          else if (lexeme->type == LT_LABEL || (lexeme->type == LT_INSTRUCTION && lexeme->has_label))
          {
             struct label* label = a_get_label(assembly, lexeme->tokens[0].string);

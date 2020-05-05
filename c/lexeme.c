@@ -1,10 +1,13 @@
-#ifdef __GNUC__
-#pragma implementation "lexeme.h"
+#if __linux__
+	#ifdef __GNUC__
+		#pragma implementation "lexeme.h"
+	#endif
+	#pragma clang diagnostic push
+	#pragma ide diagnostic ignored "EmptyDeclOrStmt"
+#else
+#define _CRT_SECURE_NO_WARNINGS
 #endif
-#include "lexeme.h"
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "EmptyDeclOrStmt"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -13,12 +16,17 @@
 #include "assembly.h"
 #include "errors.h"
 
+// Default value for a expansion prefix (not set)
 #define DEF_NO_EXP_PREF false
+// Default valuue for a modrm field (not set)
 #define DEF_NO_MODRM ((uint8_t)-1)
+// Default valuue for an imm (not set)
 #define DEF_NO_IMM ((uint8_t)-1)
-#define DEF_NO_OC_REG false
+
+// Number of all supported instructions 
 #define INSTRUCTIONS 21
 
+// Opcodes of the jumps
 #define JMP_NEAR 0xEB
 #define JMP_FAR 0xE9
 #define JNBE_NEAR 0x77
@@ -67,7 +75,7 @@
  *    E9 cw JMP rel16
 */
 
-// All possible instruction of current tasks
+// All possible instruction variations of the current task
 static struct instruction_info instruction_infos[INSTRUCTIONS] =
 {
       { .name = "CLC", .opcode = 0xF8, .ex_pr = false, .op_cnt = 0, .modrm_index = DEF_NO_MODRM,
@@ -129,6 +137,9 @@ static struct instruction_info instruction_infos[INSTRUCTIONS] =
 lexeme_t* l_create(size_t line)
 {
    lexeme_t* l = malloc(sizeof(lexeme_t));
+   
+   e_assert(l, "Unable to allocate lexeme");
+
    memset(l, 0, sizeof(lexeme_t));
    l->line = line;
    c_fill(&l->data);
@@ -156,6 +167,7 @@ bool l_fetch_lexeme_type(lexeme_t* lexeme)
 {
    e_assert(lexeme, "Passed NULL argument");
 
+   // Determining lexeme type
    if(   lexeme->tokens_cnt == 2 &&
          lexeme->tokens[0].type == TT_IDENTIFIER &&
          lexeme->tokens[1].type == TT_SEGMENT_DIRECTIVE)
@@ -182,6 +194,7 @@ bool l_fetch_lexeme_type(lexeme_t* lexeme)
 
    else
    {
+	  // Instruction with a label
       if(lexeme->has_label && lexeme->tokens_cnt >= 3 && lexeme->tokens[2].type == TT_INSTRUCTION)
          lexeme->type = LT_INSTRUCTION;
       else if(!lexeme->has_label && lexeme->tokens_cnt >= 1 && lexeme->tokens[0].type == TT_INSTRUCTION)
@@ -339,6 +352,7 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
             return false;
          }
 
+		 // Check for operand types to be correct
          if(!(op_tokens[offset + 1].type == TT_REGISTER8 || op_tokens[offset + 1].type == TT_REGISTER32))
          {
             T_SE(lexeme, "Instruction has wrong format (expected register)",
@@ -886,4 +900,6 @@ void l_string(char* buffer, size_t len, lexeme_t* lexeme)
    memset(buffer, ' ', identation);
 }
 
+#if __linux__
 #pragma clang diagnostic pop
+#endif

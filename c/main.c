@@ -1,3 +1,7 @@
+#ifndef __linux__
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
@@ -7,8 +11,8 @@
 #include "assembly.h"
 #include "errors.h"
 
-#define TEST_FILE "../tests/test1.asm"
-#define OUT_FILE "../tests/test1.log"
+#define TEST_FILE "test.asm"
+#define OUT_FILE "test.log"
 
 static void print_et2_table(FILE* output, assembly_t* assembly)
 {
@@ -228,7 +232,12 @@ void print_et4_table(FILE* output, assembly_t* assembly)
 
 int main()
 {
+#if __linux__
    FILE* log = fopen(OUT_FILE, "w");
+#else
+	FILE* log;
+	fopen_s(&log, OUT_FILE, "w");
+#endif
    e_set_out(log);
 
    e_assert(log, "Unable to open file "OUT_FILE);

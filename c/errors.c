@@ -1,6 +1,11 @@
-#ifdef __GNUC__
-#pragma implementation "errors.h"
+#if __linux__
+	#ifdef __GNUC__
+	#pragma implementation "errors.h"
+	#endif
+#else
+#define _CRT_SECURE_NO_WARNINGS
 #endif
+
 #include "errors.h"
 
 #include <stdlib.h>
@@ -23,12 +28,22 @@ void __e_assert(bool v, const char* assert_str, const char* message, const char*
 {
    if(!v)
    {
-      fprintf(errout, "[ERROR]: Assertion \"%s\" failed. \n[ERROR]: Message: %s\n[ERROR]: Error occurred at %s:%li",
+	  FILE* output;
+
+	  // If something went awfully wrong, just output to a stderr...
+	  if (!errout) output = stderr;
+	  else output = errout;
+
+      fprintf(output, "[ERROR]: Assertion \"%s\" failed. \n[ERROR]: Message: %s\n[ERROR]: Error occurred at %s:%li",
             assert_str, message, file, line);
 
-      fflush(errout);
+      fflush(output);
       fflush(stdout);
+#if __linux__
       abort();
+#else 
+	  exit(1);
+#endif
    }
 }
 
@@ -37,11 +52,21 @@ void __e_assert(bool v, const char* assert_str, const char* message, const char*
 //
 void __e_err(const char* message, const char* file, size_t line)
 {
-   fprintf(errout, "[ERROR]: %s\n[ERROR]: Error occurred at %s:%li",
+   FILE* output;
+
+   // If something went awfully wrong, just output to a stderr...
+   if (!errout) output = stderr;
+   else output = errout;
+
+   fprintf(output, "[ERROR]: %s\n[ERROR]: Error occurred at %s:%li",
            message, file, line);
 
-   fflush(errout);
+   fflush(output);
    fflush(stdout);
+#if __linux__
    abort();
+#else 
+   exit(1);
+#endif
 }
 
