@@ -1,6 +1,7 @@
 #include "Delimiter.h"
 #include "Bytes.h"
 #include "Assembly.h"
+#include <cassert>
 
 static unordered_map<string, uint8_t> regCodes;
 static unordered_map<string, uint8_t> segCodes;
@@ -25,7 +26,8 @@ static uint8_t get_rm_byte_tokens(string& tok1, string& tok2)
 	if (tok2 == "bx" && tok1 == "di") return rm_bx_di;
 	if (tok2 == "bp" && tok1 == "si") return rm_bp_si;
 	if (tok2 == "bp" && tok1 == "di") return rm_bp_di;
-	return 0;
+	
+	assert("You passed some shit to me...");
 }
 
 static uint8_t get_modrm(uint8_t mod, uint8_t reg, uint8_t rm)
@@ -109,6 +111,9 @@ string Bytes::toString()
 	string result = "";
 	if (has_seg_prefix)
 		result = padTo(seg_prefix, 2, '0', true) + ": ";
+	
+	if (exp_prefix)
+		result += "0F ";
 
 	if (has_opcode)
 		result += padTo(opcode, 2, '0', true) + " ";

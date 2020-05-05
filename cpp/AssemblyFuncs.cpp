@@ -2,6 +2,7 @@
 #include "Delimiter.h"
 
 #include <iomanip>
+#include <cassert>
 
 // Some macro for analyzeOperandTypes.
 // Check operand to be a specific type
@@ -330,7 +331,7 @@ int64_t tokenToNumber(end_token* t)
 	}
 	else
 	{
-		return 0;
+		assert("You passed some shit to me...");
 	}
 }
 
@@ -418,6 +419,9 @@ void analyzeOperandTypes()
 					lexems[l].SetError("Registers must have equal size", *operand[position + 1]);
 					continue;
 				}
+
+				lexems[l].sum1_tk = operand[position + 1];
+				lexems[l].sum2_tk = operand[position + 3];
 
 				// BX DI 
 				// BX SI
@@ -692,27 +696,54 @@ void calculateSize()
 				size = 2; // OPCODE + MORM //there no SIB because of 16 build of processing 
 			}
 			else if (instruction.token == "mov") {
-				size = 3; // OPCODE (With packed register) + CONST16
+				if (op1 == OT_Register8)
+					size = 2; // OPCODE (With packed register) + CONST8
+				else 
+					size = 3; // OPCODE (With packed register) + CONST16
 			}
 			else if (instruction.token == "or") {
 				size = 2; // OPCODE + MODRM //there no SIB because of 16 build of processing 
 
 				// CONST SIZE
-				if (op2 == OT_Const8)
+				if (op1 == OT_Memory8)
+					size += 1;
+				else if (op2 == OT_Const8)
 					size += 1;
 				else
 					size += 2;
 			}
 			else if (instruction.token == "jl") {
+				UserName* un = getUserName(NT_Label, vectorOfTokens[l][1].token);
+				assert(un);
+
+				int diff = lexems[un->begin].offset - lexems[l - 1].offset;
+				bool far = abs(diff) > 127;
+
 				if (op1 == OT_LabelBack)
-					size = 2; // OPCODE + OFFSET
+				{
+					if (far) size = 4;
+					else size = 2; 
+				}
 				else
 					size = 4; // OPCODE + OFFSET + 
 					// + (possible 2 bytes for EXP PREFIX and far jump. Thats what TASM and MASM do, Idk...) because of 16 build of procesiing
 			}
 
 			if (lexems[l].has_segment_prefix)
-				size += 1;
+			{
+				if (lexems[l].segment_prefix.token == "ss")
+				{
+					if (lexems[l].sum1_tk->token != "bp" && lexems[l].sum2_tk->token != "bp")
+						size += 1;
+				} 
+				else if (lexems[l].segment_prefix.token == "ds")
+				{
+					if (lexems[l].sum1_tk->token == "bp" || lexems[l].sum2_tk->token == "bp")
+						size += 1;
+				}
+				else
+					size += 1;
+			}
 		}
 
 		lexems[l].size = size;

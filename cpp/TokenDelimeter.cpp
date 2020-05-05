@@ -32,10 +32,10 @@ vector<struct macro> macro;
 static struct macro listeningMacro;
 
 //regular expresions for finding types of numeric constants
-static regex hexnumber("[0-9 a-f A-F]+h");
-static regex binnumber("[0-1]+b");
-static regex decnumber("[0-9]+d?");
-static regex text("^\"[A-Z a-z 0-9]+\"$");
+static regex hexnumber("-?[0-9a-fA-F]+h");
+static regex binnumber("-?[0-1]+b");
+static regex decnumber("-?[0-9]+d?");
+static regex text("^\"[A-Za-z0-9 ]+\"$");
 
 
 // Indicates that char is non-printable empty space
@@ -47,7 +47,7 @@ static bool isEmptySpace(int c)
 // Returns true for characters that will be used for splitting source
 static bool isDelimiter(char s)
 {
-	return isEmptySpace(s) || s == '*' || s == ',' || s == '[' || s == ']' || s == '-' || s == '+' || s == '=' ||
+	return isEmptySpace(s) || s == '*' || s == ',' || s == '[' || s == ']' || s == '+' || s == '=' ||
 		s == ':';
 }
 

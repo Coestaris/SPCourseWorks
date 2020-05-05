@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iomanip>
+#include <cassert>
 
 #include "TokenType.h"
 #include "Delimiter.h"
@@ -50,52 +51,8 @@ static void SetDWBytes(int l)
 
 static void SetInstructionBytes(int l)
 {
-	/*if (instruction.token == "aas") {
-		size = 1; // OPCODE
-	}
-	else if (instruction.token == "inc") {
-		if (op1 == OT_Register8)
-			size = 2; // OPCODE + MODRM
-		else
-			size = 1; // Just Opcode. Destination stored in opcode
-	}
-	else if (instruction.token == "neg") {
-		size = 2; // OPCODE + MORM 
-	}
-	else if (instruction.token == "bt") {
-		size = 3; // EXP PREF +OPCODE + MODRM   //there no SIB because of 16 build of processing 
-	}
-	else if (instruction.token == "and") {
-		size = 2; // OPCODE + MORM //there no SIB because of 16 build of processing 
-	}
-	else if (instruction.token == "cmp") {
-		size = 2; // OPCODE + MORM //there no SIB because of 16 build of processing 
-	}
-	else if (instruction.token == "mov") {
-		size = 3; // OPCODE (With packed register) + CONST16
-	}
-	else if (instruction.token == "or") {
-		size = 2; // OPCODE + MODRM //there no SIB because of 16 build of processing 
-
-		// CONST SIZE
-		if (op2 == OT_Const8)
-			size += 1;
-		else
-			size += 2;
-	}
-	else if (instruction.token == "jl") {
-		if (op1 == OT_LabelBack)
-			size = 2; // OPCODE + OFFSET
-		else
-			size = 4; // OPCODE + OFFSET + 
-			// + (possible 2 bytes for EXP PREFIX and far jump. Thats what TASM and MASM do, Idk...) because of 16 build of procesiing
-	}
-
-	if (lexems[l].has_segment_prefix)
-		size += 1;*/
-
 	// 3F  AAS
-	
+
 	// FE /0 INC r/m8 
 	// 40+rw INC r16
 
@@ -126,51 +83,147 @@ static void SetInstructionBytes(int l)
 	vector<end_token*> op1t;
 	vector<end_token*> op2t;
 
+	bool smallMode = true;
 	if (lexems[l].numberOfOperands >= 1)
+	{
 		op1t = get_operand(l, 0);
+		if (op1 == OT_Register16 || op1 == OT_Memory16)
+			smallMode = false;
+	}
 	if (lexems[l].numberOfOperands == 2)
+	{
 		op2t = get_operand(l, 1);
-
+		if (op2 == OT_Register16 || op2 == OT_Memory16)
+		{
+			if (smallMode)
+			{
+				lexems[l].SetError("Operand types mismatch", *op2t[0]);
+				return;
+			}
+			smallMode = false;
+		}
+	}
 	Bytes* b = &lexems[l].bytes;
+
+	if (lexems[l].has_segment_prefix)
+	{
+		if (lexems[l].segment_prefix.token == "ss")
+		{
+			if (lexems[l].sum1_tk->token != "bp" && lexems[l].sum2_tk->token != "bp")
+				b->setSeg(lexems[l].segment_prefix.token);
+		}
+		else if (lexems[l].segment_prefix.token == "ds")
+		{
+			if (lexems[l].sum1_tk->token == "bp" || lexems[l].sum2_tk->token == "bp")
+				b->setSeg(lexems[l].segment_prefix.token);
+		}
+		else
+			b->setSeg(lexems[l].segment_prefix.token);
+	}
 
 	if (instruction.token == "aas") {
 		b->setOpcode(0x3F);
 	}
 	else if (instruction.token == "inc") {
-		if (op1 == OT_Register8)
+		if (smallMode)
 		{
 			b->setOpcode(0xFE);
 			b->setModrmModReg(op1t[0]->token);
 			b->setModrmRegConst(0);
-			//size = 2; // OPCODE + MODRM
 		}
 		else
 		{
 			b->setOpcode(0x40);
 			b->packRegister(op1t[0]->token);
-			//size = 1; // Just Opcode. Destination stored in opcode
 		}
 	}
 	else if (instruction.token == "neg") {
-		b->setOpcode(0xF6);
+		if (smallMode) b->setOpcode(0xF6);
+		else b->setOpcode(0xF7);
+		
+		b->setModrmModSum(lexems[l].sum1_tk->token, lexems[l].sum2_tk->token);
+		b->setModrmRegConst(3);
 	}
 	else if (instruction.token == "bt") {
+		b->setExp();
 		b->setOpcode(0xA3);
+		b->setModrmModReg(op1t[0]->token);
+		b->setModrmReg(op2t[0]->token);
 	}
 	else if (instruction.token == "and") {
-		b->setOpcode(0x22);
+		if (smallMode) b->setOpcode(0x22);
+		else b->setOpcode(0x23);
+
+		b->setModrmModSum(lexems[l].sum1_tk->token, lexems[l].sum2_tk->token);
+		b->setModrmReg(op1t[0]->token);
 	}
 	else if (instruction.token == "cmp") {
-		b->setOpcode(0x38);
+		if (smallMode) b->setOpcode(0x38);
+		else  b->setOpcode(0x39);
+
+		b->setModrmModSum(lexems[l].sum1_tk->token, lexems[l].sum2_tk->token);
+		b->setModrmReg(op2t[0]->token);
 	}
 	else if (instruction.token == "mov") {
-		b->setOpcode(0xB0);
+		if (smallMode)
+		{
+			b->setOpcode(0xB0);
+			b->setImm(1, tokenToNumber(op2t[0]));
+		}
+		else 
+		{
+			b->setOpcode(0xB8);
+			b->setImm(2, tokenToNumber(op2t[0]));
+		}
+		b->packRegister(op1t[0]->token);
 	}
 	else if (instruction.token == "or") {
-		b->setOpcode(0x80);
+		if (smallMode)
+		{
+			b->setOpcode(0x80);
+			b->setImm(1, tokenToNumber(op2t[0]));
+		}
+		else
+		{
+			if (op2 == OT_Const8)
+			{
+				b->setOpcode(0x83);
+				b->setImm(1, tokenToNumber(op2t[0]));
+			}
+			else
+			{
+				b->setOpcode(0x81);
+				b->setImm(2, tokenToNumber(op2t[0]));
+			}
+		}
+		
+		b->setModrmRegConst(1);
+		b->setModrmModSum(lexems[l].sum1_tk->token, lexems[l].sum2_tk->token);
 	}
 	else if (instruction.token == "jl") {
-		b->setOpcode(0x3F);
+		UserName* un = getUserName(NT_Label, op1t[0]->token);
+		assert(un);
+
+		int diff = lexems[un->begin].offset - lexems[l].offset - lexems[l].size;
+		bool far = abs(diff) > 127;
+
+		if (far)
+		{
+			b->setOpcode(0x8C);
+			b->setExp();
+			b->setImm(2, diff);
+		}
+		else
+		{
+			b->setOpcode(0x7C);
+			if (op1 == OT_LabelBack)
+				b->setImm(1, diff);
+			else
+			{
+				int a = (diff + 2) << 16 | 0x9090;
+				b->setImm(3, a);
+			}
+		}
 	}
 }
 
