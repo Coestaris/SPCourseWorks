@@ -33,16 +33,8 @@ public class Segment {
         error = false;
     }
 
-    public int getOffSet() {
-        return offSet;
-    }
-
     public void setOffSet(int offSet) {
         this.offSet = offSet;
-    }
-
-    public boolean isError() {
-        return error;
     }
 
     public boolean equalSegment(String string) {

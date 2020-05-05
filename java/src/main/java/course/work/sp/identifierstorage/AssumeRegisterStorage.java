@@ -99,10 +99,6 @@ public class AssumeRegisterStorage {
         return 0;
     }
 
-    public List<AssumeRegister> getAssumeRegisterList() {
-        return assumeRegisterList;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
