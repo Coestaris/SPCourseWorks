@@ -23,16 +23,8 @@ public class Constant {
         return index;
     }
 
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
     public String getConstant() {
         return constant;
-    }
-
-    public void setConstant(String constant) {
-        this.constant = constant;
     }
 
     public TokenType getType() {
