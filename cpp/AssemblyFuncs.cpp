@@ -26,7 +26,7 @@
 
 vector<UserName> userNames;
 
-static string padTo(int input, const size_t num, const char paddingChar = ' ', bool hex = false)
+string padTo(int input, const size_t num, const char paddingChar, bool hex)
 {
    char buff[30];
    if (hex)
@@ -127,6 +127,102 @@ void analyzeVariablesAndLabels()
 	}
 }
 
+void printTables()
+{
+	// Print segment table
+	cout << "\n\nSegments: \n";
+	cout << "==============================\n";
+	cout << "|# |   NAME   |  BIT |  SIZE |\n";
+	cout << "==============================\n";
+	int c = 0;
+	for (int i = 0; i < userNames.size(); i++)
+	{
+		UserName* name = &userNames[i];
+		if (name->type == NT_Segment)
+		{
+			cout
+				<< "| " << c++ << "| "
+				<< setw(7) << name->token.token << "  |  "
+				<< 16 << "  | "
+				<< padTo(name->offset, 4, '0', true) << "  |"
+				<< endl;
+		}
+	}
+	cout << "==============================\n";
+
+	c = 0;
+	cout << "\nMacro: \n";
+	for (int i = 0; i < macro.size(); i++)
+	{
+		cout
+			<< "| " << c++ << "| "
+			<< setw(10) << macro[i].name.token
+			<< endl;
+	}
+
+	// Print name table
+	cout << "\nUserNames: \n";
+	cout << "===========================================\n";
+	cout << "|# |   NAME   |    TYPE     |    VALUE    |\n";
+	cout << "===========================================\n";
+	c = 0;
+	for (int i = 0; i < userNames.size(); i++)
+	{
+		string type;
+		string value;
+		UserName* name = &userNames[i];
+		if (name->type == NT_Var)
+		{
+			switch (vectorOfTokens[name->begin][1].type)
+			{
+			case DbDirective:
+				type = "Byte";
+				break;
+			case DwDirective:
+				type = "Word";
+				break;
+			case DdDirective:
+				type = "Double";
+				break;
+			}
+			UserName* segment = getUserName(NT_Segment, name->begin);
+			value = segment->token.token + ":" + padTo(lexems[name->begin].offset, 4, '0', true);
+		}
+		else if (name->type == NT_Segment)
+		{
+			type = "Semgment";
+			value = "--";
+		}
+		else
+		{
+			//label
+			type = "Near";
+			//UserName* segment = getUserName(NT_Segment, name->begin);
+			value = "code:" + padTo(lexems[name->begin].offset, 4, '0', true);
+		}
+
+		cout
+			<< "| " << c++ << "| "
+			<< setw(7) << name->token.token << "  |  "
+			<< setw(10) << type << " | "
+			<< setw(11) << value << " | "
+			<< endl;
+	}
+	cout << "===========================================\n";
+
+	cout << "\nSegments destination: \n";
+	cout << "===================================\n";
+	cout << "|# | SEGMENT REGISTER |  SEGMENT  |\n";
+	cout << "===================================\n";
+	cout << "| 0|         DS       |  " << setw(7) << userNames[0].token.token << "  |\n";
+	cout << "| 1|         CS       |  " << setw(7) << userNames[1].token.token << "  |\n";
+	cout << "| 2|         FS       |  NOTHING  |\n";
+	cout << "| 3|         GS       |  NOTHING  |\n";
+	cout << "| 4|         SS       |  NOTHING  |\n";
+	cout << "| 5|         ES       |  NOTHING  |\n";
+	cout << "===================================\n";
+}
+
 void printLexemeList()
 {
 	// Print lexeme list
@@ -181,100 +277,6 @@ void printLexemeList()
 			cout << vectorOfTokens[l][t].token << " ";
 		cout << "\n";
 	}
-
-
-	// Print segment table
-	cout << "\n\nSegments: \n";
-	cout << "==============================\n";
-	cout << "|# |   NAME   |  BIT |  SIZE |\n";
-	cout << "==============================\n";
-	int c = 0;
-	for (int i = 0; i < userNames.size(); i++)
-	{
-		UserName* name = &userNames[i];
-		if (name->type == NT_Segment)
-		{
-			cout 
-				<< "| " << c++ << "| "
-				<< setw(7) << name->token.token << "  |  "
-				<< 16 << "  | "
-				<< padTo(name->offset, 4, '0', true) << "  |"
-				<< endl;
-		}
-	}
-	cout << "==============================\n";
-	
-	c = 0;
-	cout << "\nMacro: \n";
-	for (int i = 0; i < macro.size(); i++)
-	{
-		cout
-			<< "| " << c++ << "| "
-			<< setw(10) << macro[i].name.token 
-			<< endl;
-	}
-
-	// Print name table
-	cout << "\nUserNames: \n";
-	cout << "===========================================\n";
-	cout << "|# |   NAME   |    TYPE     |    VALUE    |\n";
-	cout << "===========================================\n";
-	c = 0;
-	for (int i = 0; i < userNames.size(); i++)
-	{
-		string type;
-		string value;
-		UserName* name = &userNames[i];
-		if (name->type == NT_Var)
-		{
-			switch (vectorOfTokens[name->begin][1].type)
-			{
-			case DbDirective:
-				type = "Byte";
-				break;
-			case DwDirective:
-				type = "Word";
-				break;
-			case DdDirective:
-				type = "Double";
-				break;
-			}
-			UserName* segment = getUserName(NT_Segment, name->begin);
-			value = segment->token.token + ":" + padTo(lexems[name->begin].offset, 4, '0', true);
-		}
-		else if (name->type == NT_Segment)
-		{
-			type = "Semgment";
-			value = "--";
-		}
-		else
-		{
-			//label
-			type = "Near";
-			//UserName* segment = getUserName(NT_Segment, name->begin);
-			value = "code:" + padTo(lexems[name->begin].offset, 4, '0', true);
-		}
-
-		cout
-			<< "| " << c++ << "| "
-			<< setw(7) << name->token.token << "  |  "
-			<< setw(10) << type  << " | "
-			<< setw(11) << value << " | "
-			<< endl;
-	}
-	cout << "===========================================\n";
-
-	cout << "\nSegments destination: \n";
-	cout << "===================================\n";
-	cout << "|# | SEGMENT REGISTER |  SEGMENT  |\n";
-	cout << "===================================\n";
-	cout << "| 0|         DS       |  " << setw(7) << userNames[0].token.token << "  |\n";
-	cout << "| 1|         CS       |  " << setw(7) << userNames[1].token.token << "  |\n";
-	cout << "| 2|         FS       |  NOTHING  |\n";
-	cout << "| 3|         GS       |  NOTHING  |\n";
-	cout << "| 4|         SS       |  NOTHING  |\n";
-	cout << "| 5|         ES       |  NOTHING  |\n";
-	cout << "===================================\n";
 }
 
 UserName* getUserName(UserNameType type, int line)
@@ -308,6 +310,28 @@ void outputErrors()
 	}
 	cout << "\n";
 	cout << e << " errors.";
+}
+
+int64_t tokenToNumber(end_token* t)
+{
+	if (t->type == BinNumber)
+	{
+		string toConvert = t->token.substr(0, t->token.size() - 1);
+		return stoul(toConvert, nullptr, 2);
+	}
+	else if (t->type == HexNumber)
+	{
+		string toConvert = t->token.substr(0, t->token.size() - 1);
+		return stoul(toConvert, nullptr, 16);
+	}
+	else if (t->type == DecNumber)
+	{
+		return stoul(t->token);
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 void analyzeOperandTypes()
@@ -394,6 +418,25 @@ void analyzeOperandTypes()
 					lexems[l].SetError("Registers must have equal size", *operand[position + 1]);
 					continue;
 				}
+
+				// BX DI 
+				// BX SI
+				// BP DI
+				// BP SI only possible.
+				bool valid = false;
+				if (!valid && operand[position + 1]->token == "bx" && operand[position + 3]->token == "di") valid = true;
+				if (!valid && operand[position + 1]->token == "bx" && operand[position + 3]->token == "si") valid = true;
+				if (!valid && operand[position + 1]->token == "bp" && operand[position + 3]->token == "di") valid = true;
+				if (!valid && operand[position + 1]->token == "bp" && operand[position + 3]->token == "si") valid = true;
+				if (!valid && operand[position + 3]->token == "bx" && operand[position + 1]->token == "di") valid = true;
+				if (!valid && operand[position + 3]->token == "bx" && operand[position + 1]->token == "si") valid = true;
+				if (!valid && operand[position + 3]->token == "bp" && operand[position + 1]->token == "di") valid = true;
+				if (!valid && operand[position + 3]->token == "bp" && operand[position + 1]->token == "si") valid = true;
+				if (!valid)
+				{
+					lexems[l].SetError("Only BX+DI, BX+SI, BP+DI, BP+SI index modes are accepted", *operand[position + 1]);
+					continue;
+				}
 			}
 			else
 			{
@@ -406,22 +449,7 @@ void analyzeOperandTypes()
 					lexems[l].operandTypes[op] = OT_Register16;
 				else if (t->type == BinNumber || t->type == DecNumber || t->type == HexNumber)
 				{
-					uint64_t number = 0;
-					if (t->type == BinNumber)
-					{
-						string toConvert = t->token.substr(0, t->token.size() - 1);
-						number = stoul(toConvert, nullptr, 2);
-					}
-					else if (t->type == HexNumber)
-					{
-						string toConvert = t->token.substr(0, t->token.size() - 1);
-						number = stoul(toConvert, nullptr, 16);
-					}
-					else
-					{
-						number = stoul(t->token);
-					}
-
+					uint64_t number = tokenToNumber(t);
 					if (number < 0xFF)
 						lexems[l].operandTypes[op] = OT_Const8;
 					else
@@ -594,31 +622,6 @@ void checkInstructionRequirements()
 	}
 }
 
-// 3F  AAS
-
-// FE /0 INC r/m8 
-// 40+rw INC r16
-
-// F6 /3 NEG r/m8
-// F7 /3 NEG r/m16
-
-// 0F A3 BT r/m16, r16 
-
-// 22 /r AND r8, r/m8 
-// 23 /r AND r16, r/m16 
-
-// 38 /r CMP r/m8, r8
-// 39 /r CMP r/m16, r16
-
-// B0+rb MOV reg8, imm8
-// B8+rw MOV reg16, imm16
-
-// 80 /1 ib OR r/m8, imm8
-// 83 /1 ib OR r/m16, imm8
-// 81 /1 iw OR r/m16, imm16
-
-// 7C cb JL rel8
-// OF 8C cw JL rel16 
 void calculateSize()
 {
 	int offset = 0;

@@ -25,6 +25,11 @@ extern vector<UserName> userNames;
 UserName* getUserName(UserNameType type, const string& name);
 UserName* getUserName(UserNameType type, int line);
 
+string padTo(int input, const size_t num, const char paddingChar = ' ', bool hex = false);
+
+int64_t tokenToNumber(end_token* token);
+
+void printTables();
 void printLexemeList();
 void outputErrors();
 

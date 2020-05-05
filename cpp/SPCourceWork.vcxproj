@@ -19,12 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Assembly_functions.cpp" />
+    <ClCompile Include="AssemblyFuncs.cpp" />
+    <ClCompile Include="ByteFuncs.cpp" />
+    <ClCompile Include="Bytes.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Token_and_Delimeter.cpp" />
+    <ClCompile Include="TokenDelimeter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assembly.h" />
+    <ClInclude Include="Bytes.h" />
     <ClInclude Include="Delimiter.h" />
     <ClInclude Include="Lexem.h" />
     <ClInclude Include="TokenType.h" />

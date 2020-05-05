@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TokenType.h"
+#include "Bytes.h"
 
 using namespace std;
 
@@ -39,6 +40,7 @@ struct Lexem
 
    bool has_segment_prefix;
    end_token segment_prefix;
+   Bytes bytes;
 
    bool hasLabel = false;
    bool hasName = false;

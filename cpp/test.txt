@@ -1,4 +1,3 @@
-Test:
 DATA1 SEGMENT
     P3 db 10010b
     PSTR db "New String"
@@ -18,31 +17,63 @@ WITHPAR MACRO VARIABLE
 endm
 
 CODE SEGMENT
-   neg byte ptr [bp+si]
 METKA1:
-    mov ax, 12h
-    mov di, 2h
-    WITHPAR cx
-    inc ax
-    NOPAR
-    neg word ptr[bx+di]
-    aas
-    or byte ptr GS:[bx+si],2
-    bt di, ax
-    cmp word ptr [bx+di],ax
-    jl METKA2
-    mov cx, 7h
-    or byte ptr [bx+di],17
-    mov dx, 5h
-    and dx, [bx+di]
+
+	jl METKA1
+    jl METKA2 
+
+	aas
+
     inc dx
-    cmp word ptr [bx+si], dx
-    jl METKA1
+    inc cx
+    inc bx
+    inc al
+    inc bl
+    inc ah
+	
+	neg word ptr[bx+di]
+	neg word ptr SS:[bp+di]
+	neg byte ptr DS:[bp+di]
+	neg byte ptr[bx+si]
+
+	bt di, ax
+	bt si, di
+	bt dx, bx
+	bt di, bp
+
+    and dx, ES:[bx+di]
+    and dx, word ptr [bx+si]
+    and dl, [bx+si]
+    and al, byte ptr [bx+di]
+    and ah, byte ptr [bp+si]
+	
+	cmp word ptr DS:[bx+di], bx
+    cmp word ptr FS:[bx+si], dx
+    cmp byte ptr GS:[bx+si], dl
+    cmp byte ptr [bx+di], al
+
+    mov ax, 12h
+    mov di, -2h
+    mov dl, 001101b
+    mov cl, 43h
+    mov cx, 111
+    mov dx, 7EEEh
+    mov ax, -2457h
+    mov dl, 7h
+    mov bl, 80h
+
+    or byte ptr GS:[bx+si],2
+    or byte ptr [bx+di], -20
+    or word ptr GS:[bx+si],2
+    or word ptr [bp+di],10
+    
+	WITHPAR cx
+    
+	NOPAR
+
+	jl METKA1
+    jl METKA2 
+
 METKA2:
-   cmp ax,[bx+si]
-   inc word ptr [bp+di]
 CODE ENDS
 END
-
-
-
