@@ -13,7 +13,7 @@
     pop eax
     pop ebx
     idiv eax
-    add cl, fs: Bnm1
+    add cl, fs:Bnm1
     adc Dnm3, ebx
     in eax,001b
     or bnm1[edi], 000000b
