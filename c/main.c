@@ -230,7 +230,7 @@ void print_et4_table(FILE* output, assembly_t* assembly)
    print_et3_table(output, assembly, false);
 }
 
-int main()
+int main(int argc, char** argv)
 {
 #if __linux__
    FILE* log = fopen(OUT_FILE, "w");
