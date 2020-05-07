@@ -1,6 +1,7 @@
 package course.work.sp.secondpass;
 
 import course.work.sp.firstpass.FirstPassSentence;
+import course.work.sp.identifierstorage.IdentifierStore;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ public class SecondPass {
         pass.append("index| ").append("Offset|").append("\n");
         for (SecondPassSentence sps : secondPassSentenceList)
             pass.append(sps.toString()).append("\n");
+
+        pass.append(IdentifierStore.getInstance().toString());
         return pass.toString();
     }
 }

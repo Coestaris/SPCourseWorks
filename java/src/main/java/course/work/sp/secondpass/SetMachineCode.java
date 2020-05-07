@@ -29,10 +29,14 @@ public class SetMachineCode {
                     return mov(firstPassSentence.getNewSentence().getOperands());
                 case ("SUB"):
                     return sub(firstPassSentence.getNewSentence().getOperands());
+                case ("SBB"):
+                    return sbb(firstPassSentence.getNewSentence().getOperands());
                 case ("MUL"):
                     return mul(firstPassSentence.getNewSentence().getOperands());
                 case ("XOR"):
                     return xor(firstPassSentence.getNewSentence().getOperands());
+                case ("OR"):
+                    return or(firstPassSentence.getNewSentence().getOperands());
                 case ("BTR"):
                     return btr(firstPassSentence.getNewSentence().getOperands());
                 case ("ADC"):
@@ -84,9 +88,23 @@ public class SetMachineCode {
     private List<Byte> mul(List<Operand> operands) {
         int indexOperand = 0;
         int indexToken = 0;
-        List<Token> operandTokens = operands.get(indexOperand).getTokens();
         List<Byte> machineCode = new ArrayList<>();
-        if(operands.get(indexOperand).equalOperandType(TokenType.Mem16)) machineCode.add((byte)0x66);
+        if (operands.get(indexOperand).equalOperandType(TokenType.Reg8) ||
+                operands.get(indexOperand).equalOperandType(TokenType.Reg16) ||
+                operands.get(indexOperand).equalOperandType(TokenType.Reg32)) {
+            if (operands.get(indexOperand).equalOperandType(TokenType.Reg8)) {
+                machineCode.add((byte) 0xF6);
+                machineCode.add((byte) (0b11100000 ^ registerInfoStorage.getByteReg(operands.get(indexOperand).getStringTokenByIndex(indexToken))));
+            } else {
+                if (operands.get(indexOperand).equalOperandType(TokenType.Reg16)) machineCode.add((byte) 0x66);
+                machineCode.add((byte) 0xF7);
+                machineCode.add((byte) (0b11100000 ^ registerInfoStorage.getByteReg(operands.get(indexOperand).getStringTokenByIndex(indexToken))));
+            }
+
+            return machineCode;
+        }
+        List<Token> operandTokens = operands.get(indexOperand).getTokens();
+        if (operands.get(indexOperand).equalOperandType(TokenType.Mem16)) machineCode.add((byte) 0x66);
         if (operands.get(indexOperand).isSegmentReg()) {
             if (!operandTokens.get(indexToken).getStringToken().equals("DS"))
                 machineCode.add(AssumeRegisterStorage.getInstance().getSegmentRegisterByte(operandTokens.get(indexToken).getStringToken()));
@@ -136,7 +154,21 @@ public class SetMachineCode {
         opcode.add((byte) 0x33);
         byte reg = RegisterInfoStorage.getInstance().getByteReg(operand1.getStringTokenByIndex(indexToken));
         if (operand1.equalOperandType(TokenType.Reg16)) machineCode.add((byte) 0x66);
-        machineCode.addAll(mem(mem, opcode, reg, (byte)0b10000000));
+        machineCode.addAll(mem(mem, opcode, reg, (byte) 0b10000000));
+        return machineCode;
+    }
+
+    private List<Byte> or(List<Operand> operands) {
+        int indexToken = 0;
+        int indexOperand = 0;
+        Operand operand1 = operands.get(indexOperand + next);
+        Operand mem = operands.get(indexOperand);
+        List<Byte> machineCode = new ArrayList<>();
+        List<Byte> opcode = new ArrayList<>();
+        opcode.add((byte) 0x09);
+        byte reg = RegisterInfoStorage.getInstance().getByteReg(operand1.getStringTokenByIndex(indexToken));
+        if (operand1.equalOperandType(TokenType.Reg16)) machineCode.add((byte) 0x66);
+        machineCode.addAll(mem(mem, opcode, reg, (byte) 0b01000000));
         return machineCode;
     }
 
@@ -162,11 +194,12 @@ public class SetMachineCode {
         Operand mem = operands.get(indexOperand);
         Operand operand1 = operands.get(indexOperand + next);
         List<Byte> opcode = new ArrayList<>();
-        if(mem.equalOperandType(TokenType.Mem8) || mem.equalOperandType(TokenType.DbIdentifier)) opcode.add((byte) 0x80);
+        if (mem.equalOperandType(TokenType.Mem8) || mem.equalOperandType(TokenType.DbIdentifier))
+            opcode.add((byte) 0x80);
         else opcode.add((byte) 0x83);
 
         byte mod;
-        if(mem.equalOperandType(TokenType.Mem8)) mod = (byte) 0b01000000;
+        if (mem.equalOperandType(TokenType.Mem8)) mod = (byte) 0b01000000;
         else mod = (byte) 0b10000000;
         byte reg = (byte) 0b010;
         List<Byte> machineCode = new ArrayList<>(mem(mem, opcode, reg, mod));
@@ -181,6 +214,17 @@ public class SetMachineCode {
         if (operands.get(indexOperand).equalOperandType(TokenType.Reg16)) machineCode.add((byte) 0x66);
         machineCode.add((byte) 0x83);
         machineCode.add((byte) (0b11101000 ^ RegisterInfoStorage.getInstance().getByteReg(operands.get(indexOperand).getStringTokenByIndex(indexToken))));
+        machineCode.add((byte) Integer.parseInt(operands.get(indexOperand + next).getStringTokenByIndex(indexToken)));
+        return machineCode;
+    }
+
+    private List<Byte> sbb(List<Operand> operands) {
+        int indexOperand = 0;
+        int indexToken = 0;
+        List<Byte> machineCode = new ArrayList<>();
+        if (operands.get(indexOperand).equalOperandType(TokenType.Reg16)) machineCode.add((byte) 0x66);
+        machineCode.add((byte) 0x83);
+        machineCode.add((byte) (0b11011000 ^ RegisterInfoStorage.getInstance().getByteReg(operands.get(indexOperand).getStringTokenByIndex(indexToken))));
         machineCode.add((byte) Integer.parseInt(operands.get(indexOperand + next).getStringTokenByIndex(indexToken)));
         return machineCode;
     }
@@ -320,6 +364,7 @@ public class SetMachineCode {
         }
         if (mem.isSibRegIs16()) {
             indexToken++;
+            if(mem.equalOperandType(TokenType.Mem)) indexToken--;
             machineCode.add((byte) 0x67);//prefix
             machineCode.addAll(opCode);//opcode
             if (operandTokens.get(indexToken).getStringToken().equals("BX")) {//modrm
@@ -341,6 +386,7 @@ public class SetMachineCode {
         } else if (mem.isSibDisp()) {
 
             indexToken++;
+            if(mem.equalOperandType(TokenType.Mem)) indexToken--;
             machineCode.addAll(opCode);//opcode
             machineCode.add((byte) (0b00000100 ^ mod ^ (reg << 3)));//modrm
             machineCode.add((byte) (registerInfoStorage.getByteReg(mem.getStringTokenByIndex(indexToken)) ^
@@ -348,6 +394,7 @@ public class SetMachineCode {
 
             indexToken += 2;
             if (isIdentifier) {
+
                 machineCode.add((byte) 0x0);
                 machineCode.add((byte) 0x0);
                 machineCode.add((byte) 0x0);

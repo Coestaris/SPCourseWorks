@@ -26,18 +26,18 @@ index| Offset|        Source
 24  0000002E     Adc byte ptr[bp+si+8], 05
 25  00000033     Jnc lable1
 26  00000035     jmp lable1
-27  00000037     sbb eax,7 ERROR ):
-28  00000037     or [esp+eax+5],edx ERROR ):
-29  00000037     mul al ERROR ):
-30  00000037 lable2:
-31  00000037 
-32  00000037 Code ends
+27  00000037     sbb eax,7
+28  0000003A     or [esp+eax+5],edx
+29  0000003E     mul al
+30  00000040 lable2:
+31  00000040 
+32  00000040 Code ends
 33  00000000 END
 
 
  NAME |   TYPE  |  SEG | VALUE 
 LABLE1| Label   | CODE | 00000000 
-LABLE2| Label   | CODE | 00000037 
+LABLE2| Label   | CODE | 00000040 
 HEX1  | DbIdentifier | DATA | 00000000 
 DEC2  | DwIdentifier | DATA | 00000001 
 BIN2  | DdIdentifier | DATA | 00000003 
@@ -46,7 +46,7 @@ TXT3  | DbIdentifier | DATA | 00000007
 
 Segment name| Bit Depth| Size
 DATA |          32     | 0000000D  
-CODE |          32     | 00000037  
+CODE |          32     | 00000040  
 
 
 Segment Register | Destination

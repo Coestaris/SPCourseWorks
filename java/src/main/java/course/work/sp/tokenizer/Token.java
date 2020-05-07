@@ -17,6 +17,8 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("ASSUME", TokenType.KeyWord);
         NAME_TO_TOKEN_TYPE_MAP.put("STC", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("PUSH", TokenType.Instruction);
+        NAME_TO_TOKEN_TYPE_MAP.put("SBB", TokenType.Instruction);
+        NAME_TO_TOKEN_TYPE_MAP.put("OR", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("JMP", TokenType.JmpWord);
         NAME_TO_TOKEN_TYPE_MAP.put("JNC", TokenType.JncWord);
         NAME_TO_TOKEN_TYPE_MAP.put("MOV", TokenType.Instruction);
@@ -38,6 +40,7 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("BYTE", TokenType.BytePtr);
         NAME_TO_TOKEN_TYPE_MAP.put("EAX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("EBP", TokenType.Reg32);
+        NAME_TO_TOKEN_TYPE_MAP.put("ESP", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("EBX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("EDX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("ESI", TokenType.Reg32);
@@ -49,6 +52,7 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("AX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("DI", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("BP", TokenType.Reg16);
+        NAME_TO_TOKEN_TYPE_MAP.put("AL", TokenType.Reg8);
         NAME_TO_TOKEN_TYPE_MAP.put("ES:", TokenType.SegmentRegister);
         NAME_TO_TOKEN_TYPE_MAP.put("CS:", TokenType.SegmentRegister);
         NAME_TO_TOKEN_TYPE_MAP.put("DS:", TokenType.SegmentRegister);
