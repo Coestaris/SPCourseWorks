@@ -1,8 +1,11 @@
+.386
 .model small
+
 .data
     Bnm1 db 10011b
     Str2 db 'str'
-    Dnm3 dd 10x
+    Dnm3 dd 10
+
 .code
     lbl1:
     std
@@ -14,6 +17,7 @@
     pop ebx
     idiv eax
     add cl, fs:Bnm1
+    add cl, fs:Bnm1[edi]
     adc Dnm3, ebx
     in eax,001b
     or bnm1[edi], 000000b

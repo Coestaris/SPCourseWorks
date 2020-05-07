@@ -1,6 +1,7 @@
 import re
 
-from asmtypes import Storage, Token, LineStructure
+import asmfirstpass
+from asmtypes import Storage, Token, LineStructure, TokenType
 
 directives = [".DATA", ".CODE", ".MODEL", "END", "DB", "DD"]
 instructions = ["STD", "JNGE", "JMP", "PUSH", "POP", "IDIV", "ADD", "ADC", "IN", "OR"]
@@ -14,22 +15,6 @@ dec_re = re.compile(r"^[0-9]+$")
 bin_re = re.compile(r"^[01]+B$")
 string_re = re.compile(r"^\'.+\'$")
 id_re = re.compile(r"^[A-Z]\w{,3}$")
-
-
-class TokenType:
-    directive = 1
-    register32 = 2
-    register8 = 3
-    register_seg = 4
-    model = 5
-    data_type = 6
-    instruction = 7
-    splitter = 8
-    user_type = 9
-    dec_number = 10
-    bin_number = 11
-    string = 12
-    unknown = 13
 
 
 def type_detector(string_token):
@@ -211,17 +196,28 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
                 print("LINE   :|" + line, file=output_file)
 
             tokens, ok = get_line_tokens(line, storage, line_index)
-            if not ok:
-                continue
 
-            structure, ok = get_line_structure(tokens, storage, line_index)
-            if not ok:
-                continue
+            if ok:
+                structure, ok = get_line_structure(tokens, storage, line_index)
 
-            if et1_print:
+            if ok and et1_print:
                 print_tokens(tokens, output_file)
                 print_structure(structure, output_file)
                 print(file=output_file)
 
+            if ok:
+                ok = asmfirstpass.first_pass(tokens, structure, storage, line_index)
+
+            if et2_print:
+                asmfirstpass.print_line(line, output_file)
+
+        if et2_print:
+            print("\nUser defined segments: ", file=output_file)
+            asmfirstpass.print_segments(storage, output_file)
+            print("\nSegments assignments: ", file=output_file)
+            asmfirstpass.print_segment_destinations(storage, output_file)
+            print("\nUser defined names: ", file=output_file)
+            asmfirstpass.print_user_names(storage, output_file)
+
     except IOError as error:
-        print("Error: Unable to access file: " + error)
+            print("Error: Unable to access file: " + error)
