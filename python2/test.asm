@@ -4,10 +4,10 @@
     Str2 db 'str'
     Dnm3 dd 10x
 .code
-    label1:
+    lbl1:
     std
-    jnge Label2
-    jmp Label2
+    jnge Lbl2
+    jmp Lbl2
     push DNM3
     push Dnm3
     pop eax
@@ -17,7 +17,7 @@
     adc Dnm3, ebx
     in eax,001b
     or bnm1[edi], 000000b
-    jnge label1
-    jmp label1
-    Label2:
+    jnge lbl1
+    jmp lbl1
+    lbl2:
 END
