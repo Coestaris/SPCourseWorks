@@ -6,6 +6,9 @@ interface
 uses Base;
 
 procedure DoFirstPass(storage : PASMStorage; var outfile : TextFile; output : boolean);
+procedure PrintSegmentTables(var outfile : TextFile; storage : PASMStorage);
+procedure PrintUserNames(var outfile : TextFile; storage : PASMStorage);
+function TokenToInt(t : Token) : longint;
 
 implementation
 
@@ -371,7 +374,9 @@ var
     jmp, fwd, nr : boolean;
     diff : longint;
     un : PUserName;
+    debug : boolean;
 begin
+    debug := false;
 
     if (lexeme.tokens[1].token = 'jns') or (lexeme.tokens[1].token = 'jmp')  then
     begin
@@ -400,27 +405,28 @@ begin
         exit(0);
     end;
 
-    writeln(lexeme.lexemeLine);
+    if debug then writeln(lexeme.lexemeLine); 
     result := 1; // opcode
 
     // exp prefix
     if lexeme.instr.expPrefix then
     begin
-        writeln('exp');
+        if debug then writeln('Exp prefix'); 
         result := result + 1;
     end;
 
     // modrm
     if (lexeme.instr.modrm <> 0) and not lexeme.instr.packedReg then
     begin
-        writeln('modrm');
+        if debug then writeln('modrm'); 
         result := result + 1;    
     end;
     //imm
 
     if lexeme.instr.imm <> 0 then
     begin
-        writeln('imm', lexeme.instr.imm);
+        if debug then writeln('imm', lexeme.instr.imm); 
+
         if lexeme.b32mode and (lexeme.instr.imm = 2) then
             result := result + 4
         else 
@@ -440,31 +446,31 @@ begin
             if lexeme.operandInfos[i].hasSegmentReg and 
                 (lexeme.operandInfos[i].segmentreg.token <> 'ds') then
             begin
-                writeln('segReg');
+                if debug then writeln('segReg');
                 result := result + 1;
             end;
 
             if lexeme.operandInfos[i].directIndex then
             begin
                 result := result + 2; // disp16
-                writeln('disp16');
+                if debug then writeln('disp16');
                 continue;
             end;
 
             result := result + 4; // disp32
-            writeln('disp32');
+            if debug then writeln('disp32');
 
             result := result + 1; // sib
             result := result + 1; // index change
-            writeln('sib');
-            writeln('indexChange');
+            if debug then writeln('sib');
+            if debug then writeln('indexChange');
         end; 
     end;
 
     // data change prefix
     if lexeme.b32mode then
     begin
-        writeln('dataChange');
+        if debug then writeln('dataChange');
         result := result + 1;
     end;
 end;

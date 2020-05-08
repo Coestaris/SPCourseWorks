@@ -3,11 +3,12 @@ program CourseWork;
 uses 
     Base,
     Tokenizer,
-    FirstPass;
+    FirstPass,
+    SecondPass;
 
 const 
-    InputFileName : string = 'bin/test1.asm';
-    OutputFileName : string = 'bin/output1.log';
+    InputFileName : string = 'bin/test.asm';
+    OutputFileName : string = 'bin/output.log';
 
 var    
     outputFile : TextFile;
@@ -21,7 +22,8 @@ begin
     Rewrite(outputFile);
 
     storage := Tokenize(InputFileName, OutputFile, false);
-    DoFirstPass(@storage, OutputFile, true);
+    DoFirstPass(@storage, OutputFile, false);
+    DoSecondPass(@storage, OutputFile, true);
 
     CloseFile(outputFile);
 end.

@@ -1,5 +1,3 @@
-from validate import is_integer
-
 from asmtypes import LineStructure, Storage, Token, LexemeType, TokenType, UserName, InstructionInfo, \
     InstructionPrototype
 

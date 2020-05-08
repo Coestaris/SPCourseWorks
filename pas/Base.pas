@@ -75,6 +75,31 @@ end;
 type PInstructionInfo = ^InstructionInfo;
 
 
+type Bytes = record
+    hasOpcode : boolean;
+    opCode : byte;
+
+    expPrefix : boolean;
+    dataPrefix : boolean;
+    indexPrefix : boolean;
+    
+    hasSegmentPrefix : boolean;
+    segmentPrefix : byte;
+
+    hasModmrm : boolean;
+    modrm : byte;
+
+    hasSib : boolean;
+    sib : byte;
+
+    immSize : integer;
+    imm : int64;
+
+    dispSize : integer;
+    disp : int64;
+end;
+
+
 type Lexeme = record
     // General fields
     tokensLen : integer;
@@ -104,6 +129,7 @@ type Lexeme = record
     instr : PInstructionInfo;
     offset : integer;
     size : integer;
+    bytes : bytes;
 end;
 
 
@@ -126,6 +152,7 @@ end;
 
 
 type PLexeme = ^Lexeme;
+type PBytes = ^Bytes;
 type PASMStorage = ^ASMStorage;
 type PUserName = ^UserName;
 type POperandInfo = ^OperandInfo;
@@ -218,8 +245,8 @@ begin
     Instr('test', 2, mem8, reg8,     $84, false, 1, 0, -1, false);
     Instr('test', 2, mem16, reg16,   $85, false, 1, 0, -1, false);
 
-    Instr('mov', 2, reg8, immSmall,  $84, false, 1, 1, -1, true);
-    Instr('mov', 2, reg16, immBig,   $88, false, 1, 2, -1, true);
+    Instr('mov', 2, reg8, immSmall,  $84, false, 0, 1, -1, true);
+    Instr('mov', 2, reg16, immBig,   $88, false, 0, 2, -1, true);
 
     Instr('xor', 2, mem8,  immSmall, $80, false, 1, 1, 6, false);
     Instr('xor', 2, mem16, immSmall, $83, false, 1, 1, 6, false);
