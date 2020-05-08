@@ -80,8 +80,11 @@ class Storage:
         self.errors = []
         self.errout = errout_file
         self.code_start = -1
+        self.code_size = 0
+        self.data_size = 0
         self.data_start = -1
         self.model_line = -1
+        self.offsets = {}
         self.user_names = []
 
     def get_user_name(self, is_label, name):

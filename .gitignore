@@ -22,3 +22,7 @@ python/tests/
 lua/\.vscode/settings\.json
 
 lua/tests/
+
+python2/tests/TASM\.EXE
+
+python2/tests/

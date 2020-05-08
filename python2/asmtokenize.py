@@ -11,8 +11,8 @@ registers_seg = ["CS", "FS", "DS", "ES", "SS", "GS"]
 models = ["SMALL", "TINY"]
 splitters = [":", " ", "[", "]", "\n", "\t", ","]
 
-dec_re = re.compile(r"^[0-9]+$")
-bin_re = re.compile(r"^[01]+B$")
+dec_re = re.compile(r"^-?[0-9]+$")
+bin_re = re.compile(r"^-?[01]+B$")
 string_re = re.compile(r"^\'.+\'$")
 id_re = re.compile(r"^[A-Z]\w{,3}$")
 
@@ -189,6 +189,11 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
 
         storage = Storage(output_file)
 
+        if et2_print:
+            print("=" * 60, file=output_file)
+            print("|  # || OFFSET || SIZE ||           LINE       ", file=output_file)
+            print("=" * 60, file=output_file)
+
         for line_index, line in enumerate(input_file):
             line = line.rstrip()
 
@@ -209,9 +214,11 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
                 ok = asmfirstpass.first_pass(tokens, structure, storage, line_index)
 
             if et2_print:
-                asmfirstpass.print_line(line, output_file)
+                asmfirstpass.print_line(line, storage, line_index, output_file)
 
         if et2_print:
+            print("=" * 60, file=output_file)
+
             print("\nUser defined segments: ", file=output_file)
             asmfirstpass.print_segments(storage, output_file)
             print("\nSegments assignments: ", file=output_file)

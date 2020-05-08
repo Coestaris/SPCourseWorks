@@ -1,37 +1,74 @@
+from validate import is_integer
+
 from asmtypes import LineStructure, Storage, Token, LexemeType, TokenType, UserName, InstructionInfo, \
     InstructionPrototype
 
 
+def to_hex(s: int, l: int = 6) -> str:
+    return "{:X}".format(s).rjust(l, '0')
+
+
 def print_segments(storage, out_file):
-    print("="*40, file=out_file)
-    print("|   NAME   |    SIZE   |  LINE |   SIZE   |", file=out_file)
-    print("="*40, file=out_file)
-    print("|     DATA |        32 |    {} |    {}    |".format(0, 0), file=out_file)
-    print("|     CODE |        32 |    {} |    {}    |".format(0, 0), file=out_file)
-    print("="*40, file=out_file)
+    print("=" * 43, file=out_file)
+    print("|   NAME   |    SIZE   | LINE |    SIZE   |", file=out_file)
+    print("=" * 43, file=out_file)
+    print("|     DATA |        32 | {:>4} | {:>9} |".format(storage.data_start + 1, to_hex(storage.data_size)),
+          file=out_file)
+    print("|     CODE |        32 | {:>4} | {:>9} |".format(storage.code_start + 1, to_hex(storage.code_size)),
+          file=out_file)
+    print("=" * 43, file=out_file)
     pass
 
 
 def print_segment_destinations(storage, out_file):
-    print("="*40, file=out_file)
+    print("=" * 40, file=out_file)
     print("|   SEGMENT REGISTER   |  DESTINATION  |", file=out_file)
-    print("="*40, file=out_file)
+    print("=" * 40, file=out_file)
     print("|                 CS   |       CODE    |", file=out_file)
     print("|                 DS   |       DATA    |", file=out_file)
     print("|                 FS   |    NOTHING    |", file=out_file)
     print("|                 GS   |    NOTHING    |", file=out_file)
     print("|                 SS   |    NOTHING    |", file=out_file)
     print("|                 ES   |    NOTHING    |", file=out_file)
-    print("="*40, file=out_file)
+    print("=" * 40, file=out_file)
     pass
 
 
 def print_user_names(storage, out_file):
-    print("="*40, file=out_file)
-    print("|   NAME   |    TYPE   |  LINE |   VALUE   |", file=out_file)
-    print("|     DATA |   SEGMENT |    {} |   -----   |".format(0), file=out_file)
-    print("|     CODE |   SEGMENT |    {} |   -----   |".format(0), file=out_file)
+    print("=" * 45, file=out_file)
+    print("|   NAME   |    TYPE   | LINE |    VALUE    |", file=out_file)
+    print("=" * 45, file=out_file)
+    print("|     DATA |   SEGMENT | {:>4} |    -------- |".format(storage.data_start + 1), file=out_file)
+    print("|     CODE |   SEGMENT | {:>4} |    -------- |".format(storage.code_start + 1), file=out_file)
+    for un in storage.user_names:
+        segment = storage.get_segment(un.line)
+        value = "DATA:" if segment == storage.DataSegment else "CODE:"
+        if un.is_label:
+            type = "LABEL"
+        else:
+            type = "BYTE" if un.type == "DB" else "DWORD"
+
+        if un.line in storage.offsets:
+            value += to_hex(storage.offsets[un.line][0])
+        else:
+            value += "????"
+
+        print("| {:>8} | {:>9} | {:>4} | {:>11} |".format(un.name, type, un.line + 1, value), file=out_file)
+    print("=" * 45, file=out_file)
     pass
+
+
+def print_line(line, storage, line_index, out_file):
+    if storage.has_error(line_index):
+        print("| {:2} |:     ERROR    :| {}".format(line_index + 1, line), file=out_file)
+    else:
+        if line_index in storage.offsets:
+            offset = to_hex(storage.offsets[line_index][0])
+            size = storage.offsets[line_index][1]
+        else:
+            offset = "   "
+            size = ""
+        print("| {:2} || {:>6} || {:>6} || {}".format(line_index + 1, offset, size, line), file=out_file)
 
 
 prototypes = []
@@ -74,36 +111,58 @@ def init_prototypes():
     global prototypes
     i = InstructionInfo
     prototypes = [
-        InstructionPrototype("std", 0xFD),
+        InstructionPrototype("STD", 0xFD),
 
-        InstructionPrototype("push", 0xFF, 1, i.Memory32, modrm=True, mc=6),
+        InstructionPrototype("PUSH", 0xFF, 1, i.Memory32, modrm=True, mc=6),
 
-        InstructionPrototype("pop", 0x58, 1, i.Register32, packed=True),
+        InstructionPrototype("POP", 0x58, 1, i.Register32, packed=True),
 
-        InstructionPrototype("idiv", 0xF6, 1, i.Register8, i.Register8, modrm=True, mc=7),
-        InstructionPrototype("idiv", 0xF7, 1, i.Register32, i.Register32, modrm=True, mc=7),
+        InstructionPrototype("IDIV", 0xF6, 1, i.Register8, i.Register8, modrm=True, mc=7),
+        InstructionPrototype("IDIV", 0xF7, 1, i.Register32, i.Register32, modrm=True, mc=7),
 
-        InstructionPrototype("add", 0x02, 2, i.Register8, i.Memory8, modrm=True),
-        InstructionPrototype("add", 0x03, 2, i.Register32, i.Memory32, modrm=True),
+        InstructionPrototype("ADD", 0x02, 2, i.Register8, i.Memory8, modrm=True),
+        InstructionPrototype("ADD", 0x03, 2, i.Register32, i.Memory32, modrm=True),
 
-        InstructionPrototype("adc", 0x10, 2, i.Memory8, i.Register8, modrm=True),
-        InstructionPrototype("adc", 0x11, 2, i.Memory32, i.Register32, modrm=True),
+        InstructionPrototype("ADC", 0x10, 2, i.Memory8, i.Register8, modrm=True),
+        InstructionPrototype("ADC", 0x11, 2, i.Memory32, i.Register32, modrm=True),
 
-        InstructionPrototype("in", 0xE4, 2, i.Register8, i.IMM8, imm=1),
-        InstructionPrototype("in", 0xE5, 2, i.Register32, i.IMM8, imm=4),
-        InstructionPrototype("in", 0xE5, 2, i.Register32, i.IMM32, imm=4),
+        InstructionPrototype("IN", 0xE4, 2, i.Register8, i.IMM8, imm=1),
+        InstructionPrototype("IN", 0xE5, 2, i.Register32, i.IMM8, imm=1),
 
-        InstructionPrototype("or", 0x80, 2, i.Memory8, i.IMM8, modrm=True, mc=1, imm=1),
-        InstructionPrototype("or", 0x81, 2, i.Memory32, i.IMM32, modrm=True, mc=1, imm=4),
-        InstructionPrototype("or", 0x83, 2, i.Memory32, i.IMM8, modrm=True, mc=1, imm=1),
+        InstructionPrototype("OR", 0x80, 2, i.Memory8, i.IMM8, modrm=True, mc=1, imm=1),
+        InstructionPrototype("OR", 0x81, 2, i.Memory32, i.IMM32, modrm=True, mc=1, imm=4),
+        InstructionPrototype("OR", 0x83, 2, i.Memory32, i.IMM8, modrm=True, mc=1, imm=1),
 
-        InstructionPrototype("jnge", 0x00, 1),
-        InstructionPrototype("jnge", 0x00, 1),
+        InstructionPrototype("JNGE", 0x00, 1, i.LabelForward),
+        InstructionPrototype("JNGE", 0x00, 1, i.LabelBackward),
 
-        InstructionPrototype("jmp", 0x00, 1),
-        InstructionPrototype("jmp", 0x00, 1),
+        InstructionPrototype("JMP", 0x00, 1, i.LabelBackward),
+        InstructionPrototype("JMP", 0x00, 1, i.LabelForward),
     ]
     pass
+
+
+def match_prototype(tokens, structure, info):
+    last_error = 0
+    for prot in prototypes:
+        if prot.name == tokens[0].value:
+            if prot.op_count != structure.op_count:
+                last_error = 1
+                continue
+
+            if prot.op_count >= 1:
+                if prot.op1 != info.op1_type:
+                    last_error = 2
+                    continue
+
+            if prot.op_count == 2:
+                if prot.op2 != info.op2_type:
+                    last_error = 3
+                    continue
+
+            return prot
+
+    return last_error
 
 
 def get_number(token):
@@ -191,6 +250,7 @@ def create_instruction_info(tokens, structure, storage, line_index):
                 if un is None:
                     storage.set_error(line_index, "Undefined variable reference")
                     return None
+                info.segment_change = op[0]
                 info.direct_memory = True
                 info.memory_base = op[2]
                 if un.type == "DB":
@@ -225,9 +285,10 @@ def create_instruction_info(tokens, structure, storage, line_index):
                 info.direct_memory = False
                 info.memory_base = op[offset]
                 info.memory_index = op[offset + 2]
-                if info.memory_index.value == "ESP":
-                    storage.set_error(line_index, "Invalid index register")
-                    return None
+
+                # if info.memory_index.value == "ESP":
+                #    storage.set_error(line_index, "Invalid index register")
+                #    return None
 
                 un = storage.get_user_name(False, op[offset].value)
                 if un is None:
@@ -243,6 +304,68 @@ def create_instruction_info(tokens, structure, storage, line_index):
         else:
             info.op2_type = op_type
     return info
+
+
+def get_variable_size(tokens):
+    if tokens[1].value == "DD":
+        return 4
+    else:
+        if tokens[2].type == TokenType.string:
+            return len(tokens[2].value) - 2
+        else:
+            return 1
+
+
+def get_instruction_size(tokens, info, prot, storage):
+    size = 0
+
+    if tokens[0].value == "JMP" or tokens[0].value == "JNGE":
+        if info.op1_type == info.LabelForward:
+            if tokens[0].value == "JMP":
+                return 5
+            else:
+                return 6
+        else:
+            un = storage.get_user_name(True, tokens[1].value)
+            dest_offset = storage.offsets[un.line][0]
+            src_offset = storage.code_size
+            far = abs(dest_offset - src_offset) > 127
+            if far:
+                if tokens[0].value == "JMP":
+                    return 5
+                else:
+                    return 6
+            else:
+                return 2
+
+    size += 1  # opcode
+    if prot.imm is not None:
+        size += prot.imm
+
+    if prot.modrm:
+        size += 1  # Mod/RM
+        if info.op1_type == info.Memory8 or info.op1_type == info.Memory32 or \
+                info.op2_type == info.Memory8 or info.op2_type == info.Memory32:
+            size += 4  # Disp32
+
+            if info.memory_index is not None and info.memory_index.value == "ESP":
+                size += 1  # Sib
+
+    if info.segment_change:
+        if info.memory_index is not None:
+            if info.segment_change.value == "SS":
+                if info.memory_index.value != "EBP" and info.memory_index.value != "ESP":
+                    size += 1
+            elif info.segment_change.value == "DS":
+                if info.memory_index.value == "EBP" or info.memory_index.value == "ESP":
+                    size += 1
+            else:
+                size += 1
+        else:
+            if info.segment_change.value != "DS":
+                size += 1  # Segment change prefix
+
+    return size
 
 
 def first_pass(tokens, structure, storage, line_index):
@@ -274,6 +397,13 @@ def first_pass(tokens, structure, storage, line_index):
         pass  # idk
 
     elif type == LexemeType.blank:
+        segment = storage.get_segment(line_index)
+        if segment == Storage.DataSegment:
+            offset = storage.data_size
+            storage.offsets[line_index] = (offset, 0)
+        elif segment == Storage.CodeSegment:
+            offset = storage.code_size
+            storage.offsets[line_index] = (offset, 0)
         pass  # idk
 
     else:
@@ -306,6 +436,16 @@ def first_pass(tokens, structure, storage, line_index):
             un = UserName(tokens[0].value, False, tokens[1].value, line_index)
             storage.user_names.append(un)
 
+            size = get_variable_size(tokens)
+            if segment == Storage.DataSegment:
+                offset = storage.data_size
+                storage.data_size += size
+            else:
+                offset = storage.code_size
+                storage.code_size += size
+
+            storage.offsets[line_index] = (offset, size)
+
         elif type == LexemeType.label:
             if segment != Storage.CodeSegment:
                 storage.set_error(line_index, "You can declare labels only in CODE segment")
@@ -319,6 +459,12 @@ def first_pass(tokens, structure, storage, line_index):
             un = UserName(tokens[0].value, True, None, line_index)
             storage.user_names.append(un)
 
+            if segment == Storage.DataSegment:
+                offset = storage.data_size
+            else:
+                offset = storage.code_size
+            storage.offsets[line_index] = (offset, 0)
+
         else:
             # Instruction
             if segment != Storage.CodeSegment:
@@ -329,8 +475,25 @@ def first_pass(tokens, structure, storage, line_index):
             if info is None:
                 return False
 
+            prot = match_prototype(tokens, structure, info)
+            if isinstance(prot, int):
+                if prot == 0:
+                    storage.set_error(line_index, "Unable to match instruction: Wrong instruction name")
+                    return False
+                elif prot == 1:
+                    storage.set_error(line_index, "Unable to match instruction: Invalid parameters count")
+                    return False
+                elif prot == 2:
+                    storage.set_error(line_index, "Unable to match instruction: First operand type mismatch")
+                    return False
+                else:
+                    storage.set_error(line_index, "Unable to match instruction: Second operand type mismatch")
+                    return False
+
+            size = get_instruction_size(tokens, info, prot, storage)
+            offset = storage.code_size
+            storage.code_size += size
+
+            storage.offsets[line_index] = (offset, size)
+
     return True
-
-
-def print_line(line, out_file):
-    print(line, file=out_file)
