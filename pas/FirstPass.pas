@@ -55,7 +55,7 @@ end;
 procedure PrintSegmentTables(var outfile : TextFile; storage : PASMStorage);
 var codeLexeme, dataLexeme : Plexeme;
 begin
-    codeLexeme := @storage.lexemes[storage.lexemesLen-1];
+    codeLexeme := @storage.lexemes[storage.lexemesLen];
     dataLexeme := @storage.lexemes[storage.codeSegmentIndex - 1];
 
     writeln(outfile, '# |  Name      | Bt | Line  | Size');
@@ -182,6 +182,7 @@ begin
             len := lexeme.op2Len;
         end;
         co := @lexeme.operandInfos[i];
+        co.hasSegmentReg := false;
 
         // imm, reg, label or direct mem (are they the same??)
         if len = 1 then 
@@ -200,7 +201,7 @@ begin
             begin
                 imm := TokenToInt(co.token);
                 co.number := imm;
-                if abs(imm) < 127 then
+                if abs(imm) < 255 then
                     co.operandType := ImmSmall
                 else
                     co.operandType := ImmBig;
@@ -247,6 +248,35 @@ begin
         end
         else
         begin
+            // FS : VAR2 case
+            if (len = 3) and (lexeme.tokens[start].tokenType = RegisterSeg) and (lexeme.tokens[start + 1].token = ':') and (lexeme.tokens[start + 2].tokenType = Identifier) then
+            begin
+                // direct
+                un := GetUserNameByName(storage, true, lexeme.tokens[start+2].token);
+                if un <> nil then
+                begin
+                    // Variable
+                    varLexeme := @storage.Lexemes[un.lexemeIndex]; 
+                    co.directIndex := true;
+                    co.hasSegmentReg := true;
+                    co.segmentReg := lexeme.tokens[start];
+                    co.token := lexeme.tokens[start + 2];
+
+                    if varLexeme.tokens[2].tokenType = DbDirective then
+                        co.operandType := mem8
+                    else if varLexeme.tokens[2].tokenType = DwDirective then
+                        co.operandType := mem16
+                    else if varLexeme.tokens[2].tokenType = DdDirective then
+                        co.operandType := mem32;
+                    continue;
+                end
+                else
+                begin
+                    SetError(lexeme, 'Undefined reference', start+2);
+                    exit;
+                end;
+            end; 
+
             offset := 0;
             if (len > 8) or (len < 6) then
             begin
@@ -291,12 +321,13 @@ begin
             end;
 
             co.directIndex := false;
+            co.token := lexeme.tokens[start + offset];  
             co.base := lexeme.tokens[start + offset + 2];
             co.scale := lexeme.tokens[start + offset + 4];
 
-            if co.base.token = 'ebp' then 
+            if co.base.token = 'esp' then 
             begin
-                SetError(lexeme, 'Base register couldn`t be EBP', start + 2);
+                SetError(lexeme, 'Base register couldn`t be ESP', start + 2);
                 exit;
             end;
             
@@ -383,7 +414,7 @@ begin
         un := GetUserNameByName(storage, false, lexeme.tokens[2].token);
         if un = nil then exit(0);
         
-        diff := storage.lexemes[un.lexemeIndex].offset - lexeme.offset;
+        diff := storage.lexemes[un.lexemeIndex].offset - storage.lexemes[lexeme.lexemeLineIndex - 1].offset;
 
         jmp := lexeme.tokens[1].token = 'jmp';
         fwd := lexeme.operandInfos[1].operandType = LabelF;
@@ -405,7 +436,7 @@ begin
         exit(0);
     end;
 
-    if debug then writeln(lexeme.lexemeLine); 
+    if debug then writeln('==LINE==| ', lexeme.lexemeLine); 
     result := 1; // opcode
 
     // exp prefix
@@ -443,11 +474,29 @@ begin
             (lexeme.operandInfos[i].operandType = Mem32) then
         begin
        
-            if lexeme.operandInfos[i].hasSegmentReg and 
-                (lexeme.operandInfos[i].segmentreg.token <> 'ds') then
+            if lexeme.operandInfos[i].hasSegmentReg  then
             begin
-                if debug then writeln('segReg');
-                result := result + 1;
+                if lexeme.operandInfos[i].segmentReg.token = 'ss' then
+                begin
+                    if not (not lexeme.operandInfos[i].directIndex and (lexeme.operandInfos[i].base.token = 'ebp')) then
+                    begin
+                         if debug then writeln('SS_SEG_REG');
+                        result := result + 1;
+                    end;
+                end
+                else if lexeme.operandInfos[i].segmentReg.token = 'ds' then
+                begin
+                    if (not lexeme.operandInfos[i].directIndex and (lexeme.operandInfos[i].base.token = 'ebp')) then
+                    begin
+                         if debug then writeln('DS_SEG_REG');
+                        result := result + 1;
+                    end;
+                end
+                else
+                begin
+                    if debug then writeln('SEG_REG');
+                    result := result + 1;
+                end;
             end;
 
             if lexeme.operandInfos[i].directIndex then
@@ -460,10 +509,14 @@ begin
             result := result + 4; // disp32
             if debug then writeln('disp32');
 
-            result := result + 1; // sib
             result := result + 1; // index change
-            if debug then writeln('sib');
             if debug then writeln('indexChange');
+
+            if lexeme.operandInfos[i].scale.token <> '1' then
+            begin
+                result := result + 1; // sib
+                if debug then writeln('sib');
+            end
         end; 
     end;
 
@@ -732,6 +785,7 @@ begin
         end;
     end;
 
+    offset := 0;
     // Calculate size
     for i := 1 to storage.lexemesLen do 
     begin

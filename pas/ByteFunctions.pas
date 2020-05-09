@@ -11,7 +11,7 @@ procedure BSetImm(b : PBytes; size : integer; imm : int64);
 procedure BSetOpcode(b : PBytes; opcode : integer);
 procedure BPackRegister(b : PBytes; register : string);
 procedure BSetPrefixes(b : PBytes; exp : boolean; data : boolean; idx : boolean);
-procedure BSetSegmentPrefix(b : PBytes; prefix : byte);
+procedure BSetSegmentPrefix(b : PBytes; register : string);
 procedure BSetRegReg(b : PBytes; register : string);
 procedure BSetRegConst(b : PBytes; constant : byte);
 procedure BSetModReg(b : PBytes; register : string);
@@ -19,6 +19,25 @@ procedure BSetModIndex(b : PBytes; offset : integer; register : string; scale : 
 procedure BSetModDirect(b : PBytes; offset : integer);
 
 implementation
+
+const MOD_REG : integer = 3;
+const MOD_IND_REG_DISP32 : integer = 2;
+const MOD_DISP_ONLY : integer = 0;
+const MOD_DISP32 : integer = 0;
+const RM_SIB : integer = 4;
+const RM_DISP_ONLY : integer = 6;
+const SIB_B_NO_BASE : integer = 5;
+
+function GetSegRegCode(register : string) : byte;
+begin
+    if register = 'cs' then exit($2E);
+    if register = 'ss' then exit($36);
+    if register = 'ds' then exit($3E);
+    if register = 'es' then exit($26);
+    if register = 'fs' then exit($64);
+    if register = 'gs' then exit($65);
+    writeln(register, ' invalid segreg')
+end;
 
 function GetRegCode(register : string) : byte;
 begin
@@ -86,8 +105,10 @@ begin
         b.imm := imm and $FF
     else if size = 2 then
         b.imm := imm and $FFFF
-    else
+    else if size = 3 then
         b.imm := imm and $FFFFFF
+    else
+        b.imm := imm and $FFFFFFFF;
 end;
 
 procedure BSetOpcode(b : PBytes; opcode : integer);
@@ -109,10 +130,10 @@ begin
     b.indexPrefix := b.indexPrefix or idx;
 end;
 
-procedure BSetSegmentPrefix(b : PBytes; prefix : byte);
+procedure BSetSegmentPrefix(b : PBytes; register : string);
 begin
     b.hasSegmentPrefix := true;
-    b.segmentPrefix := prefix;
+    b.segmentPrefix := GetSegRegCode(register);
 end;
 
 procedure BSetRegReg(b : PBytes; register : string);
@@ -130,29 +151,45 @@ end;
 procedure BSetModReg(b : PBytes; register : string);
 begin
     b.hasModmrm := true;
-    b.modrm := b.modrm or GetModRM(3, 0, GetRegCode(register));
+    b.modrm := b.modrm or GetModRM(MOD_REG, 0, GetRegCode(register));
 end;
 
 procedure BSetModDirect(b : PBytes; offset : integer);
 begin
     b.hasModmrm := true;
-    b.modrm := b.modrm or GetModRM(00, 0, 5);
+    b.modrm := b.modrm or GetModRM(MOD_DISP_ONLY, 0, RM_DISP_ONLY);
     b.dispSize := 2;
     b.disp := offset and $FFFF;
 end;
 
 procedure BSetModIndex(b : PBytes; offset : integer; register : string; scale : string);
+var s : integer;
 begin
     b.hasModmrm := true;
+   
+    b.dispSize := 4;
+    b.disp := offset and $FFFFFFFF;
+    b.indexPrefix := true;
+   
+    if scale = '1' then 
+    begin
+        b.modrm := b.modrm or GetModRM(MOD_IND_REG_DISP32, 0, GetRegCode(register));
+        exit;
+    end
+    else if scale = '2' then s := 1
+    else if scale = '4' then s := 2
+    else s := 3;
+    
+    b.modrm := b.modrm or GetModRM(MOD_DISP32, 0, RM_SIB);
     b.hasSib := true;
-    b.modrm := b.modrm or GetModRM(2, 0, 4);
+    b.sib := b.sib or GetSIB(s, GetRegCode(register), SIB_B_NO_BASE);
 end;
 
 function GetByteString(b : Bytes) : string;
 begin
     result := '';
     if b.hasSegmentPrefix then 
-        result := Concat(result, IntToHex(b.segmentPrefix, 2));
+        result := Concat(Concat(result, IntToHex(b.segmentPrefix, 2)), ': ');
 
     if b.dataPrefix then
         result := Concat(result, '66| ');
@@ -167,16 +204,16 @@ begin
         result := Concat(Concat(result, IntToHex(b.opcode, 2)), ' ');
 
     if b.hasModmrm then
-        result := Concat(result, IntToHex(b.modrm, 2));
+        result := Concat(Concat(result, IntToHex(b.modrm, 2)), ' ');
 
     if b.hasSib then
-        result := Concat(result, IntToHex(b.sib, 2));
+        result := Concat(Concat(result, IntToHex(b.sib, 2)), ' ');
 
     if b.dispSize <> 0 then
-        result := Concat(result, IntToHex(b.disp, b.dispSize * 2));
+        result := Concat(Concat(result, IntToHex(b.disp, b.dispSize * 2)), ' ');
 
     if b.immSize <> 0 then
-        result := Concat(result, IntToHex(b.imm, b.immSize * 2));
+        result := Concat(Concat(result, IntToHex(b.imm, b.immSize * 2)), ' ');
 
     GetByteString := result;
 end;

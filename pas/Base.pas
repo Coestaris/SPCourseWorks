@@ -247,13 +247,15 @@ begin
 
     Instr('mov', 2, reg8, immSmall,  $84, false, 0, 1, -1, true);
     Instr('mov', 2, reg16, immBig,   $88, false, 0, 2, -1, true);
+    Instr('mov', 2, reg16, immSmall, $88, false, 0, 2, -1, true);
 
     Instr('xor', 2, mem8,  immSmall, $80, false, 1, 1, 6, false);
     Instr('xor', 2, mem16, immSmall, $83, false, 1, 1, 6, false);
-    Instr('xor', 2, mem16, immBig,   $80, false, 1, 2, 6, false);
+    Instr('xor', 2, mem16, immBig,   $81, false, 1, 2, 6, false);
 
     Instr('jns', 1, labelF, reg8,    $0, false, 0, 0, 0, false);
     Instr('jns', 1, labelB, reg8,    $0, false, 0, 0, 0, false);
+
     Instr('jmp', 1, labelF, reg8,    $0, false, 0, 0, 0, false);
     Instr('jmp', 1, labelB, reg8,    $0, false, 0, 0, 0, false);
 end;
