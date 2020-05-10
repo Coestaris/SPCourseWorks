@@ -38,7 +38,7 @@ func getTypedTokens(tokens []rawToken, program types.ASM) (types.Lexeme, error) 
 	return lex, nil
 }
 
-func Parse(program types.ASM) ([]types.Lexeme, error) {
+func Parse(program types.ASM) ([]types.Lexeme, []error) {
 	token := ""
 
 	line := 1
@@ -46,6 +46,7 @@ func Parse(program types.ASM) ([]types.Lexeme, error) {
 	var tokens []rawToken
 	lastEl := false
 	var lexemes []types.Lexeme
+	var errors []error
 
 	for _, c := range program.GetSource() {
 		if strings.ContainsRune(splitChars, c) {
@@ -64,10 +65,8 @@ func Parse(program types.ASM) ([]types.Lexeme, error) {
 		if c == '\n' {
 			t, err := getTypedTokens(tokens, program)
 			if err != nil {
-				return nil, err
-			}
-
-			if len(t.GetTokens()) != 0 {
+				errors = append(errors, err)
+			} else if len(t.GetTokens()) != 0 {
 				lexemes = append(lexemes, t)
 			}
 
@@ -83,11 +82,12 @@ func Parse(program types.ASM) ([]types.Lexeme, error) {
 
 	t, err := getTypedTokens(tokens, program)
 	if err != nil {
-		return nil, err
+		errors = append(errors, err)
+		return nil, errors
 	}
 
 	if len(t.GetTokens()) != 0 {
 		lexemes = append(lexemes, t)
 	}
-	return lexemes, nil
+	return lexemes, errors
 }

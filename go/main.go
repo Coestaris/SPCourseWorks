@@ -5,9 +5,9 @@ import (
 	"course_work_2/tokens"
 	"course_work_2/types"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -140,14 +140,19 @@ func main() {
 		}
 
 		program := assembly.NewAssembly(string(parsedFile), fileURL)
-		if err = program.Parse(); err != nil {
-			log.Fatal(err)
+		if errors := program.Parse(); errors != nil {
+			for _, err := range errors {
+				log.Error(err)
+			}
+			log.Fatal("parsing failed")
 		}
-		if err = program.FirstPass(); err != nil {
-			log.Fatal(err)
+		if errors := program.FirstPass(); errors != nil {
+			for _, err := range errors {
+				log.Error(err)
+			}
+			log.Fatal("first pass failed")
 		}
 
-		os.Open("")
 		PrintET2(program)
 	}
 }

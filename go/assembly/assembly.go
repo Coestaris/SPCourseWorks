@@ -70,11 +70,12 @@ func (a *asm) GetCodeSegment() types.Segment {
 	return a.codeSegment
 }
 
-func (a *asm) FirstPass() error {
+func (a *asm) FirstPass() []error {
 	segment.ProceedSegments(a)
+	var errs []error
 	for _, l := range a.GetLexemes() {
 		if err := l.GetOperandsInfo(); err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
 
@@ -103,13 +104,14 @@ func (a *asm) FirstPass() error {
 		case tokens.INSTRUCTION:
 			inst := FindInfo(l)
 			if inst == nil {
-				return fmt.Errorf("wrong instruction format %s", l.GetTokens()[0].GetValue())
+				errs = append(errs, fmt.Errorf("wrong instruction format %s\n", l.GetTokens()[0].GetValue()))
+				continue
 			}
 
 			l.SetInstruction(inst)
 			err := inst.CheckOpRestrictions(l)
 			if err != nil {
-				return err
+				errs = append(errs, err)
 			}
 		}
 
@@ -121,13 +123,13 @@ func (a *asm) FirstPass() error {
 			l.GetSegment().SetSize(offset)
 		}
 	}
-	return nil
+	return errs
 }
 
-func (a *asm) Parse() error {
-	var err error
-	a.Lexemes, err = parser.Parse(a)
-	return err
+func (a *asm) Parse() []error {
+	var errs []error
+	a.Lexemes, errs = parser.Parse(a)
+	return errs
 }
 
 func (a *asm) ToIndexedTable() string {

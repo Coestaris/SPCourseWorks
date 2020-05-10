@@ -17,8 +17,8 @@ type ASM interface {
 
 	ToIndexedTable() string
 
-	Parse() error
-	FirstPass() error
+	Parse() []error
+	FirstPass() []error
 }
 
 type Operand interface {

@@ -9,6 +9,7 @@ jmp label1
 
 label2:
 	lahf
+
 	inc ax
 	dec word ptr [eax + edi*4]
 	add eax, ebx
