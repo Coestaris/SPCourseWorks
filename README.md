@@ -16,6 +16,7 @@ Implemented solutions:
 * [C Version](https://github.com/Coestaris/SPCourseWorks/tree/master/c) (4 - Second Pass) - Developed by [Coestaris](https://github.com/Coestaris)
 * [LUA Version](https://github.com/Coestaris/SPCourseWorks/tree/master/lua) (3 - First pass) - Developed by [Coestaris](https://github.com/Coestaris)
 * [Pascal Version](https://github.com/Coestaris/SPCourseWorks/tree/master/pas) (4 - Second pass) - Developed by [Coestaris](https://github.com/Coestaris)
+* [Another python version](https://github.com/Coestaris/SPCourseWorks/tree/master/python2) (3 - First pass) - Ported from LUA version by [Coestaris](https://github.com/Coestaris) and [Savuardy](https://github.com/savuardy)
 
 You can contribute your implementation to make this world better ❤️
 
