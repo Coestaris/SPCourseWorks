@@ -193,7 +193,7 @@ begin
         for i := start to length(token) - 1 do 
         begin
             ok := (token[i] >= '0') and (token[i] <= '9');
-            ok := ok or ((token[i] >= 'a') and (token[i] <= 'e'));
+            ok := ok or ((token[i] >= 'a') and (token[i] <= 'f'));
 
             if not ok then 
             begin
