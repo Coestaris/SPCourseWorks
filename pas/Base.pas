@@ -245,9 +245,9 @@ begin
     Instr('test', 2, mem8, reg8,     $84, false, 1, 0, -1, false);
     Instr('test', 2, mem16, reg16,   $85, false, 1, 0, -1, false);
 
-    Instr('mov', 2, reg8, immSmall,  $84, false, 0, 1, -1, true);
-    Instr('mov', 2, reg16, immBig,   $88, false, 0, 2, -1, true);
-    Instr('mov', 2, reg16, immSmall, $88, false, 0, 2, -1, true);
+    Instr('mov', 2, reg8, immSmall,  $B0, false, 0, 1, -1, true);
+    Instr('mov', 2, reg16, immBig,   $B8, false, 0, 2, -1, true);
+    Instr('mov', 2, reg16, immSmall, $B8, false, 0, 2, -1, true);
 
     Instr('xor', 2, mem8,  immSmall, $80, false, 1, 1, 6, false);
     Instr('xor', 2, mem16, immSmall, $83, false, 1, 1, 6, false);
