@@ -1,4 +1,4 @@
-## Oascal version
+## Pascal version
 
 To build project using Debian systems use:
 ```shell
