@@ -1,3 +1,9 @@
+## C# version
+
+To build use Visual studio solution (Mono compatible)
+
+Sample test file:
+```asm
 DATA SEGMENT 
 	Var1    DB  03fh
 	Var2    DW  103
@@ -34,3 +40,4 @@ label2:
 
 CODE ENDS
 END
+```
