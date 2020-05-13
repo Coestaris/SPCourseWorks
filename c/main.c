@@ -11,15 +11,15 @@
 #include "assembly.h"
 #include "errors.h"
 
-#define TEST_FILE "test.asm"
-#define OUT_FILE "test.log"
+#define TEST_FILE "../tests/test2.asm"
+#define OUT_FILE "../tests/test1.log"
 
 static void print_et2_table(FILE* output, assembly_t* assembly)
 {
-   for(size_t i = 0; i < assembly->lexemes->count; i++)
+   for (size_t i = 0; i < assembly->lexemes->count; i++)
    {
       lexeme_t* lexeme = assembly->lexemes->collection[i];
-      for(size_t j = 0; j < lexeme->tokens_cnt; j++)
+      for (size_t j = 0; j < lexeme->tokens_cnt; j++)
          fprintf(output, "%s ", lexeme->tokens[j].string);
       putc('\n', output);
 
@@ -27,19 +27,19 @@ static void print_et2_table(FILE* output, assembly_t* assembly)
       fprintf(output, "| N | String        | Type               |\n");
       fprintf(output, "|---+---------------+--------------------|\n");
 
-      for(size_t j = 0; j < lexeme->tokens_cnt; j++)
+      for (size_t j = 0; j < lexeme->tokens_cnt; j++)
       {
          fprintf(output, "| %-2li|  %-12s | %-19s|\n",
-                j,
-                lexeme->tokens[j].string,
-                t_tt_to_name(lexeme->tokens[j].type));
+                 j,
+                 lexeme->tokens[j].string,
+                 t_tt_to_name(lexeme->tokens[j].type));
       }
       fprintf(output, "|========================================|\n");
       fprintf(output, "| NAME |    MNEM   | OPERAND1 | OPERAND2 | \n");
       fprintf(output, "|------+-----------+----------+----------|\n");
 
       char buff1[20];
-      if(lexeme->has_label)
+      if (lexeme->has_label)
          snprintf(buff1, sizeof(buff1), "0");
       else
          snprintf(buff1, sizeof(buff1), "-");
@@ -53,16 +53,16 @@ static void print_et2_table(FILE* output, assembly_t* assembly)
       char buff4[20];
       snprintf(buff4, sizeof(buff4), "-");
 
-      if(lexeme->has_instruction)
+      if (lexeme->has_instruction)
       {
          snprintf(buff2, sizeof(buff2), "%2li   1",
-               lexeme->instr_index);
+                  lexeme->instr_index);
 
-         if(lexeme->operands_count >= 1)
+         if (lexeme->operands_count >= 1)
             snprintf(buff3, sizeof(buff3), "%2li   %2li",
                      lexeme->operands_info[0].op_index, lexeme->operands_info[0].op_length);
 
-         if(lexeme->operands_count > 1)
+         if (lexeme->operands_count > 1)
             snprintf(buff4, sizeof(buff4), "%2li   %2li",
                      lexeme->operands_info[1].op_index, lexeme->operands_info[1].op_length);
       }
@@ -95,7 +95,7 @@ static void print_et3_table(FILE* output, assembly_t* assembly, bool table)
    char offset_str[9];
    char size_str[2];
 
-   if(table)
+   if (table)
    {
       fputs("OFFSET TABLE\n", output);
       fputs("/========================================================================\\\n", output);
@@ -124,7 +124,7 @@ static void print_et3_table(FILE* output, assembly_t* assembly, bool table)
    fputs("/===================================\\\n", output);
    fputs("| ID |   SEGMENT  |   SIZE   |  BIT |\n", output);
    fputs("|----|------------|----------|------|\n", output);
-   for(size_t i = 0; i < assembly->segments_cnt; i++)
+   for (size_t i = 0; i < assembly->segments_cnt; i++)
    {
       struct segment* seg = &assembly->segments[i];
 
@@ -139,7 +139,7 @@ static void print_et3_table(FILE* output, assembly_t* assembly, bool table)
    fputs("| ID |   SYMBOL  |   TYPE   |   VALUE   |\n", output);
    fputs("|----|-----------|----------|-----------|\n", output);
    size_t counter = 0;
-   for(size_t i = 0; i < assembly->labels_cnt; i++)
+   for (size_t i = 0; i < assembly->labels_cnt; i++)
    {
       struct label* lb = &assembly->labels[i];
       struct segment* seg = a_get_segment_by_line(assembly, lb->line);
@@ -149,12 +149,12 @@ static void print_et3_table(FILE* output, assembly_t* assembly, bool table)
       extend_integer(offset_str, 4, lexeme->offset, '0', true);
 
       fprintf(output, "| %s |    %s   |   LABEL  | %4s:%4s |\n",
-            lidx_str, lb->label->string, seg->name->string, offset_str);
+              lidx_str, lb->label->string, seg->name->string, offset_str);
 
       counter++;
    }
 
-   for(size_t i = 0; i < assembly->variables_cnt; i++)
+   for (size_t i = 0; i < assembly->variables_cnt; i++)
    {
       struct variable* var = &assembly->variable[i];
       struct segment* seg = a_get_segment_by_line(assembly, var->line);
@@ -164,18 +164,21 @@ static void print_et3_table(FILE* output, assembly_t* assembly, bool table)
       extend_integer(offset_str, 4, lexeme->offset, '0', true);
 
       const char* type = NULL;
-      switch(var->type->type)
+      switch (var->type->type)
       {
-         case TT_DB_DIRECTIVE: type = "BYTE";
+         case TT_DB_DIRECTIVE:
+            type = "BYTE";
             break;
-         case TT_DW_DIRECTIVE: type = "WORD";
+         case TT_DW_DIRECTIVE:
+            type = "WORD";
             break;
-         case TT_DD_DIRECTIVE: type = "DWORD";
+         case TT_DD_DIRECTIVE:
+            type = "DWORD";
             break;
       }
 
       fprintf(output, "| %s |    %s   |   %-5s  | %4s:%4s |\n",
-             lidx_str, var->name->string, type, seg->name->string, offset_str);
+              lidx_str, var->name->string, type, seg->name->string, offset_str);
 
       counter++;
    }
@@ -204,9 +207,12 @@ void print_et4_table(FILE* output, assembly_t* assembly)
    char size_str[2];
 
    fputs("OFFSET TABLE\n", output);
-   fputs("/================================================================================================\\\n", output);
-   fputs("| LN |  OFFSET  | S ||        BYTES         |                       SOURCE                       |\n", output);
-   fputs("|----|----------|---||----------------------|----------------------------------------------------|\n", output);
+   fputs("/================================================================================================\\\n",
+         output);
+   fputs("| LN |  OFFSET  | S ||        BYTES         |                       SOURCE                       |\n",
+         output);
+   fputs("|----|----------|---||----------------------|----------------------------------------------------|\n",
+         output);
    for (size_t i = 0; i < assembly->lexemes->count; i++)
    {
       lexeme_t* lexeme = assembly->lexemes->collection[i];
@@ -225,7 +231,8 @@ void print_et4_table(FILE* output, assembly_t* assembly)
       fprintf(output, "| %s | %s | %s || %-20s |%c %-49s |\n", lidx_str, offset_str, size_str,
               bytes_str, lexeme->err ? 'E' : ' ', lex_str);
    }
-   fputs("\\================================================================================================/\n\n", output);
+   fputs("\\================================================================================================/\n\n",
+         output);
 
    print_et3_table(output, assembly, false);
 }
@@ -235,14 +242,14 @@ int main(int argc, char** argv)
 #if __linux__
    FILE* log = fopen(OUT_FILE, "w");
 #else
-	FILE* log;
-	fopen_s(&log, OUT_FILE, "w");
+   FILE* log;
+   fopen_s(&log, OUT_FILE, "w");
 #endif
    e_set_out(log);
 
    e_assert(log, "Unable to open file "OUT_FILE);
 
-   char* text = (char*)t_read(TEST_FILE);
+   char* text = (char*) t_read(TEST_FILE);
    assembly_t* assembly = a_create();
 
    a_first_stage(assembly, text);

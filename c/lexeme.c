@@ -1,9 +1,9 @@
 #if __linux__
-	#ifdef __GNUC__
-		#pragma implementation "lexeme.h"
-	#endif
-	#pragma clang diagnostic push
-	#pragma ide diagnostic ignored "EmptyDeclOrStmt"
+#ifdef __GNUC__
+#pragma implementation "lexeme.h"
+#endif
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EmptyDeclOrStmt"
 #else
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -77,59 +77,59 @@
 
 // All possible instruction variations of the current task
 static struct instruction_info instruction_infos[INSTRUCTIONS] =
-{
-      { .name = "CLC", .opcode = 0xF8, .ex_pr = false, .op_cnt = 0, .modrm_index = DEF_NO_MODRM,
-        .const_imm = DEF_NO_IMM },
+      {
+            {.name = "CLC", .opcode = 0xF8, .ex_pr = false, .op_cnt = 0, .modrm_index = DEF_NO_MODRM,
+                  .const_imm = DEF_NO_IMM},
 
-      { .name = "NEG", .opcode = 0xF6, .ex_pr = false, .op_cnt = 1, .modrm_index = 0,
-        .const_modrm = 3, .const_imm = DEF_NO_IMM, .op = { OT_REG8 } },
-      { .name = "NEG", .opcode = 0xF7, .ex_pr = false, .op_cnt = 1, .modrm_index = 0,
-        .const_modrm = 3, .const_imm = DEF_NO_IMM, .op = { OT_REG32 } },
+            {.name = "NEG", .opcode = 0xF6, .ex_pr = false, .op_cnt = 1, .modrm_index = 0,
+                  .const_modrm = 3, .const_imm = DEF_NO_IMM, .op = {OT_REG8}},
+            {.name = "NEG", .opcode = 0xF7, .ex_pr = false, .op_cnt = 1, .modrm_index = 0,
+                  .const_modrm = 3, .const_imm = DEF_NO_IMM, .op = {OT_REG32}},
 
-      { .name = "DEC", .opcode = 0xFE, .ex_pr = false, .op_cnt = 1, .modrm_index = 0,
-        .const_modrm = 1, .const_imm = DEF_NO_IMM, .op = { OT_MEM8 } },
-      { .name = "DEC", .opcode = 0xFF, .ex_pr = false, .op_cnt = 1, .modrm_index = 0,
-        .const_modrm = 1, .const_imm = DEF_NO_IMM, .op = { OT_MEM32 } },
+            {.name = "DEC", .opcode = 0xFE, .ex_pr = false, .op_cnt = 1, .modrm_index = 0,
+                  .const_modrm = 1, .const_imm = DEF_NO_IMM, .op = {OT_MEM8}},
+            {.name = "DEC", .opcode = 0xFF, .ex_pr = false, .op_cnt = 1, .modrm_index = 0,
+                  .const_modrm = 1, .const_imm = DEF_NO_IMM, .op = {OT_MEM32}},
 
-      { .name = "ADD", .opcode = 0x80, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
-        .const_modrm = 0, .const_imm = 1, .op = { OT_REG8, OT_IMM8 } },
-      { .name = "ADD", .opcode = 0x83, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
-        .const_modrm = 0, .const_imm = 1, .op = { OT_REG32, OT_IMM8 } },
-      { .name = "ADD", .opcode = 0x81, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
-        .const_modrm = 0, .const_imm = 4, .op = { OT_REG32, OT_IMM32 } },
+            {.name = "ADD", .opcode = 0x80, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+                  .const_modrm = 0, .const_imm = 1, .op = {OT_REG8, OT_IMM8}},
+            {.name = "ADD", .opcode = 0x83, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+                  .const_modrm = 0, .const_imm = 1, .op = {OT_REG32, OT_IMM8}},
+            {.name = "ADD", .opcode = 0x81, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+                  .const_modrm = 0, .const_imm = 4, .op = {OT_REG32, OT_IMM32}},
 
-      { .name = "TEST", .opcode = 0x84, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
-        .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_REG8, OT_MEM8 } },
-      { .name = "TEST", .opcode = 0x85, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
-        .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_REG32, OT_MEM32 } },
+            {.name = "TEST", .opcode = 0x84, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = {OT_REG8, OT_MEM8}},
+            {.name = "TEST", .opcode = 0x85, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = {OT_REG32, OT_MEM32}},
 
-      { .name = "AND", .opcode = 0x20, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
-        .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_MEM8, OT_REG8 } },
-      { .name = "AND", .opcode = 0x21, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
-        .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_MEM32, OT_REG32 } },
+            {.name = "AND", .opcode = 0x20, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = {OT_MEM8, OT_REG8}},
+            {.name = "AND", .opcode = 0x21, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = {OT_MEM32, OT_REG32}},
 
-      { .name = "MOV", .opcode = 0x8A, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
-        .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_REG8, OT_REG8 } },
-      { .name = "MOV", .opcode = 0x8B, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
-        .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = { OT_REG32, OT_REG32 } },
+            {.name = "MOV", .opcode = 0x8A, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = {OT_REG8, OT_REG8}},
+            {.name = "MOV", .opcode = 0x8B, .ex_pr = false, .op_cnt = 2, .modrm_index = 1,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = DEF_NO_IMM, .op = {OT_REG32, OT_REG32}},
 
-      { .name = "CMP", .opcode = 0x80, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
-        .const_modrm = 7, .const_imm = 1, .op = { OT_MEM8, OT_IMM8 } },
-      { .name = "CMP", .opcode = 0x83, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
-        .const_modrm = 7, .const_imm = 1, .op = { OT_MEM32, OT_IMM8 } },
-      { .name = "CMP", .opcode = 0x81, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
-        .const_modrm = 7, .const_imm = 4, .op = { OT_MEM32, OT_IMM32 } },
+            {.name = "CMP", .opcode = 0x80, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+                  .const_modrm = 7, .const_imm = 1, .op = {OT_MEM8, OT_IMM8}},
+            {.name = "CMP", .opcode = 0x83, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+                  .const_modrm = 7, .const_imm = 1, .op = {OT_MEM32, OT_IMM8}},
+            {.name = "CMP", .opcode = 0x81, .ex_pr = false, .op_cnt = 2, .modrm_index = 0,
+                  .const_modrm = 7, .const_imm = 4, .op = {OT_MEM32, OT_IMM32}},
 
-      { .name = "JNBE", .opcode = 0x77, .ex_pr = false, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
-        .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = { OT_LABEL_BACKWARD } },
-      { .name = "JNBE", .opcode = 0x87, .ex_pr = true,  .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
-        .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = { OT_LABEL_FORWARD } },
+            {.name = "JNBE", .opcode = 0x77, .ex_pr = false, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = {OT_LABEL_BACKWARD}},
+            {.name = "JNBE", .opcode = 0x87, .ex_pr = true, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = {OT_LABEL_FORWARD}},
 
-      { .name = "JMP", .opcode = 0xEB, .ex_pr = false, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
-        .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = { OT_LABEL_BACKWARD } },
-      { .name = "JMP", .opcode = 0xE9, .ex_pr = false, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
-        .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = { OT_LABEL_FORWARD } },
-};
+            {.name = "JMP", .opcode = 0xEB, .ex_pr = false, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = {OT_LABEL_BACKWARD}},
+            {.name = "JMP", .opcode = 0xE9, .ex_pr = false, .op_cnt = 1, .modrm_index = DEF_NO_MODRM,
+                  .const_modrm = DEF_NO_MODRM, .const_imm = 4, .op = {OT_LABEL_FORWARD}},
+      };
 
 //
 // l_create()
@@ -137,7 +137,7 @@ static struct instruction_info instruction_infos[INSTRUCTIONS] =
 lexeme_t* l_create(size_t line)
 {
    lexeme_t* l = malloc(sizeof(lexeme_t));
-   
+
    e_assert(l, "Unable to allocate lexeme");
 
    memset(l, 0, sizeof(lexeme_t));
@@ -154,7 +154,7 @@ void l_free(lexeme_t* lexeme)
 {
    e_assert(lexeme, "Passed NULL argument");
 
-   for(size_t i = 0; i < lexeme->tokens_cnt; i++)
+   for (size_t i = 0; i < lexeme->tokens_cnt; i++)
       free(lexeme->tokens[i].string);
 
    free(lexeme);
@@ -168,36 +168,37 @@ bool l_fetch_lexeme_type(lexeme_t* lexeme)
    e_assert(lexeme, "Passed NULL argument");
 
    // Determining lexeme type
-   if(   lexeme->tokens_cnt == 2 &&
-         lexeme->tokens[0].type == TT_IDENTIFIER &&
-         lexeme->tokens[1].type == TT_SEGMENT_DIRECTIVE)
+   if (lexeme->tokens_cnt == 2 &&
+       lexeme->tokens[0].type == TT_IDENTIFIER &&
+       lexeme->tokens[1].type == TT_SEGMENT_DIRECTIVE)
       lexeme->type = LT_SEGMENT_DEFINITION;
 
-   else if(lexeme->tokens_cnt == 2 &&
-         lexeme->tokens[0].type == TT_IDENTIFIER &&
-         lexeme->tokens[1].type == TT_ENDS_DIRECTIVE)
+   else if (lexeme->tokens_cnt == 2 &&
+            lexeme->tokens[0].type == TT_IDENTIFIER &&
+            lexeme->tokens[1].type == TT_ENDS_DIRECTIVE)
       lexeme->type = LT_SEGMENT_END;
 
-   else if(lexeme->tokens_cnt == 3 &&
-         lexeme->tokens[0].type == TT_IDENTIFIER &&
-         (lexeme->tokens[1].type == TT_DB_DIRECTIVE || lexeme->tokens[1].type == TT_DW_DIRECTIVE || lexeme->tokens[1].type == TT_DD_DIRECTIVE))
+   else if (lexeme->tokens_cnt == 3 &&
+            lexeme->tokens[0].type == TT_IDENTIFIER &&
+            (lexeme->tokens[1].type == TT_DB_DIRECTIVE || lexeme->tokens[1].type == TT_DW_DIRECTIVE ||
+             lexeme->tokens[1].type == TT_DD_DIRECTIVE))
       lexeme->type = LT_VAR_DEFINITION;
 
-   else if(lexeme->tokens_cnt == 2 &&
-         lexeme->tokens[0].type == TT_IDENTIFIER &&
-         lexeme->tokens[1].string[0] == ':')
+   else if (lexeme->tokens_cnt == 2 &&
+            lexeme->tokens[0].type == TT_IDENTIFIER &&
+            lexeme->tokens[1].string[0] == ':')
       lexeme->type = LT_LABEL;
 
-   else if(lexeme->tokens_cnt == 1 &&
-         lexeme->tokens[0].type == TT_END_DIRECTIVE)
+   else if (lexeme->tokens_cnt == 1 &&
+            lexeme->tokens[0].type == TT_END_DIRECTIVE)
       lexeme->type = LT_END;
 
    else
    {
-	  // Instruction with a label
-      if(lexeme->has_label && lexeme->tokens_cnt >= 3 && lexeme->tokens[2].type == TT_INSTRUCTION)
+      // Instruction with a label
+      if (lexeme->has_label && lexeme->tokens_cnt >= 3 && lexeme->tokens[2].type == TT_INSTRUCTION)
          lexeme->type = LT_INSTRUCTION;
-      else if(!lexeme->has_label && lexeme->tokens_cnt >= 1 && lexeme->tokens[0].type == TT_INSTRUCTION)
+      else if (!lexeme->has_label && lexeme->tokens_cnt >= 1 && lexeme->tokens[0].type == TT_INSTRUCTION)
          lexeme->type = LT_INSTRUCTION;
       else
       {
@@ -219,13 +220,13 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
 
    assembly_t* assembly = assembly_ptr;
 
-   if(!lexeme->has_instruction || lexeme->operands_count == 0)
+   if (!lexeme->has_instruction || lexeme->operands_count == 0)
       return true;
 
-   for(size_t i = 0; i < lexeme->operands_count; i++)
+   for (size_t i = 0; i < lexeme->operands_count; i++)
    {
       struct operand* op = &lexeme->operands_info[i];
-      if(op->op_length == 1)
+      if (op->op_length == 1)
       {
          // Reg, label or imm
          op->operand = &lexeme->tokens[op->op_index];
@@ -244,7 +245,7 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
             case TT_NUMBER16:
             {
                int64_t value = t_num(op->operand);
-               if(labs(value) < 255)
+               if (labs(value) < 255)
                   op->type = OT_IMM8;
                else
                   op->type = OT_IMM32;
@@ -255,14 +256,14 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
             {
                // Label
                struct label* lbl = a_get_label(assembly, op->operand->string);
-               if(!lbl)
+               if (!lbl)
                {
                   T_SE(lexeme, "Undefined reference", lexeme->operands_info[i].op_index);
                   return false;
                }
 
                // declared in next lines - forward labeling
-               if(lbl->line > lexeme->line)
+               if (lbl->line > lexeme->line)
                   op->type = OT_LABEL_FORWARD;
                else
                   op->type = OT_LABEL_BACKWARD;
@@ -287,10 +288,10 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          // [ ecx + edi * 8 + 1 ]
          // Maximum length: 13 tokens
          // dword ptr ES:[edx+esi*4+6]
-         if(!(op->op_length <= 13 && op->op_length >= 9))
+         if (!(op->op_length <= 13 && op->op_length >= 9))
          {
             T_SE(lexeme, "Instruction has wrong format (wrong length)",
-                  lexeme->operands_info[i].op_index + offset);
+                 lexeme->operands_info[i].op_index + offset);
             return false;
          }
 
@@ -298,17 +299,17 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          token_t* op_tokens = &lexeme->tokens[op->op_index];
 
          // Has type specifier
-         if(op_tokens[0].type == TT_DWORD || op_tokens[0].type == TT_BYTE || op_tokens[0].type == TT_WORD)
+         if (op_tokens[0].type == TT_DWORD || op_tokens[0].type == TT_BYTE || op_tokens[0].type == TT_WORD)
          {
             // After type always must be PTR keyword
-            if(op_tokens[1].type != TT_PTR)
+            if (op_tokens[1].type != TT_PTR)
             {
                T_SE(lexeme, "Instruction has wrong format (expected PTR)",
                     lexeme->operands_info[i].op_index + offset);
                return false;
             }
 
-            if(op_tokens[0].type == TT_DWORD)
+            if (op_tokens[0].type == TT_DWORD)
                op->type = OT_MEM32;
             else
                op->type = OT_MEM8;
@@ -318,13 +319,13 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          }
 
          // Has segment prefix
-         if(op_tokens[offset].type == TT_REGISTER_SEG)
+         if (op_tokens[offset].type == TT_REGISTER_SEG)
          {
             // Ignore DS prefix because we already in DS segment
-            if(strcmp(op_tokens[offset].string, "DS") != 0)
+            if (strcmp(op_tokens[offset].string, "DS") != 0)
             {
                // After SegReg always must be colon
-               if(!(op_tokens[offset + 1].type == TT_SYMBOL && op_tokens[offset + 1].string[0] == ':'))
+               if (!(op_tokens[offset + 1].type == TT_SYMBOL && op_tokens[offset + 1].string[0] == ':'))
                {
                   T_SE(lexeme, "Instruction has wrong format (expected ':')",
                        lexeme->operands_info[i].op_index + offset);
@@ -337,68 +338,68 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          }
 
          // Check for minimal length
-         if(op->op_length - offset != 9)
+         if (op->op_length - offset != 9)
          {
-                 T_SE(lexeme, "Instruction has wrong format (wrong length)",
-                       lexeme->operands_info[i].op_index + offset);
+            T_SE(lexeme, "Instruction has wrong format (wrong length)",
+                 lexeme->operands_info[i].op_index + offset);
             return false;
          }
 
          // Check for [REG + REG * NUM + NUM] format
-         if(!(op_tokens[offset + 0].type == TT_SYMBOL && op_tokens[offset + 0].string[0] == '['))
+         if (!(op_tokens[offset + 0].type == TT_SYMBOL && op_tokens[offset + 0].string[0] == '['))
          {
             T_SE(lexeme, "Instruction has wrong format (expected '[')",
                  lexeme->operands_info[i].op_index + offset);
             return false;
          }
 
-		 // Check for operand types to be correct
-         if(!(op_tokens[offset + 1].type == TT_REGISTER8 || op_tokens[offset + 1].type == TT_REGISTER32))
+         // Check for operand types to be correct
+         if (!(op_tokens[offset + 1].type == TT_REGISTER8 || op_tokens[offset + 1].type == TT_REGISTER32))
          {
             T_SE(lexeme, "Instruction has wrong format (expected register)",
                  lexeme->operands_info[i].op_index + offset);
             return false;
          }
 
-         if(!(op_tokens[offset + 2].type == TT_SYMBOL && op_tokens[offset + 2].string[0] == '+'))
+         if (!(op_tokens[offset + 2].type == TT_SYMBOL && op_tokens[offset + 2].string[0] == '+'))
          {
             T_SE(lexeme, "Instruction has wrong format (expected '+)",
                  lexeme->operands_info[i].op_index + offset);
             return false;
          }
 
-         if(!(op_tokens[offset + 3].type == TT_REGISTER8 || op_tokens[offset + 3].type == TT_REGISTER32))
+         if (!(op_tokens[offset + 3].type == TT_REGISTER8 || op_tokens[offset + 3].type == TT_REGISTER32))
          {
             T_SE(lexeme, "Instruction has wrong format (expected register)",
                  lexeme->operands_info[i].op_index + offset);
             return false;
          }
 
-         if(!(op_tokens[offset + 4].type == TT_SYMBOL && op_tokens[offset + 4].string[0] == '*'))
+         if (!(op_tokens[offset + 4].type == TT_SYMBOL && op_tokens[offset + 4].string[0] == '*'))
          {
             T_SE(lexeme, "Instruction has wrong format (expected '*')",
                  lexeme->operands_info[i].op_index + offset);
             return false;
          }
 
-         if(!(
-            op_tokens[offset + 5].type == TT_NUMBER2 ||
-            op_tokens[offset + 5].type == TT_NUMBER10 ||
-            op_tokens[offset + 5].type == TT_NUMBER16))
+         if (!(
+               op_tokens[offset + 5].type == TT_NUMBER2 ||
+               op_tokens[offset + 5].type == TT_NUMBER10 ||
+               op_tokens[offset + 5].type == TT_NUMBER16))
          {
             T_SE(lexeme, "Instruction has wrong format (expected constant)",
                  lexeme->operands_info[i].op_index + offset);
             return false;
          }
 
-         if(!(op_tokens[offset + 6].type == TT_SYMBOL && op_tokens[offset + 6].string[0] == '+'))
+         if (!(op_tokens[offset + 6].type == TT_SYMBOL && op_tokens[offset + 6].string[0] == '+'))
          {
             T_SE(lexeme, "Instruction has wrong format (expected '+')",
                  lexeme->operands_info[i].op_index + offset);
             return false;
          }
 
-         if(!(
+         if (!(
                op_tokens[offset + 7].type == TT_NUMBER2 ||
                op_tokens[offset + 7].type == TT_NUMBER10 ||
                op_tokens[offset + 7].type == TT_NUMBER16))
@@ -408,7 +409,7 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
             return false;
          }
 
-         if(!(op_tokens[offset + 8].type == TT_SYMBOL && op_tokens[offset + 8].string[0] == ']'))
+         if (!(op_tokens[offset + 8].type == TT_SYMBOL && op_tokens[offset + 8].string[0] == ']'))
          {
             T_SE(lexeme, "Instruction has wrong format (expected ']')",
                  lexeme->operands_info[i].op_index + offset);
@@ -421,7 +422,7 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          op->disp = &op_tokens[offset + 7];
 
          // Registers must have same size
-         if(!(op->base->type == op->index->type))
+         if (!(op->base->type == op->index->type))
          {
             T_SE(lexeme, "Base and index register must have same size",
                  lexeme->operands_info[i].op_index + offset);
@@ -429,7 +430,7 @@ bool l_fetch_op_info(lexeme_t* lexeme, void* assembly_ptr)
          }
 
          // Scale can be only: 1, 2, 4, 8
-         if(!(
+         if (!(
                op->scale->string[0] == '1' || op->scale->string[0] == '2' ||
                op->scale->string[0] == '4' || op->scale->string[0] == '8'))
          {
@@ -451,41 +452,41 @@ bool l_assign_instruction(lexeme_t* lexeme)
 {
    e_assert(lexeme, "Passed NULL argument");
 
-   if(!lexeme->has_instruction)
+   if (!lexeme->has_instruction)
       return true;
 
    token_t* instruction = &(lexeme->tokens[lexeme->instr_index]);
 
-   for(size_t i = 0; i < INSTRUCTIONS; i++)
+   for (size_t i = 0; i < INSTRUCTIONS; i++)
    {
       struct instruction_info* info = &(instruction_infos[i]);
 
       // Compare by name
-      if(strcmp(instruction->string, info->name) != 0)
+      if (strcmp(instruction->string, info->name) != 0)
          continue;
 
       // Compare by operands count
-      if(lexeme->operands_count != info->op_cnt)
+      if (lexeme->operands_count != info->op_cnt)
          continue;
 
       bool type_mismatch = false;
 
       // Compare by operand types. We should be careful with OT_MEM because its size undefined.
-      for(size_t j = 0; j < info->op_cnt; j++)
+      for (size_t j = 0; j < info->op_cnt; j++)
       {
-         if(lexeme->operands_info[j].type != info->op[j])
+         if (lexeme->operands_info[j].type != info->op[j])
          {
             type_mismatch = true;
 
             // Give him another chance by assuming that MEM is MEM32
-            if((lexeme->operands_info[j].type == OT_MEM && info->op[j] == OT_MEM32))
+            if ((lexeme->operands_info[j].type == OT_MEM && info->op[j] == OT_MEM32))
             {
                type_mismatch = false;
                continue;
             }
 
             // Give him another chance by assuming that MEM is MEM8
-            if((lexeme->operands_info[j].type == OT_MEM && info->op[j] == OT_MEM8))
+            if ((lexeme->operands_info[j].type == OT_MEM && info->op[j] == OT_MEM8))
             {
                type_mismatch = false;
                continue;
@@ -495,7 +496,7 @@ bool l_assign_instruction(lexeme_t* lexeme)
          }
       }
 
-      if(type_mismatch)
+      if (type_mismatch)
          continue;
 
       lexeme->info = info;
@@ -513,10 +514,10 @@ size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
 
    assembly_t* assembly = assembly_ptr;
 
-   if(lexeme->type == LT_VAR_DEFINITION)
+   if (lexeme->type == LT_VAR_DEFINITION)
    {
       struct variable* var = a_get_variable_by_line(assembly, lexeme->line);
-      switch(var->type->type)
+      switch (var->type->type)
       {
          case TT_DB_DIRECTIVE:
             lexeme->size = 1;
@@ -529,31 +530,31 @@ size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
             return 4;
       }
    }
-   else if(lexeme->info)
+   else if (lexeme->info)
    {
       size_t size = 0;
 
-      if(!strcmp(lexeme->info->name, "JMP") || !strcmp(lexeme->info->name, "JNBE"))
+      if (!strcmp(lexeme->info->name, "JMP") || !strcmp(lexeme->info->name, "JNBE"))
       {
          struct operand* operand = &lexeme->operands_info[0];
          struct label* lbl = a_get_label(assembly, operand->operand->string);
          lexeme_t* lbl_lexeme = a_get_lexeme_by_line(assembly, lbl->line);
 
-         int32_t diff = (int32_t)lexeme->offset - (int32_t)lbl_lexeme->offset;
+         int32_t diff = (int32_t) lexeme->offset - (int32_t) lbl_lexeme->offset;
 
          bool jmp = !strcmp(lexeme->info->name, "JMP");
          bool far = abs(diff) > 127;
          bool back = operand->type == OT_LABEL_BACKWARD;
 
          // JMP NEAR BACKWARD
-         if(jmp && !far && back)
+         if (jmp && !far && back)
             return 2;
          // JMP FAR BACKWARD, NEAR FORWARD, FAR FORWARD
-         if(jmp)
+         if (jmp)
             return 5;
 
          // JNBE NEAR BACKWARD
-         if(!far && back)
+         if (!far && back)
             return 2;
 
          // JNBE FAR BACKWARD, NEAR FORWARD, FAR FORWARD
@@ -565,32 +566,32 @@ size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
       size += 1;
 
       // Two-byte opcode
-      if(lexeme->info->ex_pr)
+      if (lexeme->info->ex_pr)
          size += 1;
 
       // ModR/M
-      if(lexeme->info->modrm_index != DEF_NO_MODRM)
+      if (lexeme->info->modrm_index != DEF_NO_MODRM)
          size += 1;
 
       // SIB set only if we have memory operand
       // In that case we also have DISP8
       // + possible prefix
-      for(size_t i = 0; i < lexeme->operands_count; i++)
+      for (size_t i = 0; i < lexeme->operands_count; i++)
       {
          // If at least one of operands is memory
-         if(lexeme->operands_info[i].type == OT_MEM ||
-            lexeme->operands_info[i].type == OT_MEM32 ||
-            lexeme->operands_info[i].type == OT_MEM8)
+         if (lexeme->operands_info[i].type == OT_MEM ||
+             lexeme->operands_info[i].type == OT_MEM32 ||
+             lexeme->operands_info[i].type == OT_MEM8)
          {
             size += 1; // SIB
 
             int64_t disp = t_num(lexeme->operands_info[i].disp);
-            if(labs(disp) < 255)
+            if (labs(disp) < 255)
                size += 1; // DISP8
             else
                size += 4; // DISP32
 
-            if(lexeme->operands_info[i].segment)
+            if (lexeme->operands_info[i].segment)
                size += 1; // Change segment prefix
 
             break;
@@ -598,7 +599,7 @@ size_t l_get_size(lexeme_t* lexeme, void* assembly_ptr)
       }
 
       // IMM
-      if(lexeme->info->const_imm != DEF_NO_IMM)
+      if (lexeme->info->const_imm != DEF_NO_IMM)
          size += lexeme->info->const_imm;
 
       return size;
@@ -616,12 +617,12 @@ void l_get_bytes(lexeme_t* lexeme, void* assembly_ptr)
    e_assert(assembly_ptr, "Passed NULL argument");
 
    assembly_t* assembly = assembly_ptr;
-   if(lexeme->type == LT_VAR_DEFINITION)
+   if (lexeme->type == LT_VAR_DEFINITION)
    {
       struct variable* var = a_get_variable_by_line(assembly, lexeme->line);
       int64_t value = t_num(var->value);
 
-      switch(var->type->type)
+      switch (var->type->type)
       {
          case TT_DB_DIRECTIVE:
             c_set_imm(&lexeme->data, value, 1);
@@ -634,22 +635,22 @@ void l_get_bytes(lexeme_t* lexeme, void* assembly_ptr)
             return;
       }
    }
-   else if(lexeme->type == LT_INSTRUCTION)
+   else if (lexeme->type == LT_INSTRUCTION)
    {
-      if(!strcmp(lexeme->info->name, "JMP") || !strcmp(lexeme->info->name, "JNBE"))
+      if (!strcmp(lexeme->info->name, "JMP") || !strcmp(lexeme->info->name, "JNBE"))
       {
          struct operand* operand = &lexeme->operands_info[0];
          struct label* lbl = a_get_label(assembly, operand->operand->string);
          lexeme_t* lbl_lexeme = a_get_lexeme_by_line(assembly, lbl->line);
 
-         int64_t diff = (int64_t)lbl_lexeme->offset - (int64_t)lexeme->offset - lexeme->size;
+         int64_t diff = (int64_t) lbl_lexeme->offset - (int64_t) lexeme->offset - lexeme->size;
 
          bool jmp = !strcmp(lexeme->info->name, "JMP");
          bool far = labs(diff) > 127;
          bool back = operand->type == OT_LABEL_BACKWARD;
 
          // JMP NEAR BACKWARD
-         if(jmp && !far && back)
+         if (jmp && !far && back)
          {
             c_set_opcode(&lexeme->data, JMP_NEAR);
             c_set_imm(&lexeme->data, diff, 1);
@@ -657,7 +658,7 @@ void l_get_bytes(lexeme_t* lexeme, void* assembly_ptr)
          }
 
          // JMP FAR BACKWARD/FORWARD
-         if(jmp && far)
+         if (jmp && far)
          {
             c_set_opcode(&lexeme->data, JMP_FAR);
             c_set_imm(&lexeme->data, diff, 4);
@@ -665,16 +666,16 @@ void l_get_bytes(lexeme_t* lexeme, void* assembly_ptr)
          }
 
          // JMP NEAR FORWARD, FAR FORWARD
-         if(jmp)
+         if (jmp)
          {
             c_set_opcode(&lexeme->data, JMP_NEAR);
-            diff = (((uint64_t)(diff + 3) & 0xFFU) << 24U) | 0x00909090U;
+            diff = (((uint64_t) (diff + 3) & 0xFFU) << 24U) | 0x00909090U;
             c_set_imm(&lexeme->data, diff, 4);
             return;
          }
 
          // JMP NEAR BACKWARD
-         if(!far && back)
+         if (!far && back)
          {
             c_set_opcode(&lexeme->data, JNBE_NEAR);
             c_set_imm(&lexeme->data, diff, 1);
@@ -682,7 +683,7 @@ void l_get_bytes(lexeme_t* lexeme, void* assembly_ptr)
          }
 
          // JMP FAR BACKWARD/FORWARD
-         if(far)
+         if (far)
          {
             c_set_prefix_exp(&lexeme->data);
             c_set_opcode(&lexeme->data, JNBE_FAR);
@@ -692,46 +693,46 @@ void l_get_bytes(lexeme_t* lexeme, void* assembly_ptr)
 
          // JMP NEAR FORWARD, FAR FORWARD
          c_set_opcode(&lexeme->data, JNBE_NEAR);
-         diff = (((uint64_t)(diff + 4) & 0xFFU) << 32U) | 0x0090909090U;
+         diff = (((uint64_t) (diff + 4) & 0xFFU) << 32U) | 0x0090909090U;
          c_set_imm(&lexeme->data, diff, 5);
          return;
       }
 
       // OPCODE
-      if(lexeme->info->ex_pr)
+      if (lexeme->info->ex_pr)
          c_set_prefix_exp(&lexeme->data);
       c_set_opcode(&lexeme->data, lexeme->info->opcode);
 
       // MODRM AND SIB
-      if(lexeme->info->modrm_index != DEF_NO_MODRM)
+      if (lexeme->info->modrm_index != DEF_NO_MODRM)
       {
          // REG FIELD
-         if(lexeme->info->const_modrm != DEF_NO_MODRM)
+         if (lexeme->info->const_modrm != DEF_NO_MODRM)
             c_set_reg_const(&lexeme->data, lexeme->info->const_modrm);
-         else if(lexeme->info->op_cnt != 1)
+         else if (lexeme->info->op_cnt != 1)
          {
             token_t* reg = NULL;
-            if(lexeme->info->modrm_index == 0)
+            if (lexeme->info->modrm_index == 0)
                reg = lexeme->operands_info[1].operand;
             else
                reg = lexeme->operands_info[0].operand;
 
-            if(reg->type == TT_REGISTER8 || reg->type == TT_REGISTER32)
+            if (reg->type == TT_REGISTER8 || reg->type == TT_REGISTER32)
                c_set_reg(&lexeme->data, reg);
          }
 
          // RM FIELD
          struct operand* rm = &lexeme->operands_info[lexeme->info->modrm_index];
-         if(rm->type == OT_MEM || rm->type == OT_MEM8 || rm->type == OT_MEM32)
+         if (rm->type == OT_MEM || rm->type == OT_MEM8 || rm->type == OT_MEM32)
          {
             // Base != EBP
             // Index != ESP
-            if(!strcmp(rm->index->string, "ESP"))
+            if (!strcmp(rm->index->string, "ESP"))
             {
                T_SE(lexeme, "Index field cant be ESP register", 0);
                return;
             }
-            if(!strcmp(rm->base->string, "EBP"))
+            if (!strcmp(rm->base->string, "EBP"))
             {
                T_SE(lexeme, "Base field cant be EBP register", 0);
                return;
@@ -748,7 +749,7 @@ void l_get_bytes(lexeme_t* lexeme, void* assembly_ptr)
       }
 
       // SEGMENT PREFIX / IMM
-      for(size_t i = 0; i < lexeme->operands_count; i++)
+      for (size_t i = 0; i < lexeme->operands_count; i++)
       {
          if (lexeme->operands_info[i].type == OT_IMM8)
          {
@@ -780,36 +781,36 @@ void l_structure(lexeme_t* lexeme)
    size_t off = 0;
 
    // has label
-   if(lexeme->tokens_cnt >= 2 &&
-      lexeme->tokens[0].type == TT_IDENTIFIER &&
-      lexeme->tokens[1].type == TT_SYMBOL &&
-      lexeme->tokens[1].string[0] == ':')
+   if (lexeme->tokens_cnt >= 2 &&
+       lexeme->tokens[0].type == TT_IDENTIFIER &&
+       lexeme->tokens[1].type == TT_SYMBOL &&
+       lexeme->tokens[1].string[0] == ':')
    {
       lexeme->has_label = true;
       off += 2; // lbl :
    }
 
-   if(lexeme->tokens_cnt <= off)
+   if (lexeme->tokens_cnt <= off)
    {
       // only label
       lexeme->has_instruction = false;
       return;
    }
 
-   if(lexeme->tokens[off].type == TT_IDENTIFIER)
+   if (lexeme->tokens[off].type == TT_IDENTIFIER)
    {
       //has name
       lexeme->has_label = true;
       off += 1;
    }
 
-   if(lexeme->tokens[off].type == TT_INSTRUCTION ||
-      lexeme->tokens[off].type == TT_DW_DIRECTIVE ||
-      lexeme->tokens[off].type == TT_DB_DIRECTIVE ||
-      lexeme->tokens[off].type == TT_DD_DIRECTIVE ||
-      lexeme->tokens[off].type == TT_END_DIRECTIVE ||
-      lexeme->tokens[off].type == TT_ENDS_DIRECTIVE ||
-      lexeme->tokens[off].type == TT_SEGMENT_DIRECTIVE)
+   if (lexeme->tokens[off].type == TT_INSTRUCTION ||
+       lexeme->tokens[off].type == TT_DW_DIRECTIVE ||
+       lexeme->tokens[off].type == TT_DB_DIRECTIVE ||
+       lexeme->tokens[off].type == TT_DD_DIRECTIVE ||
+       lexeme->tokens[off].type == TT_END_DIRECTIVE ||
+       lexeme->tokens[off].type == TT_ENDS_DIRECTIVE ||
+       lexeme->tokens[off].type == TT_SEGMENT_DIRECTIVE)
    {
       lexeme->has_instruction = true;
    }
@@ -821,17 +822,17 @@ void l_structure(lexeme_t* lexeme)
    lexeme->instr_index = off;
    off += 1;
 
-   if(lexeme->tokens_cnt <= off)
+   if (lexeme->tokens_cnt <= off)
    {
       // has instruction only
       return;
    }
 
    lexeme->operands_info[0].op_index = off;
-   for(size_t i = off; i < lexeme->tokens_cnt; i++)
+   for (size_t i = off; i < lexeme->tokens_cnt; i++)
    {
       token_t* t = &lexeme->tokens[i];
-      if(t->type == TT_SYMBOL && t->string[0] == ',')
+      if (t->type == TT_SYMBOL && t->string[0] == ',')
       {
          lexeme->operands_info[lexeme->operands_count + 1].op_index =
                lexeme->operands_info[lexeme->operands_count].op_length + lexeme->operands_count + 1 + off;
@@ -855,45 +856,45 @@ void l_string(char* buffer, size_t len, lexeme_t* lexeme)
    e_assert(lexeme, "Passed NULL argument");
 
    buffer[0] = 0;
-   for(size_t i = 0; i < lexeme->tokens_cnt; i++)
+   for (size_t i = 0; i < lexeme->tokens_cnt; i++)
    {
       token_t* tk = &lexeme->tokens[i];
       bool before = false, after = false;
 
-      if(tk->type == TT_INSTRUCTION || tk->type == TT_DWORD || tk->type == TT_BYTE || tk->type == TT_PTR)
+      if (tk->type == TT_INSTRUCTION || tk->type == TT_DWORD || tk->type == TT_BYTE || tk->type == TT_PTR)
          after = true;
-      else if(tk->type == TT_DW_DIRECTIVE || tk->type == TT_DB_DIRECTIVE || tk->type == TT_DD_DIRECTIVE)
+      else if (tk->type == TT_DW_DIRECTIVE || tk->type == TT_DB_DIRECTIVE || tk->type == TT_DD_DIRECTIVE)
       {
          before = true;
          after = true;
       }
-      else if(tk->type == TT_SEGMENT_DIRECTIVE || tk->type == TT_ENDS_DIRECTIVE)
+      else if (tk->type == TT_SEGMENT_DIRECTIVE || tk->type == TT_ENDS_DIRECTIVE)
          before = true;
-      else if(tk->type == TT_SYMBOL && (tk->string[0] == '+' || tk->string[0] == '*'))
+      else if (tk->type == TT_SYMBOL && (tk->string[0] == '+' || tk->string[0] == '*'))
       {
          after = true;
          before = true;
       }
-      else if(tk->type == TT_SYMBOL && tk->string[0] == ',')
+      else if (tk->type == TT_SYMBOL && tk->string[0] == ',')
          after = true;
 
-      if(before)
+      if (before)
          strncat(buffer, " ", len);
       strcat(buffer, tk->string);
-      if(after)
+      if (after)
          strncat(buffer, " ", len);
    }
 
    size_t identation = 0;
-   if(lexeme->type == LT_SEGMENT_DEFINITION || lexeme->type == LT_SEGMENT_END || lexeme->type == LT_END)
+   if (lexeme->type == LT_SEGMENT_DEFINITION || lexeme->type == LT_SEGMENT_END || lexeme->type == LT_END)
       identation = 0;
-   else if(lexeme->type == LT_LABEL || lexeme->type == LT_VAR_DEFINITION)
+   else if (lexeme->type == LT_LABEL || lexeme->type == LT_VAR_DEFINITION)
       identation = 3;
    else
       identation = 6;
 
    size_t l = strlen(buffer);
-   if(l + identation >= len)
+   if (l + identation >= len)
       l = len - identation;
 
    memmove(buffer + identation, buffer, l + 1);

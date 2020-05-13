@@ -38,7 +38,8 @@ typedef enum _operand_type
 } operand_type_t;
 
 // Contains all information about instruction
-typedef struct instruction_info {
+typedef struct instruction_info
+{
 
    // Instruction string value
    const char* name;

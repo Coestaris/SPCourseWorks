@@ -1,7 +1,7 @@
 #if __linux__
-	#ifdef __GNUC__
-	#pragma implementation "list.h"
-	#endif
+#ifdef __GNUC__
+#pragma implementation "list.h"
+#endif
 #else
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -38,9 +38,9 @@ void list_push(list_t* list, void* object)
          size_t new_len = (int) ((float) list->max_size * LIST_SIZE_INCREASE);
          list->collection = realloc(list->collection, sizeof(void*) * new_len);
 
-		 e_assert(list->collection, "Unable to reallocate collection");
-         
-		 list->max_size = new_len;
+         e_assert(list->collection, "Unable to reallocate collection");
+
+         list->max_size = new_len;
       }
    }
    list->collection[list->count++] = object;
@@ -65,7 +65,8 @@ void list_free(list_t* list)
 {
    e_assert(list, "Passed NULL argument");
 
-   if (list->collection != list->bootstrap) {
+   if (list->collection != list->bootstrap)
+   {
       free(list->collection);
    }
    free(list);
@@ -90,7 +91,7 @@ list_t* list_create()
    list_t* list = malloc(sizeof(list_t));
 
    e_assert(list, "Unable to allocate list");
-   
+
    list->count = 0;
    list->max_size = LIST_BOOTSTRAP_SIZE;
    list->collection = list->bootstrap;

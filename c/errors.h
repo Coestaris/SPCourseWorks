@@ -5,11 +5,11 @@
 #include <stdbool.h>
 
 #ifndef e_assert
-   #define e_assert(v, s) __e_assert(v, #v, s, __FILE__, __LINE__)
+#define e_assert(v, s) __e_assert(v, #v, s, __FILE__, __LINE__)
 #endif
 
 #ifndef e_err
-   #define e_err(s) __e_err(s, __FILE__, __LINE__)
+#define e_err(s) __e_err(s, __FILE__, __LINE__)
 #endif
 
 // Sets error output stream

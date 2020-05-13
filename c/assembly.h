@@ -19,9 +19,9 @@ typedef struct _assembly
    size_t labels_cnt;
    struct label
    {
-	  // Label defenition line
+      // Label defenition line
       size_t line;
-	  // Pointer to label's nane
+      // Pointer to label's nane
       token_t* label;
 
    } labels[MAX_LABELS];
@@ -32,24 +32,24 @@ typedef struct _assembly
    {
       token_t* name;
 
-	  // Segment's size
+      // Segment's size
       size_t size;
 
-	  // SEGMENT keyword line
+      // SEGMENT keyword line
       size_t line_start;
-	  // ENDS keyword line
+      // ENDS keyword line
       size_t line_end;
 
-   }  segments[MAX_SEGMENTS];
+   } segments[MAX_SEGMENTS];
 
    // User defined variables
    size_t variables_cnt;
    struct variable
    {
-	  // Variable definition line
+      // Variable definition line
       size_t line;
 
-	  // Pointers to a variable defenition tokens
+      // Pointers to a variable defenition tokens
       token_t* name;
       token_t* type;
       token_t* value;

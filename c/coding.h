@@ -11,7 +11,7 @@ typedef struct _coding
 {
    // Segment or EXP prefix
    bool has_prefixes;
-   uint8_t prefixes[2]; 
+   uint8_t prefixes[2];
 
    bool has_opcode;
    uint8_t opcode;

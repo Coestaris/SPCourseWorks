@@ -1,7 +1,7 @@
 #if __linux__
-	#ifdef __GNUC__
-	#pragma implementation "errors.h"
-	#endif
+#ifdef __GNUC__
+#pragma implementation "errors.h"
+#endif
 #else
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -26,23 +26,23 @@ void e_set_out(FILE* out)
 //
 void __e_assert(bool v, const char* assert_str, const char* message, const char* file, size_t line)
 {
-   if(!v)
+   if (!v)
    {
-	  FILE* output;
+      FILE* output;
 
-	  // If something went awfully wrong, just output to a stderr...
-	  if (!errout) output = stderr;
-	  else output = errout;
+      // If something went awfully wrong, just output to a stderr...
+      if (!errout) output = stderr;
+      else output = errout;
 
       fprintf(output, "[ERROR]: Assertion \"%s\" failed. \n[ERROR]: Message: %s\n[ERROR]: Error occurred at %s:%li",
-            assert_str, message, file, line);
+              assert_str, message, file, line);
 
       fflush(output);
       fflush(stdout);
 #if __linux__
       abort();
-#else 
-	  exit(1);
+#else
+      exit(1);
 #endif
    }
 }
@@ -65,7 +65,7 @@ void __e_err(const char* message, const char* file, size_t line)
    fflush(stdout);
 #if __linux__
    abort();
-#else 
+#else
    exit(1);
 #endif
 }
