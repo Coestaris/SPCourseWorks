@@ -74,7 +74,7 @@ local tt_to_name = {
     [types.tt_segment_reg] = "REG_SEG",
 }
 
-local number16_re = "-?0[0-9A-F]+H"
+local number16_re = "-?[0-9A-F]+H"
 local number10_re = "-?[0-9]+"
 local number2_re = "-?0[01]+B"
 local id_re = "[A-Z][A-Z0-9_]+"
