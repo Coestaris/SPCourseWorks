@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Xml.Schema;
@@ -12,36 +13,70 @@ namespace CourseWork
         private const string TestFile = "test.asm";
         private const string Output = "test.out";
 
-        private static void WriteAsm(Assembly assembly)
+        private static void WriteAsm(Assembly assembly, bool bytes)
         {
             var i = 0;
             var err = 0;
-            Console.WriteLine(new string('=', 96));
-            Console.WriteLine(" #|  Cnt  | Offset |              Bytes            |                        Source                     |");
-            Console.WriteLine(new string('=', 96));
 
-            foreach (var lexeme in assembly.Lexemes)
+            if (!bytes)
             {
-                var indentation = "";
-                if (lexeme.Segment != null) indentation = "   ";
-                if (lexeme.Structure == null || !lexeme.Structure.HasName) indentation += "   ";
+                Console.WriteLine(new string('=', 68));
+                Console.WriteLine(" #|  Cnt  | Offset |                      Source                   |");
+                Console.WriteLine(new string('=', 68));
 
-                var s = string.Format("{3,2}|  {4,3}  |  {2} |  {5,-28} | {0}{1}",
-                    indentation,
-                    lexeme.ToTable(true),
-                    lexeme.HasOffset ? lexeme.Offset.ToString("X").PadLeft(5, '0') : "-----",
-                    i++, lexeme.Size,
-                    lexeme.Storage == null ? "" : lexeme.Storage.ToString());
-
-                Console.WriteLine(s.PadRight(95,' ') + "|");
-                if (lexeme.Error != null)
+                foreach (var lexeme in assembly.Lexemes)
                 {
-                    err++;
-                    Console.WriteLine(lexeme.Error);
+                    var indentation = "";
+                    if (lexeme.Segment != null) indentation = "   ";
+                    if (lexeme.Structure == null || !lexeme.Structure.HasName) indentation += "   ";
+
+                    var s = string.Format("{3,2}|  {4,3}  |  {2} |  {0}{1}",
+                        indentation,
+                        lexeme.ToTable(true),
+                        lexeme.HasOffset ? lexeme.Offset.ToString("X").PadLeft(5, '0') : "-----",
+                        i++, lexeme.Size);
+                    Console.WriteLine(s.PadRight(67, ' ') + "|");
+                    if (lexeme.Error != null)
+                    {
+                        err++;
+                        Console.WriteLine(lexeme.Error);
+                    }
                 }
+
+                Console.WriteLine(new string('=', 68));
+                Console.WriteLine("{0} errors\n", err);
             }
-            Console.WriteLine(new string('=', 96));
-            Console.WriteLine("{0} errors\n", err);
+            else
+            {
+                Console.WriteLine(new string('=', 96));
+                Console.WriteLine(
+                    " #|  Cnt  | Offset |              Bytes            |                        Source                     |");
+                Console.WriteLine(new string('=', 96));
+
+                foreach (var lexeme in assembly.Lexemes)
+                {
+                    var indentation = "";
+                    if (lexeme.Segment != null) indentation = "   ";
+                    if (lexeme.Structure == null || !lexeme.Structure.HasName) indentation += "   ";
+
+                    var s = string.Format("{3,2}|  {4,3}  |  {2} |  {5,-28} | {0}{1}",
+                        indentation,
+                        lexeme.ToTable(true),
+                        lexeme.HasOffset ? lexeme.Offset.ToString("X").PadLeft(5, '0') : "-----",
+                        i++, lexeme.Size,
+                        lexeme.Storage == null ? "" : lexeme.Storage.ToString());
+
+                    Console.WriteLine(s.PadRight(95, ' ') + "|");
+                    if (lexeme.Error != null)
+                    {
+                        err++;
+                        Console.WriteLine(lexeme.Error);
+                    }
+                }
+
+                Console.WriteLine(new string('=', 96));
+                Console.WriteLine("{0} errors\n", err);
+            }
         }
 
         private static void WriteSegmentsTable(Assembly assembly)
@@ -112,6 +147,61 @@ namespace CourseWork
             Console.WriteLine(new string('=', 48));
         }
 
+        private static void WriteSecondStage(Assembly assembly)
+        {
+            Console.WriteLine("TOKENS: ");
+            foreach (var lexeme in assembly.Lexemes)
+            {
+                Console.WriteLine("Source   | {0}", lexeme.ToTable(true));
+                if (lexeme.Error != null)
+                {
+                    Console.WriteLine(lexeme.Error);
+                    Console.WriteLine();
+                    continue;
+                }
+                Console.WriteLine("Tokens   | {0}", lexeme.ToTable(false));
+                Console.WriteLine("Sentence |{0}", lexeme.Structure.ToTable());
+                Console.WriteLine();
+            }
+        }
+
+        private static void WriteThirdStage(Assembly assembly)
+        {
+            Console.WriteLine("TOKENS: ");
+            WriteAsm(assembly, false);
+
+            Console.WriteLine();
+            Console.WriteLine("LOGICAL SEGMENTS: ");
+            WriteSegmentsTable(assembly);
+
+            Console.WriteLine();
+            Console.WriteLine("SEGMENT REGISTER DESTINATIONS: ");
+            WriteSegRegAssignmentTable(assembly);
+
+            Console.WriteLine();
+            Console.WriteLine("USER DEFINED NAMES: ");
+            WriteUserNamesTable(assembly);
+        }
+
+        private static void WriteFourthStage(Assembly assembly)
+        {
+            Console.WriteLine("TOKENS: ");
+            WriteAsm(assembly, true);
+
+            Console.WriteLine();
+            Console.WriteLine("LOGICAL SEGMENTS: ");
+            WriteSegmentsTable(assembly);
+
+            Console.WriteLine();
+            Console.WriteLine("SEGMENT REGISTER DESTINATIONS: ");
+            WriteSegRegAssignmentTable(assembly);
+
+            Console.WriteLine();
+            Console.WriteLine("USER DEFINED NAMES: ");
+            WriteUserNamesTable(assembly);
+        }
+
+
         private static void DoTest(string inputFile, string outputFile)
         {
             if (!File.Exists(inputFile))
@@ -136,20 +226,9 @@ namespace CourseWork
                 assembly.FirstPass();
                 assembly.SecondPass();
 
-                Console.WriteLine("TOKENS: ");
-                WriteAsm(assembly);
-
-                Console.WriteLine();
-                Console.WriteLine("LOGICAL SEGMENTS: ");
-                WriteSegmentsTable(assembly);
-
-                Console.WriteLine();
-                Console.WriteLine("SEGMENT REGISTER DESTINATIONS: ");
-                WriteSegRegAssignmentTable(assembly);
-
-                Console.WriteLine();
-                Console.WriteLine("USER DEFINED NAMES: ");
-                WriteUserNamesTable(assembly);
+                //WriteSecondStage(assembly);
+                //WriteThirdStage(assembly);
+                WriteFourthStage(assembly);
             }
 
             Console.SetOut(oldOut);
