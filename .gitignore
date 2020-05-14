@@ -26,3 +26,5 @@ lua/tests/
 python2/tests/TASM\.EXE
 
 python2/tests/
+
+go/generated.lst

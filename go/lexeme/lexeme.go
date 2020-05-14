@@ -15,8 +15,12 @@ const (
 	Register16
 	Register32
 	Constant8
+	Constant16
 	Constant32
-	Mem
+	Mem8
+	Mem16
+	Mem32
+	Ptr16
 	LabelBackward
 	LabelForward
 )
@@ -34,6 +38,14 @@ type lexeme struct {
 	hasInstruction bool
 	hasOperands bool
 	operands []types.Operand
+}
+
+func Abs(x int64) int64 {
+	if x < 0 {
+		return -x
+	} else {
+		return x
+	}
 }
 
 func (l *lexeme) PrettyPrint() string {
@@ -182,17 +194,25 @@ func (l *lexeme) SetTokens(tokens []types.Token) error {
 		variables := l.program.GetVariables()
 		variableFound := false
 		for _, x := range variables {
-			if x == tokens[0].GetValue() {
+			if x.GetName().GetValue() == tokens[0].GetValue() {
 				variableFound = true
 				break
 			}
 		}
+
 		if variableFound {
 			return errors.New("same variable already exists")
 		}
 
-		l.program.SetVariables(append(l.program.GetVariables(), variable.NewVariable(tokens[1], tokens[0], tokens[2])))
-	case tokenLen >= 2 && tokens[0].GetTokenType() == ptokens.IDENTIFIER && tokens[1].GetValue() == ":":
+		v := variable.NewVariable(tokens[1], tokens[0], tokens[2])
+		/*_, err := scanType(v)
+		if err != nil {
+			return err
+		}*/
+
+		l.program.SetVariables(append(l.program.GetVariables(), v))
+	case tokenLen >= 2 && tokens[0].GetTokenType() == ptokens.IDENTIFIER &&
+			tokens[1].GetValue() == ":":
 		// LABEL
 		labels := l.program.GetLabels()
 		labelFound := false
@@ -208,10 +228,38 @@ func (l *lexeme) SetTokens(tokens []types.Token) error {
 
 		l.tokens[0].SetTokenType(ptokens.LABEL)
 		l.program.SetLabels(append(l.program.GetLabels(), l.tokens[0]))
+	case tokenLen >= 3 && tokens[2].GetTokenType() == ptokens.PTR:
+		// if there were multiple PTR types, this would be usable
+		if tokens[1].GetTokenType() == ptokens.WORDPTR {
+			tokens[2].SetTokenType(ptokens.WORDPTR)
+		}
 	}
 
 	l.ParseOperands()
 	return nil
+}
+
+func scanType(x types.Variable) (int, error) {
+	switch x.GetDirective().GetValue() {
+	case "db":
+		if value := x.GetValue(); Abs(value.GetNumValue()) >= 0xFF {
+			return 0, fmt.Errorf("incorrect num value (%d, %d)",
+				value.GetLine(), value.GetChar())
+		}
+		return Mem8, nil
+	case "dw":
+		if value := x.GetValue(); Abs(value.GetNumValue()) >= 0xFFFF {
+			return 0, fmt.Errorf("incorrect num value (%d, %d)",
+				value.GetLine(), value.GetChar())
+		}
+		return Mem16, nil
+	default:
+		if value := x.GetValue(); Abs(value.GetNumValue()) >= 0xFFFFFFFF {
+			return 0, fmt.Errorf("incorrect num value (%d, %d)",
+				value.GetLine(), value.GetChar())
+		}
+		return Mem32, nil
+	}
 }
 
 func (l *lexeme) GetOperandsInfo() error {
@@ -242,10 +290,20 @@ func (l *lexeme) GetOperandsInfo() error {
 			case ptokens.HEX:
 				switch value := token.GetNumValue(); {
 				case value < 2^8: op.SetOperandType(Constant8)
+				case value < 2^16: op.SetOperandType(Constant16)
 				default: op.SetOperandType(Constant32)
 				}
 			case ptokens.IDENTIFIER:
-				op.SetOperandType(Mem)
+				for _, x := range l.program.GetVariables() {
+					if x.GetName().GetValue() == token.GetValue() {
+						opType, err := scanType(x)
+						if err != nil {
+							return err
+						}
+						op.SetOperandType(opType)
+						break
+					}
+				}
 				fallthrough
 			case ptokens.LABEL:
 				for _, x := range l.program.GetLabels() {
@@ -263,27 +321,48 @@ func (l *lexeme) GetOperandsInfo() error {
 		case len(opTokens) == 3 && opTokens[1].GetTokenType() == ptokens.MODEL:
 			continue
 		case len(opTokens) == 3 && opTokens[0].GetTokenType() == ptokens.SEGREG:
-			op.SetOperandType(Mem)
+			for _, x := range l.program.GetVariables() {
+				if x.GetName().GetValue() == opTokens[2].GetValue() {
+					opType, err := scanType(x)
+					if err != nil {
+						return err
+					}
+					op.SetOperandType(opType)
+					break
+				}
+			}
 			op.SetSegmentPrefix(opTokens[0])
 			op.SetToken(opTokens[2])
 		case len(opTokens) < 6:
 			return fmt.Errorf("wrong token in operand %s", opTokens[0].GetValue())
 		default:
 			offset := 0
-			op.SetOperandType(Mem)
-			if opTokens[offset].GetTokenType() == ptokens.SEGREG {
+			for _, x := range l.program.GetVariables() {
+				if x.GetName().GetValue() == opTokens[2].GetValue() {
+					opType, err := scanType(x)
+					if err != nil {
+						return err
+					}
+					op.SetOperandType(opType)
+					break
+				}
+			}
+			if opTokens[offset].GetTokenType() == ptokens.WORDPTR {
+				offset++
+				op.SetOperandType(Ptr16)
+			} else if opTokens[offset].GetTokenType() == ptokens.SEGREG {
 				op.SetSegmentPrefix(opTokens[offset])
 				offset += 2
 
 				if len(opTokens) != 8 {
-					return fmt.Errorf("wrong token in operand %s", op.GetToken().GetValue())
+					return fmt.Errorf("wrong token in operand %s", opTokens[offset].GetValue())
 				}
 			}
 			if opTokens[offset + 5].GetTokenType() == ptokens.SYM && opTokens[offset + 5].GetValue() == "*" {
 				// scaled index
-				if len(opTokens) != 8 {
-					return fmt.Errorf("wrong token in operand %s", op.GetToken().GetValue())
-				}
+				/*if len(opTokens) != 8 {
+					return fmt.Errorf("wrong token in operand %s", opTokens[offset].GetValue())
+				}*/
 				op.SetScaleToken(opTokens[offset + 6])
 			}
 			op.SetToken(opTokens[offset])
@@ -409,13 +488,18 @@ func (l *lexeme) ParseOperands() {
 		return
 	}
 
+	/*if l.tokens[offset].GetTokenType() == ptokens.WORDPTR {
+		offset++
+	}*/
+
 	operandInd := 0
 	l.operands = append(l.operands, NewOperand(offset, 0))
 
 	for _, t := range l.tokens[offset:] {
 		if t.GetTokenType() == ptokens.SYM && t.GetValue() == "," {
 			l.operands = append(l.operands,
-				NewOperand(l.operands[operandInd].GetLength() + l.operands[operandInd].GetIndex() + operandInd + 1, 0))
+				NewOperand(l.operands[operandInd].GetLength() + l.operands[operandInd].GetIndex() + operandInd + 1,
+					0))
 			operandInd++
 		} else {
 			l.operands[operandInd].SetLength(l.operands[operandInd].GetLength() + 1)

@@ -25,7 +25,6 @@ func getTypedTokens(tokens []rawToken, program types.ASM) (types.Lexeme, error) 
 			if err != nil {
 				return nil, err
 			}
-
 			clearedTokens = append(clearedTokens, t)
 		}
 	}

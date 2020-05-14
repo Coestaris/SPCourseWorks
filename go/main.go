@@ -38,29 +38,29 @@ func printLexemes(l types.Lexeme) {
 	}
 }
 
-func PrintET2(program types.ASM) {
+func PrintET2(program types.ASM) (res string) {
 	for _, l := range program.GetLexemes() {
 		sources := make([]string, len(l.GetTokens()))
 		for i, t := range l.GetTokens() {
 			sources[i] = t.GetValue()
 		}
-		fmt.Printf("Source : %s\n", strings.Join(sources, " "))
-		fmt.Printf("Lexemes: \n")
+		res += fmt.Sprintf("Source : %s\n", strings.Join(sources, " "))
+		res += fmt.Sprintf("Lexemes: \n")
 		printLexemes(l)
-		fmt.Println("+-----------------------------------------+")
-		fmt.Println("|  LABEL |  MNEM  |   Op1  |   Op2  | ....|")
-		fmt.Println("|-----------------------------------------|")
-		fmt.Println("|        |  I | L |  I | L |  I | L |     |")
-		fmt.Println("|-----------------------------------------|")
-		fmt.Printf("|  %s\n", l.ToSentenceTableString(0))
-		fmt.Println("+-----------------------------------------+")
-		fmt.Println()
-		fmt.Println()
+		res += fmt.Sprintln("+-----------------------------------------+")
+		res += fmt.Sprintln("|  LABEL |  MNEM  |   Op1  |   Op2  | ....|")
+		res += fmt.Sprintln("|-----------------------------------------|")
+		res += fmt.Sprintln("|        |  I | L |  I | L |  I | L |     |")
+		res += fmt.Sprintln("|-----------------------------------------|")
+		res += fmt.Sprintf("|  %s\n", l.ToSentenceTableString(0))
+		res += fmt.Sprintln("+-----------------------------------------+")
+		res += fmt.Sprintln()
+		res += fmt.Sprintln()
 	}
+	return res
 }
 
-func PrintET3(a types.ASM) {
-	res := ""
+func PrintET3(a types.ASM) (res string) {
 	res += fmt.Sprintln("+---------------------------------------------+")
 	res += fmt.Sprintln("| № | OFFSET  |   SOURCE                      |")
 	res += fmt.Sprintln("+---------------------------------------------+")
@@ -120,9 +120,33 @@ func PrintET3(a types.ASM) {
 	res += fmt.Sprintln("| 5 |                         FS|   NONE   |")
 	res += fmt.Sprintln("+------------------------------------------+")
 
-	if err := ioutil.WriteFile("generated.lst", []byte(res), 0644); err != nil {
-		panic(err)
+	return res
+}
+
+func PrintET4(asm types.ASM, bytes [][]byte) (res string) {
+	byteIndex := 0
+	for i, l := range asm.GetLexemes() {
+		hexOffset := fmt.Sprintf("%x", l.GetOffset())
+		inst := l.GetInstructionToken()
+		if inst.GetTokenType() == tokens.END {
+			hexOffset = "----"
+		}
+
+		if l.GetInstruction() != nil {
+			bytesStr := ""
+			for _, b := range bytes[byteIndex] {
+				pad := ""
+				if b < 0x10 {
+					pad = "0"
+				}
+				bytesStr += fmt.Sprintf("%s%X ", pad, b)
+			}
+			res += fmt.Sprintf("| %s | %2s | %25s | %s\n", rjust(2, strconv.Itoa(i), "0"),
+				hexOffset, bytesStr, l.PrettyPrint())
+			byteIndex++
+		}
 	}
+	return
 }
 
 func main() {
@@ -146,6 +170,9 @@ func main() {
 			}
 			log.Fatal("parsing failed")
 		}
+
+		// fmt.Println(PrintET2(program))
+
 		if errors := program.FirstPass(); errors != nil {
 			for _, err := range errors {
 				log.Error(err)
@@ -153,6 +180,17 @@ func main() {
 			log.Fatal("first pass failed")
 		}
 
-		PrintET2(program)
+		if err := ioutil.WriteFile("generated.lst", []byte(PrintET3(program)), 0644); err != nil {
+			panic(err)
+		}
+
+		if bytes, errors := program.SecondPass(); errors != nil {
+			for _, err := range errors {
+				log.Error(err)
+			}
+			log.Fatal("second pass failed")
+		} else {
+			fmt.Println(PrintET4(program, bytes))
+		}
 	}
 }

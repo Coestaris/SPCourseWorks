@@ -22,6 +22,10 @@ const (
 	BIN
 	DEC
 
+	WORDPTR
+
+	PTR
+
 	IDENTIFIER
 
 	LABEL
@@ -49,11 +53,16 @@ var tokenMap = []string{
 	"BIN",
 	"DEC",
 
+	"WORDPTR",
+
+	"PTR",
+
 	"IDENTIFIER",
 
 	"LABEL",
 }
 
+// Reserved tokens
 var tokenSymbols = []string{"[", "]", ".", ",", "+", "-", ":", "*"}
 var tokenRegister32s = []string{"eax", "ebx", "ecx", "edx", "edi", "esi"}
 var tokenRegister16s = []string{"ax", "bx", "cx", "dx", "sp", "bp", "si", "di"}
@@ -62,6 +71,8 @@ var tokenSegRegs = []string{"es", "cs", "ss", "ds", "fs", "gs"}
 var tokenDirectives = []string{"db", "dw", "dd"}
 var tokenInstructions = []string{"lahf", "inc", "dec", "add", "jng", "lea", "and", "mov", "test", "jmp"}
 var tokenModel = []string{"model"}
+var tokenWord = []string{"word"}
+var tokenPtr = []string{"ptr"}
 var tokenDataSegment = []string{"data"}
 var tokenCodeSegment = []string{"code"}
 var tokenEnd = []string{"end"}
@@ -71,9 +82,9 @@ type tokenRule struct {
 	tokenType int
 }
 
-var numberHexRegex, _ = regexp.Compile("^[0-9a-f]+h$")
-var numberDecRegex, _ = regexp.Compile("^[0-9]+$")
-var numberBinRegex, _ = regexp.Compile("^[01]+b$")
+var numberHexRegex, _ = regexp.Compile("^-?[0-9a-f]+h$")
+var numberDecRegex, _ = regexp.Compile("^-?[0-9]+$")
+var numberBinRegex, _ = regexp.Compile("^-?[01]+b$")
 var identifierRegex, _ = regexp.Compile(`^[a-z]\w*$`)
 
 var TokenDict = []tokenRule{
@@ -85,6 +96,8 @@ var TokenDict = []tokenRule{
 	{tokenDirectives, DIRECTIVE},
 	{tokenInstructions, INSTRUCTION},
 	{tokenModel, MODEL},
+	{tokenWord, WORDPTR},
+	{tokenPtr, PTR},
 	{tokenDataSegment, DATA},
 	{tokenCodeSegment, CODE},
 	{tokenEnd, END},

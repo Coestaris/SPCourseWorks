@@ -14,6 +14,10 @@ type token struct {
 	Char      int
 }
 
+func (t *token) GetChar() int {
+	return t.Char
+}
+
 func (t *token) GetLexeme() types.Lexeme {
 	return t.Lexeme
 }

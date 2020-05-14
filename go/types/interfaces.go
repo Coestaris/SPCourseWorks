@@ -19,6 +19,7 @@ type ASM interface {
 
 	Parse() []error
 	FirstPass() []error
+	SecondPass() ([][]byte, []error)
 }
 
 type Operand interface {
@@ -71,6 +72,7 @@ type Token interface {
 	GetValue() string
 	GetNumValue() int64
 	GetLine() int
+	GetChar() int
 	GetLexeme() Lexeme
 
 	SetTokenType(int)
@@ -101,4 +103,7 @@ type Instruction interface {
 }
 
 type Variable interface {
+	GetName() Token
+	GetValue() Token
+	GetDirective() Token
 }

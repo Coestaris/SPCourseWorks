@@ -126,6 +126,23 @@ func (a *asm) FirstPass() []error {
 	return errs
 }
 
+func (a *asm) SecondPass() (bytes [][]byte, errs []error) {
+	for _, l := range a.GetLexemes() {
+		directive := l.GetInstructionToken()
+		if tType := directive.GetTokenType(); tType == tokens.INSTRUCTION ||
+			tType == tokens.DIRECTIVE {
+			if l.GetInstruction() != nil {
+				instBytes, err := GetBytes(l)
+				bytes = append(bytes, instBytes)
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+		}
+	}
+	return
+}
+
 func (a *asm) Parse() []error {
 	var errs []error
 	a.Lexemes, errs = parser.Parse(a)
