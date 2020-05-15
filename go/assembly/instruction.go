@@ -323,13 +323,13 @@ func GetBytes(l types.Lexeme) (bytes []byte, err error) {
 				var imm []byte
 				if i.name == "jng" {
 					if op.GetOperandType() == lexeme.LabelForward {
-						imm = append(imm, byte(diff + 2) & 0xFF, 0x90, 0x90, 0x90, 0x90)
+						imm = append(imm, byte(diff - 2) & 0xFF, 0x90, 0x90, 0x90, 0x90)
 					} else {
-						imm = append(imm, byte(diff - GetSize(l)) & 0xFF, 0x90, 0x90, 0x90)
+						imm = append(imm, byte(diff - GetSize(l)) & 0xFF)
 					}
 				} else {
 					if op.GetOperandType() == lexeme.LabelForward {
-						imm = append(imm, byte(diff + 3) & 0xFF, 0x90, 0x90, 0x90)
+						imm = append(imm, byte(diff - 2) & 0xFF, 0x90, 0x90, 0x90)
 					} else {
 						imm = append(imm, Int32ToBytes(diff - GetSize(l))...)
 					}
