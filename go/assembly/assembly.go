@@ -130,12 +130,10 @@ func (a *asm) SecondPass() (bytes [][]byte, errs []error) {
 		directive := l.GetInstructionToken()
 		if tType := directive.GetTokenType(); tType == tokens.INSTRUCTION ||
 			tType == tokens.DIRECTIVE {
-			if l.GetInstruction() != nil {
-				instBytes, err := GetBytes(l)
-				bytes = append(bytes, instBytes)
-				if err != nil {
-					errs = append(errs, err)
-				}
+			instBytes, err := GetBytes(l)
+			bytes = append(bytes, instBytes)
+			if err != nil {
+				errs = append(errs, err)
 			}
 		}
 	}

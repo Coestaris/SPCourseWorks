@@ -130,7 +130,7 @@ func PrintET4(a types.ASM, bytes [][]byte) (res string) {
 		}
 
 		bytesStr := ""
-		if l.GetInstruction() != nil {
+		if l.HasInstructions() {
 			for _, b := range bytes[byteIndex] {
 				bytesStr += fmt.Sprintf("%02X ", b)
 			}
