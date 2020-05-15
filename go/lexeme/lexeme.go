@@ -50,8 +50,7 @@ func Abs(x int64) int64 {
 	}
 }
 
-func (l *lexeme) PrettyPrint() string {
-	str := ""
+func (l *lexeme) PrettyPrint() (str string) {
 	for _, t := range l.tokens {
 		hasSpaceBefore := false
 		hasSpaceAfter := false
@@ -416,8 +415,7 @@ func (l *lexeme) hasLabel() bool {
 	return len(l.tokens) >= 2 && l.tokens[0].GetTokenType() == ptokens.LABEL
 }
 
-func (l *lexeme) ToString() string {
-	str := ""
+func (l *lexeme) ToString() (str string) {
 	i := 0
 	for _, t := range l.tokens {
 		str += fmt.Sprintf("%-30s", t.ToString())
@@ -430,9 +428,7 @@ func (l *lexeme) ToString() string {
 	return fmt.Sprintf("[%s]", strings.TrimSpace(str))
 }
 
-func (l *lexeme) ToSentenceTableString(level int) string {
-	res := ""
-
+func (l *lexeme) ToSentenceTableString(level int) (res string) {
 	if l.hasName {
 		res += fmt.Sprintf("%5d |", level)
 	} else {

@@ -291,16 +291,6 @@ func GetBytes(l types.Lexeme) (bytes []byte, err error) {
 					return nil, err
 				}
 			}
-			/*if len(l.GetOperands()) != 1 { // if has source
-				var tok types.Token
-				tok = l.GetOperands()[i.source].GetToken()
-
-				if _, ok := regCodes[tok.GetValue()]; !ok {
-					return nil, fmt.Errorf("(%d, %d): unknown register: %s", tok.GetLine(), tok.GetChar(),
-						tok.GetValue())
-				}
-				modRM |= NewModRM(0, regCodes[tok.GetValue()], 0)
-			}*/
 
 			bytes = append(bytes, modRM)
 
@@ -333,13 +323,13 @@ func GetBytes(l types.Lexeme) (bytes []byte, err error) {
 				var imm []byte
 				if i.name == "jng" {
 					if op.GetOperandType() == lexeme.LabelForward {
-						imm = append(imm, byte(diff) & 0xFF, 0x90, 0x90, 0x90, 0x90)
+						imm = append(imm, byte(diff + 2) & 0xFF, 0x90, 0x90, 0x90, 0x90)
 					} else {
 						imm = append(imm, byte(diff - GetSize(l)) & 0xFF, 0x90, 0x90, 0x90)
 					}
 				} else {
 					if op.GetOperandType() == lexeme.LabelForward {
-						imm = append(imm, byte(diff + 1) & 0xFF, 0x90, 0x90, 0x90)
+						imm = append(imm, byte(diff + 3) & 0xFF, 0x90, 0x90, 0x90)
 					} else {
 						imm = append(imm, Int32ToBytes(diff - GetSize(l))...)
 					}
@@ -374,8 +364,7 @@ func GetBytes(l types.Lexeme) (bytes []byte, err error) {
 	return
 }
 
-func GetSize(l types.Lexeme) int {
-	size := 0
+func GetSize(l types.Lexeme) (size int) {
 	if _inst := l.GetInstruction(); _inst != nil {
 		inst := _inst.(*instruction)
 		// reserve 4 bytes for jmp forward, hardcode
@@ -406,9 +395,8 @@ func GetSize(l types.Lexeme) int {
 			size++
 			if inst.sibSet {
 				// SIB byte
+				// 𓂺𓂺
 				size++
-				// btw this is also hardcoded as I don't have any displacements
-				// :3
 			}
 		}
 
@@ -429,7 +417,7 @@ func GetSize(l types.Lexeme) int {
 			default: size += 4; break
 		}
 	}
-	return size
+	return
 }
 
 func (i *instruction) GetOpTypes() []int {
@@ -508,7 +496,7 @@ var instructions = []types.Instruction{
 	NewInstruction("inc", 0x40, []int{lexeme.Register32}, packedRegister(true)),
 
 	// FF /1 | DEC r/m16 | dec word ptr [eax + edi*4] | 1/3
-	NewInstruction("dec", 0xFF, []int{lexeme.Ptr16}, setModRM(), regOpCodeExtension(1),
+	NewInstruction("dec", 0xFF, []int{lexeme.Ptr16}, setModRM(), regOpCodeExtension(1), setSib(),
 		operandSizePrefix()),
 
 	// 01 /r | ADD r/m32, r32 | add eax, ebx | 1/3
@@ -518,20 +506,23 @@ var instructions = []types.Instruction{
 	NewInstruction("add", 0x03, []int{lexeme.Register32, lexeme.Register32}, firstSource(), setModRM()),
 
 	// 8D /r | LEA r32, ea32 | lea ebx, ES:Bin1 | 1
-	NewInstruction("lea", 0x8D, []int{lexeme.Register32, lexeme.Mem32}, firstDest(), setModRM(), dispSize(4)),
+	NewInstruction("lea", 0x8D, []int{lexeme.Register32, lexeme.Mem32}, firstDest(), setModRM(),
+	dispSize(4)),
 
 	// 83 /4 ib | AND r/m16, imm8 | and Dec1, 02h | 1/3
-	NewInstruction("and", 0x83, []int{lexeme.Mem16, lexeme.Constant8}, firstDest(), regOpCodeExtension(4),
-		operandSizePrefix(), setModRM(), dispSize(4), immSize(1)),
+	NewInstruction("and", 0x83, []int{lexeme.Mem16, lexeme.Constant8}, firstDest(),
+	regOpCodeExtension(4), operandSizePrefix(), setModRM(), dispSize(4), immSize(1)),
 
 	// B8+rd | MOV r/m32, imm32 | mov eax, 0001b | 1
-	NewInstruction("mov", 0xB8, []int{lexeme.Register32, lexeme.Constant32}, firstDest(), packedRegister(true),
-		immSize(4)),
+	NewInstruction("mov", 0xB8, []int{lexeme.Register32, lexeme.Constant32}, firstDest(),
+	packedRegister(true), immSize(4)),
 
 	// 7E cb | JNG rel8 | 1
-	NewInstruction("jng", 0x7E, []int{lexeme.LabelForward}, dispSize(1)),
-	// OF 8E cw | JNG rel16 | 1
-	NewInstruction("jng", 0x8E | 0b1, []int{lexeme.LabelBackward}, dispSize(4)),
+	NewInstruction("jng", 0x7E, []int{lexeme.LabelForward}, dispSize(5)),
+
+	// 7E cb | JNG rel8 | 1
+	NewInstruction("jng", 0x7E, []int{lexeme.LabelBackward}, dispSize(1)),
+
 	// EB cb | JMP rel8 | 1
 	NewInstruction("jmp", 0xEB, []int{lexeme.LabelForward}, dispSize(1)),
 
@@ -558,6 +549,12 @@ func setModRM() InstructionOption {
 	}
 }
 
+func setSib() InstructionOption {
+	return func(i *instruction) error {
+		i.sibSet = true
+		return nil
+	}
+}
 
 func dispSize(value byte) InstructionOption {
 	return func(i *instruction) error {

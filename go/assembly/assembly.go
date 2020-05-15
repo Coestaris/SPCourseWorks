@@ -70,9 +70,8 @@ func (a *asm) GetCodeSegment() types.Segment {
 	return a.codeSegment
 }
 
-func (a *asm) FirstPass() []error {
+func (a *asm) FirstPass() (errs []error) {
 	segment.ProceedSegments(a)
-	var errs []error
 	for _, l := range a.GetLexemes() {
 		if err := l.GetOperandsInfo(); err != nil {
 			errs = append(errs, err)
@@ -123,7 +122,7 @@ func (a *asm) FirstPass() []error {
 			l.GetSegment().SetSize(offset)
 		}
 	}
-	return errs
+	return
 }
 
 func (a *asm) SecondPass() (bytes [][]byte, errs []error) {
@@ -143,14 +142,12 @@ func (a *asm) SecondPass() (bytes [][]byte, errs []error) {
 	return
 }
 
-func (a *asm) Parse() []error {
-	var errs []error
+func (a *asm) Parse() (errs []error) {
 	a.Lexemes, errs = parser.Parse(a)
-	return errs
+	return
 }
 
-func (a *asm) ToIndexedTable() string {
-	res := ""
+func (a *asm) ToIndexedTable() (res string) {
 	i := 0
 	for li, l := range a.Lexemes {
 		res += fmt.Sprintf("%2d | ", li)
@@ -161,5 +158,5 @@ func (a *asm) ToIndexedTable() string {
 		i += len(l.GetTokens())
 	}
 
-	return res
+	return
 }

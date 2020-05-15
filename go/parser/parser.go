@@ -37,15 +37,13 @@ func getTypedTokens(tokens []rawToken, program types.ASM) (types.Lexeme, error) 
 	return lex, nil
 }
 
-func Parse(program types.ASM) ([]types.Lexeme, []error) {
+func Parse(program types.ASM) (lexemes []types.Lexeme, errors []error) {
 	token := ""
 
 	line := 1
 	char := 1
 	var tokens []rawToken
 	lastEl := false
-	var lexemes []types.Lexeme
-	var errors []error
 
 	for _, c := range program.GetSource() {
 		if strings.ContainsRune(splitChars, c) {
