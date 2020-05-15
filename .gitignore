@@ -27,4 +27,6 @@ python2/tests/TASM\.EXE
 
 python2/tests/
 
-go/generated.lst
+go/res.lst
+go/course_work_2
+go/test.asm
