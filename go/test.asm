@@ -14,7 +14,7 @@ label2:
 	dec word ptr [eax + edi*4]
 	add eax, ebx
 	jng label1
-	lea ebx, ES:Bin1[eax + ebx]
+	lea ebx, ES:Bin1[ebx + ecx]
 	and Dec1, 02h
 	mov eax, 0001b
 label1:

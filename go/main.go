@@ -9,7 +9,6 @@ import (
 	flag "github.com/spf13/pflag"
 	"io/ioutil"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -21,20 +20,9 @@ func init() {
 	flag.Parse()
 }
 
-func rjust(pad int, str string, padString string) string {
-	if len(str) < pad {
-		buf := ""
-		for i := 0; i < pad - len(str); i++ {
-			buf += padString
-		}
-		str = buf + str
-	}
-	return str
-}
-
 func printLexemes(l types.Lexeme) {
 	for i, t := range l.GetTokens() {
-		fmt.Printf("%s. %s\n", rjust(2, strconv.Itoa(i), "0"), t.ToString())
+		fmt.Printf("%02d. %s\n", i, t.ToString())
 	}
 }
 
@@ -65,13 +53,13 @@ func PrintET3(a types.ASM) (res string) {
 	res += fmt.Sprintln("| № | OFFSET  |   SOURCE                      |")
 	res += fmt.Sprintln("+---------------------------------------------+")
 	for i, l := range a.GetLexemes() {
-		offsetHex := fmt.Sprintf("%x", l.GetOffset())
+		offsetHex := fmt.Sprintf("%04x", l.GetOffset())
 		inst := l.GetInstructionToken()
 		if inst.GetTokenType() == tokens.END {
 			offsetHex = "----"
 		}
 
-		res += fmt.Sprintf("|%s|     %s|%s\n", rjust(3, strconv.Itoa(i), "0"), rjust(4, offsetHex, "0"),
+		res += fmt.Sprintf("|%03d|     %s|%s\n", i, offsetHex,
 			l.PrettyPrint())
 	}
 	res += fmt.Sprintln("+---------------------------------------------+")
@@ -83,10 +71,10 @@ func PrintET3(a types.ASM) (res string) {
 	res += fmt.Sprintln("|------------------------------------------|")
 	res += fmt.Sprintln("| № |    SEG NAME   | BIT DEPTH |  OFFSET  |")
 	res += fmt.Sprintln("|------------------------------------------|")
-	res += fmt.Sprintf("|%s|           DATA|         32|%s|\n", rjust(3, "1", "0"),
-		rjust(10, fmt.Sprintf("%x", a.GetDataSegment().GetSize()), " "))
-	res += fmt.Sprintf("|%s|           CODE|         32|%s|\n", rjust(3, "1", "0"),
-		rjust(10, fmt.Sprintf("%x", a.GetCodeSegment().GetSize()), " "))
+	res += fmt.Sprintf("|001|           DATA|         32|%10x|\n",
+		a.GetDataSegment().GetSize())
+	res += fmt.Sprintf("|002|           CODE|         32|%10x|\n",
+		a.GetCodeSegment().GetSize())
 	res += fmt.Sprintln("+------------------------------------------+")
 
 	res += fmt.Sprintln()
@@ -98,10 +86,10 @@ func PrintET3(a types.ASM) (res string) {
 	res += fmt.Sprintln("|------------------------------------------|")
 	i := 0
 	for _, l := range a.GetLabels() {
-		res += fmt.Sprintf("|%s|%s|  LABEL |%s|%s|\n", rjust(3, strconv.Itoa(-i), "0"),
-			rjust(10, l.GetValue(), " "),
-			rjust(7, l.GetLexeme().GetSegment().GetOpen().GetValue(), " "),
-			rjust(10, fmt.Sprintf("%x", l.GetLexeme().GetOffset()), " "))
+		res += fmt.Sprintf("|%03d|%10s|  LABEL |%7s|%10x|\n", -i,
+			l.GetValue(),
+			l.GetLexeme().GetSegment().GetOpen().GetValue(),
+			l.GetLexeme().GetOffset())
 	}
 	res += fmt.Sprintln("+------------------------------------------+")
 
@@ -126,7 +114,7 @@ func PrintET3(a types.ASM) (res string) {
 func PrintET4(asm types.ASM, bytes [][]byte) (res string) {
 	byteIndex := 0
 	for i, l := range asm.GetLexemes() {
-		hexOffset := fmt.Sprintf("%x", l.GetOffset())
+		hexOffset := fmt.Sprintf("%02x", l.GetOffset())
 		inst := l.GetInstructionToken()
 		if inst.GetTokenType() == tokens.END {
 			hexOffset = "----"
@@ -135,13 +123,9 @@ func PrintET4(asm types.ASM, bytes [][]byte) (res string) {
 		if l.GetInstruction() != nil {
 			bytesStr := ""
 			for _, b := range bytes[byteIndex] {
-				pad := ""
-				if b < 0x10 {
-					pad = "0"
-				}
-				bytesStr += fmt.Sprintf("%s%X ", pad, b)
+				bytesStr += fmt.Sprintf("%02X ", b)
 			}
-			res += fmt.Sprintf("| %s | %2s | %25s | %s\n", rjust(2, strconv.Itoa(i), "0"),
+			res += fmt.Sprintf("| %02d | %2s | %-25s | %s\n", i,
 				hexOffset, bytesStr, l.PrettyPrint())
 			byteIndex++
 		}
@@ -171,7 +155,7 @@ func main() {
 			log.Fatal("parsing failed")
 		}
 
-		// fmt.Println(PrintET2(program))
+		fmt.Println(PrintET2(program))
 
 		if errors := program.FirstPass(); errors != nil {
 			for _, err := range errors {

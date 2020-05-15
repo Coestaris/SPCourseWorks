@@ -20,7 +20,9 @@ const (
 	Mem8
 	Mem16
 	Mem32
+	Ptr8
 	Ptr16
+	Ptr32
 	LabelBackward
 	LabelForward
 )
@@ -230,8 +232,8 @@ func (l *lexeme) SetTokens(tokens []types.Token) error {
 		l.program.SetLabels(append(l.program.GetLabels(), l.tokens[0]))
 	case tokenLen >= 3 && tokens[2].GetTokenType() == ptokens.PTR:
 		// if there were multiple PTR types, this would be usable
-		if tokens[1].GetTokenType() == ptokens.WORDPTR {
-			tokens[2].SetTokenType(ptokens.WORDPTR)
+		if tokens[1].GetTokenType() == ptokens.WORD {
+			tokens[2].SetTokenType(ptokens.WORD)
 		}
 	}
 
@@ -347,10 +349,14 @@ func (l *lexeme) GetOperandsInfo() error {
 					break
 				}
 			}
-			if opTokens[offset].GetTokenType() == ptokens.WORDPTR {
+			switch opTokens[offset].GetTokenType() {
+			case ptokens.WORD:
 				offset++
 				op.SetOperandType(Ptr16)
-			} else if opTokens[offset].GetTokenType() == ptokens.SEGREG {
+			case ptokens.DWORD:
+				offset++
+				op.SetOperandType(Ptr32)
+			case ptokens.SEGREG:
 				op.SetSegmentPrefix(opTokens[offset])
 				offset += 2
 
@@ -488,7 +494,7 @@ func (l *lexeme) ParseOperands() {
 		return
 	}
 
-	/*if l.tokens[offset].GetTokenType() == ptokens.WORDPTR {
+	/*if l.tokens[offset].GetTokenType() == ptokens.WORD {
 		offset++
 	}*/
 

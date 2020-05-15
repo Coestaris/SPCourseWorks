@@ -22,7 +22,8 @@ const (
 	BIN
 	DEC
 
-	WORDPTR
+	WORD
+	DWORD
 
 	PTR
 
@@ -53,7 +54,8 @@ var tokenMap = []string{
 	"BIN",
 	"DEC",
 
-	"WORDPTR",
+	"WORD",
+	"DWORD",
 
 	"PTR",
 
@@ -72,6 +74,7 @@ var tokenDirectives = []string{"db", "dw", "dd"}
 var tokenInstructions = []string{"lahf", "inc", "dec", "add", "jng", "lea", "and", "mov", "test", "jmp"}
 var tokenModel = []string{"model"}
 var tokenWord = []string{"word"}
+var tokenDword = []string{"dword"}
 var tokenPtr = []string{"ptr"}
 var tokenDataSegment = []string{"data"}
 var tokenCodeSegment = []string{"code"}
@@ -96,7 +99,8 @@ var TokenDict = []tokenRule{
 	{tokenDirectives, DIRECTIVE},
 	{tokenInstructions, INSTRUCTION},
 	{tokenModel, MODEL},
-	{tokenWord, WORDPTR},
+	{tokenWord, WORD},
+	{tokenDword, DWORD},
 	{tokenPtr, PTR},
 	{tokenDataSegment, DATA},
 	{tokenCodeSegment, CODE},

@@ -9,6 +9,7 @@ import (
 // ModRM
 const (
 	ModReg           = 0b11
+	ModDispOnly      = 0b00
 	ModMemPlusDisp8  = 0b01
 	ModMemPlusDisp32 = 0b10
 	RMSib            = 0b100
@@ -30,6 +31,13 @@ var segPrefixes = map[string]byte {
 	"ds": 0x3E,
 	"fs": 0x64,
 	"gs": 0x65,
+}
+
+var scaleSSSib = map[int64]byte {
+	1: 0b00,
+	2: 0b01,
+	4: 0b10,
+	8: 0b11,
 }
 
 var regCodes = map[string]byte {
@@ -148,6 +156,77 @@ func (i *instruction) GetName() string {
 	return i.name
 }
 
+// mode 0 - parse as source
+// mode 1 - parse as dest
+func parseOperand(mode byte, modRM, sib *byte, sibSet, dispSet *bool, disp *[]byte,
+	l types.Lexeme) error {
+	dest := l.GetOperands()[mode]
+	if opType := dest.GetOperandType(); opType == lexeme.Mem8 || opType == lexeme.Mem16 ||
+		opType == lexeme.Mem32 || opType == lexeme.Ptr8 || opType == lexeme.Ptr16 || opType == lexeme.Ptr32 {
+		var v types.Variable
+		if opType != lexeme.Ptr8 && opType != lexeme.Ptr16 && opType != lexeme.Ptr32 {
+			for _, varLex := range l.GetParentProgram().GetVariables() {
+				if dest.GetToken().GetValue() == varLex.GetName().GetValue() {
+					v = varLex
+				}
+			}
+
+			if v == nil {
+				tok := dest.GetToken()
+				return fmt.Errorf("(%d, %d): unknown variable: %s", tok.GetLine(), tok.GetChar(),
+					tok.GetValue())
+			}
+
+			// #5.3 Displacement | 4 bytes
+			*dispSet = true
+			*disp = append(*disp, Int32ToBytes(v.GetName().GetLexeme().GetOffset())...)
+			*modRM |= NewModRM(ModDispOnly, 0, RMDisp)
+		}
+
+		if dest.GetSumFirstToken() != nil && dest.GetSumSecondToken() != nil {
+			if _, ok := regCodes[dest.GetSumFirstToken().GetValue()]; !ok {
+				tok := dest.GetToken()
+				return fmt.Errorf("(%d, %d): unknown register: %s", tok.GetLine(),
+					tok.GetChar(), tok.GetValue())
+			}
+			if _, ok := regCodes[dest.GetSumSecondToken().GetValue()]; !ok {
+				tok := dest.GetToken()
+				return fmt.Errorf("(%d, %d): unknown register: %s", tok.GetLine(), tok.GetChar(),
+					tok.GetValue())
+			}
+
+			if *dispSet {
+				*modRM |= NewModRM(ModMemPlusDisp32, 0, 0)
+			}
+			// reset RM
+			*modRM = NewModRM(*modRM >> 6, *modRM >> 3, RMSib)
+
+			// #5.2 SIB | 1 byte
+			*sibSet = true
+			scale := int64(1)
+			if scaleToken := dest.GetScaleToken(); scaleToken != nil {
+				scale = scaleToken.GetNumValue()
+			}
+
+			*sib |= NewSib(scaleSSSib[scale], regCodes[dest.GetSumSecondToken().GetValue()],
+				regCodes[dest.GetSumFirstToken().GetValue()])
+		}
+	} else  {
+		// assuming that if operand wasn't mem, it's a register
+		tok := dest.GetToken()
+		if _, ok := regCodes[tok.GetValue()]; !ok {
+			return fmt.Errorf("(%d, %d): unknown register: %s", tok.GetLine(), tok.GetChar(),
+				tok.GetValue())
+		}
+		if mode == 0 || *dispSet {
+			*modRM |= NewModRM(0, regCodes[tok.GetValue()], 0)
+		} else {
+			*modRM |= NewModRM(ModReg, 0, regCodes[tok.GetValue()])
+		}
+	}
+	return nil
+}
+
 func GetBytes(l types.Lexeme) (bytes []byte, err error) {
 	inst := l.GetInstruction()
 
@@ -187,6 +266,10 @@ func GetBytes(l types.Lexeme) (bytes []byte, err error) {
 			bytes = append(bytes, i.opCode)
 		}
 
+		if len(l.GetOperands()) > 2 {
+			return nil, fmt.Errorf("(Line %d) instructions with more than 2 operands aren't supported",
+				l.GetTokens()[0].GetLine())
+		}
 		// #5.1 ModRM | [0-1] bytes
 		if i.modSet {
 			modRM := byte(0)
@@ -195,61 +278,20 @@ func GetBytes(l types.Lexeme) (bytes []byte, err error) {
 			sib := byte(0)
 			var disp []byte
 
-			dest := l.GetOperands()[i.dest]
-			if opType := dest.GetOperandType(); opType == lexeme.Mem8 || opType == lexeme.Mem16 ||
-				opType == lexeme.Mem32 || opType == lexeme.Ptr16 {
-				if opType != lexeme.Ptr16 {
-					var v types.Variable
-					for _, varLex := range l.GetParentProgram().GetVariables() {
-						if dest.GetToken().GetValue() == varLex.GetName().GetValue() {
-							v = varLex
-						}
-					}
-
-					if v == nil {
-						tok := dest.GetToken()
-						return nil, fmt.Errorf("(%d, %d): unknown variable: %s", tok.GetLine(), tok.GetChar(),
-							tok.GetValue())
-					}
-
-					// #5.3 Displacement | 4 bytes
-					dispSet = true
-					disp = append(disp, Int32ToBytes(v.GetName().GetLexeme().GetOffset())...)
-
-					if dest.GetSumFirstToken() != nil && dest.GetSumSecondToken() != nil {
-						if _, ok := regCodes[dest.GetSumFirstToken().GetValue()]; !ok {
-							tok := dest.GetToken()
-							return nil, fmt.Errorf("(%d, %d): unknown register: %s", tok.GetLine(),
-								tok.GetChar(), tok.GetValue())
-						}
-						if _, ok := regCodes[dest.GetSumSecondToken().GetValue()]; !ok {
-							tok := dest.GetToken()
-							return nil, fmt.Errorf("(%d, %d): unknown register: %s", tok.GetLine(), tok.GetChar(),
-								tok.GetValue())
-						}
-						modRM |= NewModRM(ModMemPlusDisp32, 0, RMSib)
-
-						// #5.2 SIB | 1 byte
-						sibSet = true
-						sib |= NewSib(0, regCodes[dest.GetSumSecondToken().GetValue()],
-							regCodes[dest.GetSumFirstToken().GetValue()])
-					}
-				} else {
-					// displacement only mode
-					modRM |= NewModRM(0, 0, RMDisp)
-				}
-			} else {
-				tok := dest.GetToken()
-				if _, ok := regCodes[tok.GetValue()]; !ok {
-					return nil, fmt.Errorf("(%d, %d): unknown register: %s", tok.GetLine(), tok.GetChar(),
-						tok.GetValue())
-				}
-				modRM |= NewModRM(ModReg, 0, regCodes[tok.GetValue()])
-			}
-
 			if i.regOpCodeExtensionSet {
 				modRM |= NewModRM(0, i.regOpCodeExtension, 0)
-			} else if len(l.GetOperands()) != 1 { // if has source
+			}
+
+			if err := parseOperand(i.dest, &modRM, &sib, &sibSet, &dispSet, &disp, l); err != nil {
+				return nil, err
+			}
+			if opTokens := l.GetOperands(); len(opTokens) == 2 && opTokens[1].GetOperandType() != lexeme.Constant8 &&
+				opTokens[1].GetOperandType() != lexeme.Constant16 && opTokens[1].GetOperandType() != lexeme.Constant32 {
+				if err := parseOperand(i.source, &modRM, &sib, &sibSet, &dispSet, &disp, l); err != nil {
+					return nil, err
+				}
+			}
+			/*if len(l.GetOperands()) != 1 { // if has source
 				var tok types.Token
 				tok = l.GetOperands()[i.source].GetToken()
 
@@ -258,7 +300,7 @@ func GetBytes(l types.Lexeme) (bytes []byte, err error) {
 						tok.GetValue())
 				}
 				modRM |= NewModRM(0, regCodes[tok.GetValue()], 0)
-			}
+			}*/
 
 			bytes = append(bytes, modRM)
 
@@ -291,13 +333,13 @@ func GetBytes(l types.Lexeme) (bytes []byte, err error) {
 				var imm []byte
 				if i.name == "jng" {
 					if op.GetOperandType() == lexeme.LabelForward {
-						imm = append(imm, byte(diff - 2) & 0xFF, 0x90, 0x90, 0x90, 0x90)
+						imm = append(imm, byte(diff) & 0xFF, 0x90, 0x90, 0x90, 0x90)
 					} else {
 						imm = append(imm, byte(diff - GetSize(l)) & 0xFF, 0x90, 0x90, 0x90)
 					}
 				} else {
 					if op.GetOperandType() == lexeme.LabelForward {
-						imm = append(imm, byte(diff - 2) & 0xFF, 0x90, 0x90, 0x90)
+						imm = append(imm, byte(diff + 1) & 0xFF, 0x90, 0x90, 0x90)
 					} else {
 						imm = append(imm, Int32ToBytes(diff - GetSize(l))...)
 					}
@@ -466,17 +508,17 @@ var instructions = []types.Instruction{
 	NewInstruction("inc", 0x40, []int{lexeme.Register32}, packedRegister(true)),
 
 	// FF /1 | DEC r/m16 | dec word ptr [eax + edi*4] | 1/3
-	NewInstruction("dec", 0xFF, []int{lexeme.Ptr16}, setModRM(), firstDest(), regOpCodeExtension(1),
+	NewInstruction("dec", 0xFF, []int{lexeme.Ptr16}, setModRM(), regOpCodeExtension(1),
 		operandSizePrefix()),
 
 	// 01 /r | ADD r/m32, r32 | add eax, ebx | 1/3
 	// or
 	// 03 /r | ADD r32, r/m32 | add edi, a[ebx + esi*4] | 1/2
 	// but in reality we are making ADD r32, r32
-	NewInstruction("add", 0x01, []int{lexeme.Register32, lexeme.Register32}, firstDest(), setModRM()),
+	NewInstruction("add", 0x03, []int{lexeme.Register32, lexeme.Register32}, firstSource(), setModRM()),
 
 	// 8D /r | LEA r32, ea32 | lea ebx, ES:Bin1 | 1
-	NewInstruction("lea", 0x8D, []int{lexeme.Register32, lexeme.Mem32}, firstSource(), setModRM(), dispSize(4)),
+	NewInstruction("lea", 0x8D, []int{lexeme.Register32, lexeme.Mem32}, firstDest(), setModRM(), dispSize(4)),
 
 	// 83 /4 ib | AND r/m16, imm8 | and Dec1, 02h | 1/3
 	NewInstruction("and", 0x83, []int{lexeme.Mem16, lexeme.Constant8}, firstDest(), regOpCodeExtension(4),
@@ -487,14 +529,14 @@ var instructions = []types.Instruction{
 		immSize(4)),
 
 	// 7E cb | JNG rel8 | 1
-	NewInstruction("jng", 0x7E | 0b1, []int{lexeme.LabelBackward}, dispSize(1)),
+	NewInstruction("jng", 0x7E, []int{lexeme.LabelForward}, dispSize(1)),
 	// OF 8E cw | JNG rel16 | 1
-	NewInstruction("jng", 0x8E, []int{lexeme.LabelForward}, dispSize(4), expansionPrefix()),
+	NewInstruction("jng", 0x8E | 0b1, []int{lexeme.LabelBackward}, dispSize(4)),
 	// EB cb | JMP rel8 | 1
 	NewInstruction("jmp", 0xEB, []int{lexeme.LabelForward}, dispSize(1)),
 
 	// 84 /r | TEST r/m8, r8 | test ES:Hex1, bh
-	NewInstruction("test", 0x84 | 0b1, []int{lexeme.Mem8, lexeme.Register8}, setModRM(), firstDest(), dispSize(4)),
+	NewInstruction("test", 0x84, []int{lexeme.Mem8, lexeme.Register8}, setModRM(), firstDest(), dispSize(4)),
 }
 
 func regOpCodeExtension(regExt byte) InstructionOption {
