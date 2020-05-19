@@ -1,3 +1,130 @@
+EXP_PREFIX = 0x0F
+SEGMENT_PREFIX = \
+    {
+        "es": 0x26,
+        "cs": 0x2E,
+        "ss": 0x36,
+        "ds": 0x3E,
+        "fs": 0x64,
+        "gs": 0x65,
+    }
+
+REGISTER_CODES = \
+    {
+        "eax": 0b000,
+        "ecx": 0b001,
+        "edx": 0b010,
+        "ebx": 0b011,
+        "esp": 0b100,
+        "ebp": 0b101,
+        "esi": 0b110,
+        "edi": 0b111,
+        "al": 0b000,
+        "cl": 0b001,
+        "dl": 0b010,
+        "bl": 0b011,
+        "ah": 0b100,
+        "ch": 0b101,
+        "dh": 0b110,
+        "bh": 0b111,
+    }
+
+
+def to_hex(s, l=6):
+    return "{:X}".format(s).rjust(l, '0')
+
+
+def int_to_bytes(value):
+    return [
+        (value >> 24) & 0xFF,
+        (value >> 16) & 0xFF,
+        (value >> 8) & 0xFF,
+        value & 0xFF,
+    ]
+
+
+def get_modrm(mod, reg, rm):
+    return (mod & 0b11) << 6 | (reg & 0b111) << 3 | (rm & 0b111)
+
+
+def short_to_bytes(value):
+    return [(value >> 8) & 0xFF, value & 0xFF]
+
+
+def byte_to_bytes(value):
+    return [value & 0xFF]
+
+
+class Bytes:
+    def __init__(self):
+        self.prefixes = []
+        self.opcode = None
+        self.modrm = None
+        self.disp = []
+        self.imm = []
+
+    def set_exp_prefix(self):
+        self.prefixes += EXP_PREFIX
+
+    def set_segment_prefix(self, segment):
+        self.prefixes += SEGMENT_PREFIX[segment]
+
+    def set_opcode(self, opcode):
+        self.opcode = opcode
+
+    def set_mod_reg(self, reg):
+        if self.modrm is None: self.modrm = 0
+        self.modrm |= get_modrm(0, REGISTER_CODES[reg], 0)
+
+    def set_mod_const(self, const):
+        if self.modrm is None: self.modrm = 0
+        self.modrm |= get_modrm(0, const, 0)
+
+    def set_rm_reg(self, reg):
+        if self.modrm is None: self.modrm = 0
+        self.modrm |= get_modrm(0b11, 0, REGISTER_CODES[reg])
+
+    def set_rm_mem_index(self, offset, reg):
+        if self.modrm is None: self.modrm = 0
+        self.modrm |= get_modrm(0b10, 0, REGISTER_CODES[reg])
+        self.disp = int_to_bytes(offset)
+
+    def set_rm_mem_direct(self, offset):
+        if self.modrm is None: self.modrm = 0
+        self.modrm |= get_modrm(0b00, 0, 0b101)
+        self.disp = int_to_bytes(offset)
+
+    def set_imm8(self, imm):
+        self.imm = byte_to_bytes(imm)
+
+    def set_imm32(self, imm):
+        self.imm = int_to_bytes(imm)
+
+    def set_imm_long(self, imm):
+        self.imm = imm
+
+    def __str__(self):
+        result = ""
+        for prefix in self.prefixes:
+            result += "{}| ".format(to_hex(prefix, 2))
+        if self.opcode is not None:
+            result += "{} ".format(to_hex(self.opcode, 2))
+        if self.modrm is not None:
+            result += "{} ".format(to_hex(self.modrm, 2))
+
+        if len(self.disp) != 0:
+            for byte in self.disp:
+                result += "{}".format(to_hex(byte, 2))
+            result += " "
+
+        if len(self.imm) != 0:
+            for byte in self.imm:
+                result += "{}".format(to_hex(byte, 2))
+            result += " "
+
+        return result
+
+
 class LineStructure:
     def __init__(self):
         self.op_count = 0
@@ -86,6 +213,7 @@ class Storage:
         self.model_line = -1
         self.offsets = {}
         self.user_names = []
+        self.bytes = {}
 
     def get_user_name(self, is_label, name):
         for un in self.user_names:
