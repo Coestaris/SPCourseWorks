@@ -85,9 +85,16 @@ def proceed_token(tokens, token, line_index, storage):
 def get_line_tokens(line, storage, line_index):
     tokens = []
     token = ""
+    is_string = False
     for char in line:
-        if char in splitters:
+        if char == '\'':
+            is_string = not is_string
 
+        if is_string:
+            token += char
+            continue
+
+        if char in splitters:
             if not proceed_token(tokens, token, line_index, storage):
                 return (tokens, False)
             if not proceed_token(tokens, char, line_index, storage):
