@@ -3,7 +3,6 @@ package course.work.sp.secondpass;
 import course.work.sp.firstpass.FirstPassSentence;
 import course.work.sp.identifierstorage.IdentifierStore;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 

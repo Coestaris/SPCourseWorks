@@ -1,11 +1,7 @@
 package course.work.sp.secondpass;
 
-import course.work.sp.identifierstorage.AssumeRegisterStorage;
-
 import java.util.ArrayList;
-
 import java.util.List;
-import java.util.Set;
 
 public class RegisterInfoStorage {
     private List<RegisterInfo> registerInfoList;

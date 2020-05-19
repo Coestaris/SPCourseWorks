@@ -1,7 +1,5 @@
 package course.work.sp.secondpass;
 
-import java.util.Objects;
-
 public class RegisterInfo {
     private String reg;
     private byte opcode;

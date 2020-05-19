@@ -58,24 +58,11 @@ public class FirstPassSentence {
     }
 
 
-
-
     @Override
     public String toString() {
         StringBuilder pass = new StringBuilder();
         pass.append(String.format("%02d", newSentence.getNumber())).append(String.format("  %08X ", offset)).append(newSentence.getLine());
         if (newSentence.isError()) pass.append(" ERROR ):");
-        return pass.toString();
-    }
-
-    public String toStringTest(){
-        StringBuilder pass = new StringBuilder();
-        pass.append(newSentence.getLine()).append("\n");
-        pass.append(newSentence.getNumber()).append("  ").append(String.format("%08X ", offset)).append("  ").append(newSentence.getIdentifier().getType()).append("  ")
-                .append(newSentence.getInstruction().getType()).append("\n");
-        for (Operand op : newSentence.getOperands())
-            pass.append(op.toString()).append("\n");
-        pass.append(newSentence.isError()).append("\n");
         return pass.toString();
     }
 }
