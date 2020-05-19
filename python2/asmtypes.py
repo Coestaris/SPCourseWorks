@@ -1,33 +1,33 @@
 EXP_PREFIX = 0x0F
 SEGMENT_PREFIX = \
-    {
-        "es": 0x26,
-        "cs": 0x2E,
-        "ss": 0x36,
-        "ds": 0x3E,
-        "fs": 0x64,
-        "gs": 0x65,
-    }
+{
+    "ES": 0x26,
+    "CS": 0x2E,
+    "SS": 0x36,
+    "DS": 0x3E,
+    "FS": 0x64,
+    "GS": 0x65,
+}
 
 REGISTER_CODES = \
-    {
-        "eax": 0b000,
-        "ecx": 0b001,
-        "edx": 0b010,
-        "ebx": 0b011,
-        "esp": 0b100,
-        "ebp": 0b101,
-        "esi": 0b110,
-        "edi": 0b111,
-        "al": 0b000,
-        "cl": 0b001,
-        "dl": 0b010,
-        "bl": 0b011,
-        "ah": 0b100,
-        "ch": 0b101,
-        "dh": 0b110,
-        "bh": 0b111,
-    }
+{
+    "EAX": 0b000,
+    "ECX": 0b001,
+    "EDX": 0b010,
+    "EBX": 0b011,
+    "ESP": 0b100,
+    "EBP": 0b101,
+    "ESI": 0b110,
+    "EDI": 0b111,
+    "AL": 0b000,
+    "CL": 0b001,
+    "DL": 0b010,
+    "BL": 0b011,
+    "AH": 0b100,
+    "CH": 0b101,
+    "DH": 0b110,
+    "BH": 0b111,
+}
 
 
 def to_hex(s, l=6):
@@ -60,17 +60,21 @@ class Bytes:
         self.prefixes = []
         self.opcode = None
         self.modrm = None
+        self.sib = None
         self.disp = []
         self.imm = []
 
     def set_exp_prefix(self):
-        self.prefixes += EXP_PREFIX
+        self.prefixes.append(EXP_PREFIX)
 
     def set_segment_prefix(self, segment):
-        self.prefixes += SEGMENT_PREFIX[segment]
+        self.prefixes.append(SEGMENT_PREFIX[segment])
 
     def set_opcode(self, opcode):
         self.opcode = opcode
+
+    def pack_reg(self, reg):
+        self.opcode |= REGISTER_CODES[reg]
 
     def set_mod_reg(self, reg):
         if self.modrm is None: self.modrm = 0
@@ -86,8 +90,13 @@ class Bytes:
 
     def set_rm_mem_index(self, offset, reg):
         if self.modrm is None: self.modrm = 0
-        self.modrm |= get_modrm(0b10, 0, REGISTER_CODES[reg])
-        self.disp = int_to_bytes(offset)
+        if reg == "ESP":
+            self.modrm |= get_modrm(0b10, 0, 0b100)
+            self.disp = int_to_bytes(offset)
+            self.sib = 0x24
+        else:
+            self.modrm |= get_modrm(0b10, 0, REGISTER_CODES[reg])
+            self.disp = int_to_bytes(offset)
 
     def set_rm_mem_direct(self, offset):
         if self.modrm is None: self.modrm = 0
@@ -111,6 +120,8 @@ class Bytes:
             result += "{} ".format(to_hex(self.opcode, 2))
         if self.modrm is not None:
             result += "{} ".format(to_hex(self.modrm, 2))
+        if self.sib is not None:
+            result += "{} ".format(to_hex(self.sib, 2))
 
         if len(self.disp) != 0:
             for byte in self.disp:
@@ -123,6 +134,16 @@ class Bytes:
             result += " "
 
         return result
+
+    def get_size(self):
+        size = 0
+        size += len(self.prefixes)
+        if self.opcode is not None: size += 1
+        if self.modrm is not None: size += 1
+        if self.sib is not None: size += 1
+        size += len(self.disp)
+        size += len(self.imm)
+        return size
 
 
 class LineStructure:
@@ -156,7 +177,7 @@ class LineStructure:
 
 
 class InstructionPrototype():
-    def __init__(self, name, opcode, op_count=0, op1=0, op2=0, modrm=False, mc=0, imm=0, packed=False):
+    def __init__(self, name, opcode, op_count=0, op1=0, op2=0, modrm=-1, mc=-1, imm=0, packed=False, imm_index=0):
         self.name = name
         self.opcode = opcode
         self.op_count = op_count
@@ -166,7 +187,7 @@ class InstructionPrototype():
         self.mc = mc
         self.imm = imm
         self.packed = packed
-
+        self.imm_index = imm_index
 
 class InstructionInfo:
     LabelForward = 0

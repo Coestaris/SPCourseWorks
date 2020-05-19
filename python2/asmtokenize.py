@@ -239,9 +239,10 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
             print("|  # || OFFSET || SIZE ||         BYTES         ||         LINE       ", file=output_file)
             print("=" * 80, file=output_file)
 
-        global_tokens = []
-        global_types = []
-        global_structures = []
+        global_tokens = {}
+        global_types = {}
+        global_structures = {}
+        global_prototypes = {}
 
         # Iterating thought all lines for a first time
         for line_index, line in enumerate(input_file):
@@ -251,11 +252,11 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
                 print("LINE   :|" + line, file=output_file)
 
             tokens, ok = get_line_tokens(line, storage, line_index)
-            global_tokens.append(tokens)
+            global_tokens[line_index] = tokens
 
             if ok:
                 structure, ok = get_line_structure(tokens, storage, line_index)
-                global_structures.append(structure)
+                global_structures[line_index] = structure
 
             if ok and et1_print:
                 print_tokens(tokens, output_file)
@@ -263,13 +264,14 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
                 print(file=output_file)
 
             type = get_lexeme_type(tokens, structure)
-            global_types.append(type)
+            global_types[line_index] = type
             if type == LexemeType.unknown:
                 ok = False
                 storage.set_error(line_index, "Unknown lexeme type")
 
             if ok:
-                asmfirstpass.first_pass(type, tokens, structure, storage, line_index)
+                prototype = asmfirstpass.first_pass(type, tokens, structure, storage, line_index)
+                global_prototypes[line_index] = prototype
 
             if et2_print:
                 asmfirstpass.print_line(line, storage, line_index, output_file)
@@ -282,9 +284,10 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
             tokens = global_tokens[line_index]
             structure = global_structures[line_index]
             type = global_types[line_index]
+            prototype = global_prototypes[line_index]
 
             if not storage.has_error(line_index):
-                asmsecondpass.second_pass(type, tokens, structure, storage, line_index)
+                asmsecondpass.second_pass(type, prototype, tokens, structure, storage, line_index, output_file)
 
             asmsecondpass.print_line(line, storage, line_index, output_file)
 
@@ -298,8 +301,6 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
             asmfirstpass.print_segment_destinations(storage, output_file)
             print("\nUser defined names: ", file=output_file)
             asmfirstpass.print_user_names(storage, output_file)
-
-
 
     except IOError as error:
         print("Error: Unable to access file: " + error)
