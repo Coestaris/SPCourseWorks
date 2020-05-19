@@ -1,11 +1,7 @@
 package course.work.sp.firstpass;
 
-import course.work.sp.identifierstorage.AssumeRegisterStorage;
 import course.work.sp.fileparser.Operand;
-import course.work.sp.identifierstorage.Constant;
-import course.work.sp.identifierstorage.IdentifierStore;
-import course.work.sp.identifierstorage.Label;
-import course.work.sp.identifierstorage.Segment;
+import course.work.sp.identifierstorage.*;
 import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
 
