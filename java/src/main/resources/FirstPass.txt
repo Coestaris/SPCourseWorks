@@ -34,7 +34,6 @@ index| Offset|        Source
 32  00000040 Code ends
 33  00000000 END
 
-
  NAME |   TYPE  |  SEG | VALUE 
 LABLE1| Label   | CODE | 00000000 
 LABLE2| Label   | CODE | 00000040 
