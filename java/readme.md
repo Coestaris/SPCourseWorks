@@ -1,3 +1,11 @@
+## JAVA version
+
+JAVA8 
+
+Sample test file:
+result and testfile you can see in  src\main\resources
+
+```asm
 Data Segment
 
      Hex1    db  21h
@@ -32,5 +40,4 @@ lable2:
 
 Code ends
 END
-
-
+```

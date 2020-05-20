@@ -13,4 +13,4 @@ if __name__ == '__main__':
     if OUTPUT_FILE is None:
         OUTPUT_FILE = ".".join(INPUT_FILE.split('.')[:-1]) + ".log"
 
-    asmtokenize.tokenize(INPUT_FILE, OUTPUT_FILE, False, True, False)
+    asmtokenize.tokenize(INPUT_FILE, OUTPUT_FILE, False, False, True)

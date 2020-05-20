@@ -364,7 +364,7 @@ public class SetMachineCode {
         }
         if (mem.isSibRegIs16()) {
             indexToken++;
-            if(mem.equalOperandType(TokenType.Mem)) indexToken--;
+            if (mem.equalOperandType(TokenType.Mem)) indexToken--;
             machineCode.add((byte) 0x67);//prefix
             machineCode.addAll(opCode);//opcode
             if (operandTokens.get(indexToken).getStringToken().equals("BX")) {//modrm
@@ -386,7 +386,7 @@ public class SetMachineCode {
         } else if (mem.isSibDisp()) {
 
             indexToken++;
-            if(mem.equalOperandType(TokenType.Mem)) indexToken--;
+            if (mem.equalOperandType(TokenType.Mem)) indexToken--;
             machineCode.addAll(opCode);//opcode
             machineCode.add((byte) (0b00000100 ^ mod ^ (reg << 3)));//modrm
             machineCode.add((byte) (registerInfoStorage.getByteReg(mem.getStringTokenByIndex(indexToken)) ^

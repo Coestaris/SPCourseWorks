@@ -1,9 +1,4 @@
-from asmtypes import LineStructure, Storage, Token, LexemeType, TokenType, UserName, InstructionInfo, \
-    InstructionPrototype
-
-
-def to_hex(s: int, l: int = 6) -> str:
-    return "{:X}".format(s).rjust(l, '0')
+from asmtypes import *
 
 
 def print_segments(storage, out_file):
@@ -111,25 +106,25 @@ def init_prototypes():
     prototypes = [
         InstructionPrototype("STD", 0xFD),
 
-        InstructionPrototype("PUSH", 0xFF, 1, i.Memory32, modrm=True, mc=6),
+        InstructionPrototype("PUSH", 0xFF, 1, i.Memory32, modrm=0, mc=6),
 
-        InstructionPrototype("POP", 0x58, 1, i.Register32, packed=True),
+        InstructionPrototype("POP", 0x58, 1, i.Register32, packed=0),
 
-        InstructionPrototype("IDIV", 0xF6, 1, i.Register8, i.Register8, modrm=True, mc=7),
-        InstructionPrototype("IDIV", 0xF7, 1, i.Register32, i.Register32, modrm=True, mc=7),
+        InstructionPrototype("IDIV", 0xF6, 1, i.Register8, i.Register8, modrm=0, mc=7),
+        InstructionPrototype("IDIV", 0xF7, 1, i.Register32, i.Register32, modrm=0, mc=7),
 
-        InstructionPrototype("ADD", 0x02, 2, i.Register8, i.Memory8, modrm=True),
-        InstructionPrototype("ADD", 0x03, 2, i.Register32, i.Memory32, modrm=True),
+        InstructionPrototype("ADD", 0x02, 2, i.Register8, i.Memory8, modrm=1),
+        InstructionPrototype("ADD", 0x03, 2, i.Register32, i.Memory32, modrm=1),
 
-        InstructionPrototype("ADC", 0x10, 2, i.Memory8, i.Register8, modrm=True),
-        InstructionPrototype("ADC", 0x11, 2, i.Memory32, i.Register32, modrm=True),
+        InstructionPrototype("ADC", 0x10, 2, i.Memory8, i.Register8, modrm=0),
+        InstructionPrototype("ADC", 0x11, 2, i.Memory32, i.Register32, modrm=0),
 
-        InstructionPrototype("IN", 0xE4, 2, i.Register8, i.IMM8, imm=1),
-        InstructionPrototype("IN", 0xE5, 2, i.Register32, i.IMM8, imm=1),
+        InstructionPrototype("IN", 0xE4, 2, i.Register8, i.IMM8, imm=1, imm_index=1),
+        InstructionPrototype("IN", 0xE5, 2, i.Register32, i.IMM8, imm=1, imm_index=1),
 
-        InstructionPrototype("OR", 0x80, 2, i.Memory8, i.IMM8, modrm=True, mc=1, imm=1),
-        InstructionPrototype("OR", 0x81, 2, i.Memory32, i.IMM32, modrm=True, mc=1, imm=4),
-        InstructionPrototype("OR", 0x83, 2, i.Memory32, i.IMM8, modrm=True, mc=1, imm=1),
+        InstructionPrototype("OR", 0x80, 2, i.Memory8, i.IMM8, modrm=0, mc=1, imm=1, imm_index=1),
+        InstructionPrototype("OR", 0x81, 2, i.Memory32, i.IMM32, modrm=0, mc=1, imm=4, imm_index=1),
+        InstructionPrototype("OR", 0x83, 2, i.Memory32, i.IMM8, modrm=0, mc=1, imm=1, imm_index=1),
 
         InstructionPrototype("JNGE", 0x00, 1, i.LabelForward),
         InstructionPrototype("JNGE", 0x00, 1, i.LabelBackward),
@@ -168,37 +163,6 @@ def get_number(token):
         return int(token.value[:-1], base=2)
     elif token.type == TokenType.dec_number:
         return int(token.value)
-
-
-def get_lexeme_type(tokens, structure):
-    if len(tokens) == 0:
-        return LexemeType.blank
-
-    if len(tokens) == 2 and tokens[0].value == ".MODEL" and tokens[1].type == TokenType.model:
-        return LexemeType.model
-
-    if len(tokens) == 1 and tokens[0].value == ".DATA":
-        return LexemeType.data_seg
-
-    if len(tokens) == 1 and tokens[0].value == ".CODE":
-        return LexemeType.code_seg
-
-    if len(tokens) == 1 and tokens[0].value == "END":
-        return LexemeType.end
-
-    if len(tokens) == 2 and tokens[0].type == TokenType.user_type and tokens[1].value == ":":
-        return LexemeType.label
-
-    if len(tokens) >= 1 and tokens[0].type == TokenType.instruction:
-        return LexemeType.instruction
-
-    if len(tokens) == 3 and tokens[0].type == TokenType.user_type and \
-            (tokens[1].value == "DB" or tokens[1].value == "DD") and \
-            (tokens[2].type == TokenType.bin_number or tokens[2].type == TokenType.dec_number or tokens[
-                2].type == TokenType.string):
-        return LexemeType.var_def
-
-    return LexemeType.unknown
 
 
 def create_instruction_info(tokens, structure, storage, line_index):
@@ -242,8 +206,7 @@ def create_instruction_info(tokens, structure, storage, line_index):
                         op_type = InstructionInfo.Memory32
         else:
             # SEG : NAME case
-            if len(op) == 3 and op[0].type == TokenType.register_seg and op[1].value == ":" and op[
-                2].type == TokenType.user_type:
+            if len(op) == 3 and op[0].type == TokenType.register_seg and op[1].value == ":" and op[2].type == TokenType.user_type:
                 un = storage.get_user_name(False, op[2].value)
                 if un is None:
                     storage.set_error(line_index, "Undefined variable reference")
@@ -340,7 +303,7 @@ def get_instruction_size(tokens, info, prot, storage):
     if prot.imm is not None:
         size += prot.imm
 
-    if prot.modrm:
+    if prot.modrm != -1:
         size += 1  # Mod/RM
         if info.op1_type == info.Memory8 or info.op1_type == info.Memory32 or \
                 info.op2_type == info.Memory8 or info.op2_type == info.Memory32:
@@ -366,13 +329,7 @@ def get_instruction_size(tokens, info, prot, storage):
     return size
 
 
-def first_pass(tokens, structure, storage, line_index):
-    type = get_lexeme_type(tokens, structure)
-
-    if type == LexemeType.unknown:
-        storage.set_error(line_index, "Unknown lexeme type")
-        return False
-
+def first_pass(type, tokens, structure, storage, line_index):
     if type == LexemeType.model:
         if storage.model_line != -1:
             storage.set_error(line_index, "Model type already declared at line " + str(storage.model_line + 1))
@@ -428,7 +385,7 @@ def first_pass(tokens, structure, storage, line_index):
                     storage.set_error(line_index, "Constant is too large for 8bit variable")
                     return False
                 if tokens[1].value == "DD" and abs(value) > 0xFFFFFF:
-                    storage.set_error(line_index, "Constant is too large for 8bit variable")
+                    storage.set_error(line_index, "Constant is too large for 32bit variable")
                     return False
 
             un = UserName(tokens[0].value, False, tokens[1].value, line_index)
@@ -493,5 +450,6 @@ def first_pass(tokens, structure, storage, line_index):
             storage.code_size += size
 
             storage.offsets[line_index] = (offset, size)
+            return prot, info
 
     return True

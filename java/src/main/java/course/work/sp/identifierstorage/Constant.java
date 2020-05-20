@@ -12,7 +12,6 @@ public class Constant {
     private String segment;
 
 
-
     public Constant(int index, String constant, TokenType type) {
         this.index = index;
         this.constant = constant;

@@ -1,6 +1,5 @@
 package course.work.sp.identifierstorage;
 
-import course.work.sp.tokenizer.Token;
 import course.work.sp.tokenizer.TokenType;
 
 public class Label {

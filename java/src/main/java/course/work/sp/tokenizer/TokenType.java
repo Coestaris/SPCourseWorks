@@ -9,12 +9,6 @@ public enum TokenType {
     DdIdentifier,
     SegmentIdentifier,
 
-    //
-    Db,
-    Dw,  // must delete after newFirstPass
-    Dd,
-    //
-
     Instruction,
     JmpWord,
     JncWord,
@@ -30,8 +24,6 @@ public enum TokenType {
     Comma,
 
     Identifier,
-    IdentifierEnd,
-
 
     HexNumber,
     DecNumber,
@@ -57,7 +49,6 @@ public enum TokenType {
 
     Unknown,
     Empty,
-    EmptyString,
 
     DS,
     CS,

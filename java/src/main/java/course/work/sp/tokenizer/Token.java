@@ -10,34 +10,42 @@ public class Token {
     private static final Map<String, TokenType> NAME_TO_TOKEN_TYPE_MAP;
     static {
         NAME_TO_TOKEN_TYPE_MAP = new HashMap<>();
+
         NAME_TO_TOKEN_TYPE_MAP.put("SEGMENT", TokenType.SegmentWord);
+        NAME_TO_TOKEN_TYPE_MAP.put("ENDS", TokenType.EndsWord);
+
         NAME_TO_TOKEN_TYPE_MAP.put("DB", TokenType.DbDir);
         NAME_TO_TOKEN_TYPE_MAP.put("DW", TokenType.DwDir);
         NAME_TO_TOKEN_TYPE_MAP.put("DD", TokenType.DdDir);
+
         NAME_TO_TOKEN_TYPE_MAP.put("ASSUME", TokenType.KeyWord);
+
         NAME_TO_TOKEN_TYPE_MAP.put("STC", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("PUSH", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("SBB", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("OR", TokenType.Instruction);
-        NAME_TO_TOKEN_TYPE_MAP.put("JMP", TokenType.JmpWord);
-        NAME_TO_TOKEN_TYPE_MAP.put("JNC", TokenType.JncWord);
         NAME_TO_TOKEN_TYPE_MAP.put("MOV", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("MUL", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("XOR", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("BTR", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("SUB", TokenType.Instruction);
         NAME_TO_TOKEN_TYPE_MAP.put("ADC", TokenType.Instruction);
-        NAME_TO_TOKEN_TYPE_MAP.put("END", TokenType.EndWord);
-        NAME_TO_TOKEN_TYPE_MAP.put("ENDS", TokenType.EndsWord);
+
+        NAME_TO_TOKEN_TYPE_MAP.put("JMP", TokenType.JmpWord);
+        NAME_TO_TOKEN_TYPE_MAP.put("JNC", TokenType.JncWord);
+
+
+        NAME_TO_TOKEN_TYPE_MAP.put("DWORD", TokenType.DwordPtr);
+        NAME_TO_TOKEN_TYPE_MAP.put("PTR", TokenType.Ptr);
+        NAME_TO_TOKEN_TYPE_MAP.put("WORD", TokenType.WordPtr);
+        NAME_TO_TOKEN_TYPE_MAP.put("BYTE", TokenType.BytePtr);
+
         NAME_TO_TOKEN_TYPE_MAP.put("[", TokenType.Symbol);
         NAME_TO_TOKEN_TYPE_MAP.put("]", TokenType.Symbol);
         NAME_TO_TOKEN_TYPE_MAP.put("+", TokenType.Symbol);
         NAME_TO_TOKEN_TYPE_MAP.put(":", TokenType.Symbol);
         NAME_TO_TOKEN_TYPE_MAP.put(",", TokenType.Comma);
-        NAME_TO_TOKEN_TYPE_MAP.put("DWORD", TokenType.DwordPtr);
-        NAME_TO_TOKEN_TYPE_MAP.put("PTR", TokenType.Ptr);
-        NAME_TO_TOKEN_TYPE_MAP.put("WORD", TokenType.WordPtr);
-        NAME_TO_TOKEN_TYPE_MAP.put("BYTE", TokenType.BytePtr);
+
         NAME_TO_TOKEN_TYPE_MAP.put("EAX", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("EBP", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("ESP", TokenType.Reg32);
@@ -46,19 +54,34 @@ public class Token {
         NAME_TO_TOKEN_TYPE_MAP.put("ESI", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("EDI", TokenType.Reg32);
         NAME_TO_TOKEN_TYPE_MAP.put("ECX", TokenType.Reg32);
+
+        NAME_TO_TOKEN_TYPE_MAP.put("AX", TokenType.Reg16);
+        NAME_TO_TOKEN_TYPE_MAP.put("BP", TokenType.Reg16);
+        NAME_TO_TOKEN_TYPE_MAP.put("SP", TokenType.Reg16);
+        NAME_TO_TOKEN_TYPE_MAP.put("BX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("DX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("SI", TokenType.Reg16);
-        NAME_TO_TOKEN_TYPE_MAP.put("BX", TokenType.Reg16);
-        NAME_TO_TOKEN_TYPE_MAP.put("AX", TokenType.Reg16);
         NAME_TO_TOKEN_TYPE_MAP.put("DI", TokenType.Reg16);
-        NAME_TO_TOKEN_TYPE_MAP.put("BP", TokenType.Reg16);
+        NAME_TO_TOKEN_TYPE_MAP.put("CX", TokenType.Reg16);
+
+
         NAME_TO_TOKEN_TYPE_MAP.put("AL", TokenType.Reg8);
+        NAME_TO_TOKEN_TYPE_MAP.put("CH", TokenType.Reg8);
+        NAME_TO_TOKEN_TYPE_MAP.put("AH", TokenType.Reg8);
+        NAME_TO_TOKEN_TYPE_MAP.put("BL", TokenType.Reg8);
+        NAME_TO_TOKEN_TYPE_MAP.put("DL", TokenType.Reg8);
+        NAME_TO_TOKEN_TYPE_MAP.put("DH", TokenType.Reg8);
+        NAME_TO_TOKEN_TYPE_MAP.put("BH", TokenType.Reg8);
+        NAME_TO_TOKEN_TYPE_MAP.put("CL", TokenType.Reg8);
+
         NAME_TO_TOKEN_TYPE_MAP.put("ES:", TokenType.SegmentRegister);
         NAME_TO_TOKEN_TYPE_MAP.put("CS:", TokenType.SegmentRegister);
         NAME_TO_TOKEN_TYPE_MAP.put("DS:", TokenType.SegmentRegister);
         NAME_TO_TOKEN_TYPE_MAP.put("FS:", TokenType.SegmentRegister);
         NAME_TO_TOKEN_TYPE_MAP.put("SS:", TokenType.SegmentRegister);
         NAME_TO_TOKEN_TYPE_MAP.put("GS:", TokenType.SegmentRegister);
+
+        NAME_TO_TOKEN_TYPE_MAP.put("END", TokenType.EndWord);
     }
 
     private static final Pattern numberHexRegex = Pattern.compile("^[0-9A-F]+H$");
@@ -80,10 +103,6 @@ public class Token {
 
     public String getStringToken() {
         return stringToken;
-    }
-
-    public void setStringToken(String stringToken) {
-        this.stringToken = stringToken;
     }
 
     public Token(boolean empty){

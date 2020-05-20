@@ -43,33 +43,33 @@ public class AssumeRegisterStorage {
     public void changeRegister(Operand operand) {
         int index = 0;
         int next = 1;
-                switch (operand.getTokens().get(index).getStringToken()) {
-                    case ("DS"):
-                        changeDestinationByTokenType(TokenType.DS, operand.getTokens().get(index + next).getStringToken());
-                        break;
-                    case ("ES"):
-                        changeDestinationByTokenType(TokenType.ES, operand.getTokens().get(index + next).getStringToken());
-                        break;
-                    case ("FS"):
-                        changeDestinationByTokenType(TokenType.FS, operand.getTokens().get(index + next).getStringToken());
-                        break;
-                    case ("SS"):
-                        changeDestinationByTokenType(TokenType.SS, operand.getTokens().get(index + next).getStringToken());
-                        break;
-                    case ("CS"):
-                        changeDestinationByTokenType(TokenType.CS, operand.getTokens().get(index + next).getStringToken());
-                        break;
-                    case ("GS"):
-                        changeDestinationByTokenType(TokenType.GS, operand.getTokens().get(index + next).getStringToken());
-                        break;
-                    default:
-                        System.out.println("Unknown register");
-                        break;
-                }
-        
+        switch (operand.getTokens().get(index).getStringToken()) {
+            case ("DS"):
+                changeDestinationByTokenType(TokenType.DS, operand.getTokens().get(index + next).getStringToken());
+                break;
+            case ("ES"):
+                changeDestinationByTokenType(TokenType.ES, operand.getTokens().get(index + next).getStringToken());
+                break;
+            case ("FS"):
+                changeDestinationByTokenType(TokenType.FS, operand.getTokens().get(index + next).getStringToken());
+                break;
+            case ("SS"):
+                changeDestinationByTokenType(TokenType.SS, operand.getTokens().get(index + next).getStringToken());
+                break;
+            case ("CS"):
+                changeDestinationByTokenType(TokenType.CS, operand.getTokens().get(index + next).getStringToken());
+                break;
+            case ("GS"):
+                changeDestinationByTokenType(TokenType.GS, operand.getTokens().get(index + next).getStringToken());
+                break;
+            default:
+                System.out.println("Unknown register");
+                break;
+        }
+
     }
 
-    public byte getSegmentRegisterByte(String segmentReg){
+    public byte getSegmentRegisterByte(String segmentReg) {
         TokenType typeReg = TokenType.Unknown;
         switch (segmentReg) {
             case ("DS"):
@@ -93,8 +93,8 @@ public class AssumeRegisterStorage {
             default:
                 break;
         }
-        for (AssumeRegister asr: assumeRegisterList){
-            if(asr.getTokenType().equals(typeReg)) return asr.getPrefixCode();
+        for (AssumeRegister asr : assumeRegisterList) {
+            if (asr.getTokenType().equals(typeReg)) return asr.getPrefixCode();
         }
         return 0;
     }
@@ -103,7 +103,7 @@ public class AssumeRegisterStorage {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Segment Register | Destination\n");
-        for (AssumeRegister sr : assumeRegisterList){
+        for (AssumeRegister sr : assumeRegisterList) {
             sb.append(sr.getTokenType()).append("    ").append(sr.getDestination()).append("\n");
         }
         return sb.toString();

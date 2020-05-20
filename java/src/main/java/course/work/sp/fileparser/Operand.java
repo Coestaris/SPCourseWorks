@@ -24,7 +24,7 @@ public class Operand {
             if (tokens.get(index).equals(TokenType.BytePtr) || tokens.get(index).equals(TokenType.WordPtr) || tokens.get(index).equals(TokenType.DwordPtr)) {
                 if (tokens.get(++index).equals(TokenType.Ptr)) {
                     this.tokens.remove(index);
-                    index --;
+                    index--;
                 } else {
                     error = true;
                     break;
@@ -139,7 +139,7 @@ public class Operand {
         return tokens;
     }
 
-    public String getStringTokenByIndex(int indexToken){
+    public String getStringTokenByIndex(int indexToken) {
         return tokens.get(indexToken).getStringToken();
     }
 

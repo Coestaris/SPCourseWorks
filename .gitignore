@@ -15,6 +15,9 @@ python/log\.dat
 
 *.log
 
+*.xml
+*.iml
+
 c/tests/
 
 python/tests/
