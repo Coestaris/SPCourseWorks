@@ -145,11 +145,13 @@ func (i *instruction) PackReg(packedReg types.Token) error {
 		}
 
 		if regNotFound {
-			return fmt.Errorf("unkown register %s", packedReg.GetValue())
+			return fmt.Errorf("(%d, %d): unkown register %s", packedReg.GetLine(), packedReg.GetChar(),
+				packedReg.GetValue())
 		}
 		return nil
 	}
-	return fmt.Errorf("instruction not marked as having packed opCode")
+	return fmt.Errorf("(%d, %d) instruction not marked as having packed opCode", packedReg.GetLine(),
+		packedReg.GetChar())
 }
 
 func (i *instruction) GetName() string {
@@ -441,7 +443,8 @@ func (i *instruction) CheckOpRestrictions(l types.Lexeme) error {
 		if restriction != "" {
 			token := l.GetOperands()[i].GetToken()
 			if token.GetValue() != restriction {
-				return fmt.Errorf("expected another operand %s", token.GetValue())
+				return fmt.Errorf("(%d, %d): expected another operand %s", token.GetLine(), token.GetChar(),
+					token.GetValue())
 			}
 		}
 	}

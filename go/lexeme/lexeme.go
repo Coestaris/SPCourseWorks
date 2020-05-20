@@ -5,7 +5,6 @@ import (
 	ptokens "course_work_2/tokens"
 	"course_work_2/types"
 	"course_work_2/variable"
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -188,7 +187,7 @@ func (l *lexeme) SetTokens(tokens []types.Token) error {
 				parent.GetDataSegment().SetClose(firstToken)
 			}
 		default:
-			return errors.New("unknown segment type")
+			return fmt.Errorf("(%d, %d): unknown segment type", firstToken.GetLine(), firstToken.GetChar())
 		}
 	case tokenLen == 3 && tokens[0].GetTokenType() == ptokens.IDENTIFIER && tokens[1].GetTokenType() == ptokens.DIRECTIVE:
 		// VARIABLE
@@ -202,7 +201,7 @@ func (l *lexeme) SetTokens(tokens []types.Token) error {
 		}
 
 		if variableFound {
-			return errors.New("same variable already exists")
+			return fmt.Errorf("(%d, %d): same variable already exists", tokens[0].GetLine(), tokens[0].GetChar())
 		}
 
 		v := variable.NewVariable(tokens[1], tokens[0], tokens[2])
@@ -224,7 +223,7 @@ func (l *lexeme) SetTokens(tokens []types.Token) error {
 			}
 		}
 		if labelFound {
-			return errors.New("same label already exists")
+			return fmt.Errorf("(%d, %d): same label already exists", tokens[0].GetLine(), tokens[0].GetChar())
 		}
 
 		l.tokens[0].SetTokenType(ptokens.LABEL)
@@ -244,19 +243,19 @@ func scanType(x types.Variable) (int, error) {
 	switch x.GetDirective().GetValue() {
 	case "db":
 		if value := x.GetValue(); Abs(value.GetNumValue()) >= 0xFF {
-			return 0, fmt.Errorf("incorrect num value (%d, %d)",
+			return 0, fmt.Errorf("(%d, %d): incorrect num value",
 				value.GetLine(), value.GetChar())
 		}
 		return Mem8, nil
 	case "dw":
 		if value := x.GetValue(); Abs(value.GetNumValue()) >= 0xFFFF {
-			return 0, fmt.Errorf("incorrect num value (%d, %d)",
+			return 0, fmt.Errorf("(%d, %d): incorrect num value",
 				value.GetLine(), value.GetChar())
 		}
 		return Mem16, nil
 	default:
 		if value := x.GetValue(); Abs(value.GetNumValue()) >= 0xFFFFFFFF {
-			return 0, fmt.Errorf("incorrect num value (%d, %d)",
+			return 0, fmt.Errorf("(%d, %d): incorrect num value",
 				value.GetLine(), value.GetChar())
 		}
 		return Mem32, nil
@@ -317,7 +316,9 @@ func (l *lexeme) GetOperandsInfo() error {
 					}
 				}
 			default:
-				return fmt.Errorf("wrong token in operand %s", op.GetToken().GetValue())
+				failedTok := op.GetToken()
+				return fmt.Errorf("(%d, %d): wrong token in operand %s", failedTok.GetLine(), failedTok.GetChar(),
+					failedTok.GetValue())
 			}
 		case len(opTokens) == 3 && opTokens[1].GetTokenType() == ptokens.MODEL:
 			continue
@@ -335,7 +336,9 @@ func (l *lexeme) GetOperandsInfo() error {
 			op.SetSegmentPrefix(opTokens[0])
 			op.SetToken(opTokens[2])
 		case len(opTokens) < 6:
-			return fmt.Errorf("wrong token in operand %s", opTokens[0].GetValue())
+			failedTok := opTokens[0]
+			return fmt.Errorf("(%d, %d): wrong token in operand %s", failedTok.GetLine(), failedTok.GetChar(),
+				failedTok.GetValue())
 		default:
 			offset := 0
 			for _, x := range l.program.GetVariables() {
@@ -360,7 +363,9 @@ func (l *lexeme) GetOperandsInfo() error {
 				offset += 2
 
 				if len(opTokens) != 8 {
-					return fmt.Errorf("wrong token in operand %s", opTokens[offset].GetValue())
+					failedTok := opTokens[offset]
+					return fmt.Errorf("(%d, %d): wrong token in operand %s", failedTok.GetLine(),
+						failedTok.GetChar(), failedTok.GetValue())
 				}
 			}
 			if opTokens[offset + 5].GetTokenType() == ptokens.SYM && opTokens[offset + 5].GetValue() == "*" {

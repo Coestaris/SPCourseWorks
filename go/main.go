@@ -21,9 +21,9 @@ var et4 bool
 func init() {
 	flag.StringArrayVarP(&compileFiles, "compile", "c", []string{}, ".asm to compile")
 	flag.StringVarP(&saveDest, "save", "s", "res.lst", "location to save")
-	flag.BoolVar(&et2, "et2", true, "save eta2 info")
-	flag.BoolVar(&et3, "et3", true, "save eta3 info")
-	flag.BoolVar(&et4, "et4", true, "save eta4 info")
+	flag.BoolVar(&et2, "et2", false, "save eta2 info")
+	flag.BoolVar(&et3, "et3", false, "save eta3 info")
+	flag.BoolVar(&et4, "et4", false, "save eta4 info")
 
 	flag.Parse()
 }

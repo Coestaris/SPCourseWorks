@@ -103,7 +103,9 @@ func (a *asm) FirstPass() (errs []error) {
 		case tokens.INSTRUCTION:
 			inst := FindInfo(l)
 			if inst == nil {
-				errs = append(errs, fmt.Errorf("wrong instruction format %s\n", l.GetTokens()[0].GetValue()))
+				failedTok := l.GetTokens()[0]
+				errs = append(errs, fmt.Errorf("(%d, %d): wrong instruction format %s\n",
+					failedTok.GetLine(), failedTok.GetChar(), failedTok.GetValue()))
 				continue
 			}
 
