@@ -22,6 +22,41 @@ def get_instruction_bytes(prototype_tuple, tokens, structure, storage, line_inde
 
     bytes = Bytes()
 
+    if tokens[0].value == "JMP" or tokens[0].value == "JNGE":
+
+        un = storage.get_user_name(True, tokens[1].value)
+        dest_offset = storage.offsets[un.line][0]
+        src_offset = storage.offsets[line_index][0]
+        dist = dest_offset - src_offset - storage.offsets[line_index][1]
+        far = abs(dist) > 127
+
+        if far:
+            if tokens[0].value == "JMP":
+                bytes.set_opcode(0xE9)
+                bytes.set_imm32(dist)
+            else:
+                bytes.set_exp_prefix()
+                bytes.set_opcode(0x8C)
+                bytes.set_imm32(dist)
+        else:
+            if info.op1_type == info.LabelForward:
+                if tokens[0].value == "JMP":
+                    bytes.set_opcode(0xEB)
+                    bytes.set_imm_long(byte_to_bytes(dist + 3) + [0x90] * 3)
+                else:
+                    bytes.set_opcode(0x7C)
+                    bytes.set_imm_long(byte_to_bytes(dist + 4) + [0x90] * 4)
+            else:
+                if tokens[0].value == "JMP":
+                    bytes.set_opcode(0xEB)
+                    bytes.set_imm8(dist)
+                else:
+                    bytes.set_opcode(0x7C)
+                    bytes.set_imm8(dist)
+
+        storage.bytes[line_index] = bytes
+        return
+
     bytes.set_opcode(prot.opcode)
     if prot.packed:
         bytes.pack_reg(tokens[1].value)

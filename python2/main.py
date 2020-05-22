@@ -1,7 +1,7 @@
 import asmtokenize
 from asmfirstpass import init_prototypes
 
-INPUT_FILE = "tests/testb.asm"
+INPUT_FILE = "tests/test.asm"
 
 # Set None for automatic name
 OUTPUT_FILE = None
