@@ -1,5 +1,5 @@
 unit tokenizer;
-
+{$MODE DELPHI}
 {$I DefMacro.inc}
 
 interface

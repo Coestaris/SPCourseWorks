@@ -2,7 +2,9 @@ unit ByteFunctions;
 
 interface
 
-uses Base, SysUtils;
+uses 
+    Base, 
+    SysUtils;
 
 function GetEmptyBytes() : Bytes;
 function GetByteString(b : Bytes) : string;

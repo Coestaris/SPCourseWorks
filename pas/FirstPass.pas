@@ -1,4 +1,6 @@
 unit FirstPass;
+
+{$MODE DELPHI}
 {$I DefMacro.inc}
 
 interface
@@ -12,7 +14,9 @@ function TokenToInt(t : Token) : longint;
 
 implementation
 
-uses SysUtils, Math;
+uses 
+    SysUtils, 
+    Math;
     
 function GetLexemeType(lexeme : PLexeme) : LType;
 begin

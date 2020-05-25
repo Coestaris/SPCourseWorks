@@ -1,5 +1,6 @@
-unit base;
+unit Base;
 
+{$MODE DELPHI}
 {$I DefMacro.inc}
 
 interface

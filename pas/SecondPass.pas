@@ -1,4 +1,6 @@
 unit SecondPass;
+
+{$MODE DELPHI}
 {$I DefMacro.inc}
 
 interface
@@ -9,7 +11,11 @@ procedure DoSecondPass(storage : PASMStorage; var outfile : TextFile; output : b
 
 implementation
 
-uses FirstPass, SysUtils, StrUtils, ByteFunctions;
+uses 
+    FirstPass, 
+    SysUtils, 
+    StrUtils, 
+    ByteFunctions;
 
 function GetVariableBytes(l : PLexeme) : Bytes;
 var imm : longint;
@@ -216,7 +222,7 @@ begin
     // Output
     if output then
     begin
-        writeln(outfile, ' # |  Off | Size |              Bytes            | Lex');
+        writeln(outfile, '  # |  Off | Size |             Bytes            | Lex');
         for i := 1 to storage.lexemesLen do 
         begin
             l := @storage.lexemes[i];

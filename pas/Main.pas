@@ -1,5 +1,7 @@
 program CourseWork;
 
+{$MODE DELPHI}
+
 uses 
     Base,
     Tokenizer,
