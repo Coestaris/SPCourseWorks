@@ -1,4 +1,5 @@
-unit tokenizer;
+unit Tokenizer;
+
 {$MODE DELPHI}
 {$I DefMacro.inc}
 
