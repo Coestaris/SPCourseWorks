@@ -6,6 +6,7 @@ local asm_storage = require("asmstorage")
 
 local tokenize = require("tokenize")
 local first_pass = require("first_pass")
+local second_pass = require("second_pass")
 
 -- Input file name
 local filename = "tests/test.asm"
@@ -42,7 +43,8 @@ local function main()
 
     tokenize.proceed(
         filename, asm_storage, false, 
-        first_pass.do_first_pass, true)
+        first_pass.do_first_pass, false,
+        second_pass.do_second_pass, true)
 end
 
 main()

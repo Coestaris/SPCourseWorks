@@ -256,16 +256,23 @@ end
 --
 -- Main ET1 Proceed routine. Tokenize and append types
 --
-function tokenize.proceed(filename, storage, et1_print, next_et_function, et2_print)
+function tokenize.proceed(filename, storage, et1_print, et2_function, et2_print, et3_function, et3_print)
     assert(type(filename) == "string")
     assert(type(storage) == "table")
     assert(type(et1_print) == "boolean")
-    assert(type(next_et_function) == "function")
+    assert(type(et2_function) == "function")
     assert(type(et2_print) == "boolean")
+    assert(type(et3_function) == "function")
+    assert(type(et3_print) == "boolean")
+    
 
     global_fn = filename
     global_storage = storage
 
+    local cached_tokens = {}
+    local cached_token_types = {}
+    local cached_structures = {}
+    
     local lines = read_lines(filename)
     for i, line in pairs(lines) do
 
@@ -286,7 +293,7 @@ function tokenize.proceed(filename, storage, et1_print, next_et_function, et2_pr
         end
         
         if not storage:has_error(i) then
-            next_et_function(filename, i, line, tokens, token_types, structure, storage, et2_print)
+            et2_function(filename, i, line, tokens, token_types, structure, storage, et2_print)
         end        
         
         if et2_print then
@@ -298,10 +305,13 @@ function tokenize.proceed(filename, storage, et1_print, next_et_function, et2_pr
                 print(string.format("%2i:|  --  |  --  | %s", i, line))
             end
         end
+
+        table.insert(cached_tokens, { i = tokens })
+        table.insert(cached_token_types, { i = token_types })
+        table.insert(cached_structures, { i = structure })
     end
 
     if et2_print then
-
         print()
         print("User defined names")
         first_pass.print_user_names(storage)
@@ -313,6 +323,20 @@ function tokenize.proceed(filename, storage, et1_print, next_et_function, et2_pr
         print()
         print("Segments destinations")
         first_pass.print_segment_dest(storage)
+    end
+
+    for i, line in pairs(lines) do
+        if et3_print then 
+            print(string.format("line#%2i:| %s", i, line))
+        end
+
+        tokens = cached_tokens[i]
+        token_types = cached_token_types[i]
+        structure = cached_structures[i]
+
+        if not storage:has_error(i) then
+            et3_function(filename, i, line, tokens, token_types, structure, storage, et3_print)
+        end        
     end
 end
 
