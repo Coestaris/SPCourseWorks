@@ -263,11 +263,13 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
                 print_structure(structure, output_file)
                 print(file=output_file)
 
-            type = get_lexeme_type(tokens, structure)
-            global_types[line_index] = type
-            if type == LexemeType.unknown:
-                ok = False
-                storage.set_error(line_index, "Unknown lexeme type")
+            if ok:
+                type = get_lexeme_type(tokens, structure)
+                global_types[line_index] = type
+
+                if type == LexemeType.unknown:
+                    ok = False
+                    storage.set_error(line_index, "Unknown lexeme type")
 
             if ok:
                 prototype = asmfirstpass.first_pass(type, tokens, structure, storage, line_index)
@@ -281,12 +283,12 @@ def tokenize(in_filename, out_filename, et1_print, et2_print, et3_print):
         for line_index, line in enumerate(input_file):
             line = line.rstrip()
 
-            tokens = global_tokens[line_index]
-            structure = global_structures[line_index]
-            type = global_types[line_index]
-            prototype = global_prototypes[line_index]
-
             if not storage.has_error(line_index):
+                tokens = global_tokens[line_index]
+                structure = global_structures[line_index]
+                type = global_types[line_index]
+                prototype = global_prototypes[line_index]
+
                 asmsecondpass.second_pass(type, prototype, tokens, structure, storage, line_index, output_file)
 
             asmsecondpass.print_line(line, storage, line_index, output_file)
