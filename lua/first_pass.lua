@@ -5,7 +5,6 @@ local error = require("error")
 local asm_storage = require("asmstorage")
 local common = require("common")
 
-local pretty = require("pl.pretty")
 local math = require("math")
 
 local global_fn = ""
@@ -127,7 +126,7 @@ local function get_lexeme_type(tokens, token_types)
     return types.lt_wrong 
 end
 
-local function token_to_number(token, token_type)
+function first_pass.token_to_number(token, token_type)
     if token_type == types.tt_number2 then
         return tonumber(token:sub(1, #token - 1), 2)
     elseif token_type == types.tt_number10 then
@@ -137,11 +136,11 @@ local function token_to_number(token, token_type)
     end
 end
 
-local function get_info(tokens, structure, token_types, i, storage) 
+local function get_info(tokens, structure, token_types, line_index, storage) 
     assert(type(tokens) == "table")
     assert(type(structure) == "table")
     assert(type(token_types) == "table")
-    assert(type(i) == "number")
+    assert(type(line_index) == "number")
     assert(type(storage) == "table")
 
     local info = asm_storage.create_instruction_info(tokens[1])
@@ -175,7 +174,7 @@ local function get_info(tokens, structure, token_types, i, storage)
 
                 op_info.type = types.ot_reg_big
                 if info.b16mode ~= nil and not info.b16mode then
-                    source_error(i, 1, "Expected 32bit operand")
+                    source_error(line_index, 1, "Expected 32bit operand")
                     return;
                 end
 
@@ -185,7 +184,7 @@ local function get_info(tokens, structure, token_types, i, storage)
                 
                 op_info.type = types.ot_reg_big
                 if info.b16mode ~= nil and info.b16mode then
-                    source_error(i, 1, "Expected 16bit operand")
+                    source_error(line_index, 1, "Expected 16bit operand")
                     return;
                 end
 
@@ -197,19 +196,19 @@ local function get_info(tokens, structure, token_types, i, storage)
             
                 -- Imm
             
-                op_info.imm = token_to_number(op_info.token, op_info.token_type)
+                op_info.imm = first_pass.token_to_number(op_info.token, op_info.token_type)
                 if math.abs(op_info.imm) < 255 then 
                     op_info.type = types.ot_imm_small
                 else
                     op_info.type = types.ot_imm_big
                     if info.b16mode ~= nil and info.b16mode then 
                         if op_info.imm > 0xFFFF then
-                            source_error(i, 1, "Constant is too big for 16bit mode")
+                            source_error(line_index, 1, "Constant is too big for 16bit mode")
                             return;
                         end
                     else
                         if op_info.imm > 0xFFFFFF then
-                            source_error(i, 1, "Constant is too big for 32bit mode")
+                            source_error(line_index, 1, "Constant is too big for 32bit mode")
                             return;
                         end
                     end
@@ -225,7 +224,7 @@ local function get_info(tokens, structure, token_types, i, storage)
             end
         else
             if len < 5 or len > 9 then
-                source_error(i, 1, "Invalid memory format: Expected from 5 to 9 tokens")
+                source_error(line_index, 1, "Invalid memory format: Expected from 5 to 9 tokens")
                 return;
             end
 
@@ -236,18 +235,18 @@ local function get_info(tokens, structure, token_types, i, storage)
                 op_info.type = types.ot_mem_small
 
                 if tokens[index + 1] ~= "PTR" then 
-                    source_error(i, 1, "Expected PTR keyword")
+                    source_error(line_index, 1, "Expected PTR keyword")
                     return;
                 end
 
             elseif token_types[index] == types.tt_word then
                 offset = 2
                 if info.b16mode ~= nil and not info.b16mode then
-                    source_error(i, 1, "Expected 32bit operand")
+                    source_error(line_index, 1, "Expected 32bit operand")
                     return;
                 end
                 if tokens[index + 1] ~= "PTR" then 
-                    source_error(i, 1, "Expected PTR keyword")
+                    source_error(line_index, 1, "Expected PTR keyword")
                     return;
                 end
 
@@ -258,11 +257,11 @@ local function get_info(tokens, structure, token_types, i, storage)
                 offset = 2
 
                 if info.b16mode ~= nil and info.b16mode then
-                    source_error(i, 1, "Expected 16bit operand")
+                    source_error(line_index, 1, "Expected 16bit operand")
                     return;
                 end
                 if tokens[index + 1] ~= "PTR" then 
-                    source_error(i, 1, "Expected PTR keyword")
+                    source_error(line_index, 1, "Expected PTR keyword")
                     return;
                 end
 
@@ -274,7 +273,7 @@ local function get_info(tokens, structure, token_types, i, storage)
             
             if token_types[index + offset] == types.tt_segment_reg then
                 if tokens[index + offset + 1] ~= ":" then 
-                    source_error(i, 1, "Expected \":\" symbol")
+                    source_error(line_index, 1, "Expected \":\" symbol")
                     return;
                 end
                 info.seg_reg = tokens[index + offset]
@@ -282,14 +281,14 @@ local function get_info(tokens, structure, token_types, i, storage)
             end
 
             if len - offset ~= 5 then
-                source_error(i, 1, "Invalid memory format: Invalid tokens count")
+                source_error(line_index, 1, "Invalid memory format: Invalid tokens count")
                 return;
             end
 
             if  tokens[index + offset + 0] ~= '[' or
                 tokens[index + offset + 2] ~= '+' or 
                 tokens[index + offset + 4] ~= ']' then
-                source_error(i, 1, "Invalid memory format")
+                source_error(line_index, 1, "Invalid memory format")
                 return;
             end
 
@@ -299,13 +298,27 @@ local function get_info(tokens, structure, token_types, i, storage)
             op_info.sum2_type = token_types[index + offset + 3]
 
             if op_info.sum1_type ~= op_info.sum2_type then
-                source_error(i, 1, "Invalid memory format: Index registers mismatch")
+                source_error(line_index, 1, "Invalid memory format: Index registers mismatch")
                 return;
             end
 
             if op_info.sum1_type ~= types.tt_reg16 and  op_info.sum1_type ~= types.tt_reg32 then
-                source_error(i, 1, "Invalid memory format: Wrong index registers type")
+                source_error(line_index, 1, "Invalid memory format: Wrong index registers type")
                 return;
+            end
+            
+            if op_info.sum1_type == types.tt_reg16 or op_info.sum2_type == types.tt_reg16 then
+                if  (not (op_info.sum1 == "BX" and op_info.sum2 == "SI")) and
+                    (not (op_info.sum1 == "BX" and op_info.sum2 == "DI")) and
+                    (not (op_info.sum1 == "BP" and op_info.sum2 == "SI")) and
+                    (not (op_info.sum1 == "BP" and op_info.sum2 == "DI")) and
+                    (not (op_info.sum2 == "BX" and op_info.sum1 == "SI")) and
+                    (not (op_info.sum2 == "BX" and op_info.sum1 == "DI")) and
+                    (not (op_info.sum2 == "BP" and op_info.sum1 == "SI")) and
+                    (not (op_info.sum2 == "BP" and op_info.sum1 == "DI")) then
+                        source_error(line_index, 1, "Invalid memory format: Invalid 16bit index registers")
+                        return;
+                end
             end
         end
     end
@@ -318,12 +331,12 @@ local function get_info(tokens, structure, token_types, i, storage)
     -- Check for udef memory
     if info.op1.type == types.ot_mem_undef then
         if info.op_count == 1 then 
-            source_error(i, 1, "Invalid memory format: Undefined memory bit depth")
+            source_error(line_index, 1, "Invalid memory format: Undefined memory bit depth")
             return;
         end
 
         if info.op2.type == types.ot_imm_small or info.op2.type == types.ot_imm_big or info.op2.type == types.ot_mem_undef then
-            source_error(i, 1, "Invalid memory format: Undefined memory bit depth")
+            source_error(line_index, 1, "Invalid memory format: Undefined memory bit depth")
             return;
         end
 
@@ -335,12 +348,12 @@ local function get_info(tokens, structure, token_types, i, storage)
 
     elseif info.op2.type == types.ot_mem_undef then
         if info.op_count == 1 then 
-            source_error(i, 1, "Invalid memory format: Undefined memory bit depth")
+            source_error(line_index, 1, "Invalid memory format: Undefined memory bit depth")
             return;
         end
 
         if info.op1.type == types.ot_imm_small or info.op1.type == types.ot_imm_big or info.op1.type == types.ot_mem_undef then
-            source_error(i, 1, "Invalid memory format: Undefined memory bit depth")
+            source_error(line_index, 1, "Invalid memory format: Undefined memory bit depth")
             return;
         end
 
@@ -405,24 +418,24 @@ function first_pass.register_instructions()
     push_instruction("STC",  0xF9, 0)
     push_instruction("PUSH", 0x50, 1, types.ot_reg_big, nil, nil, nil, nil, true)
     
-    push_instruction("IMUL", 0xF6, 1, types.ot_mem_small, nil, true, nil, 5, nil)
-    push_instruction("IMUL", 0xF7, 1, types.ot_mem_big, nil, true, nil, 5, nil)
+    push_instruction("IMUL", 0xF6, 1, types.ot_mem_small, nil, 1, nil, 5, nil)
+    push_instruction("IMUL", 0xF7, 1, types.ot_mem_big, nil, 1, nil, 5, nil)
 
-    push_instruction("MOV",  0x8A, 2, types.ot_reg_small, types.ot_reg_small, true, nil, nil, nil)
-    push_instruction("MOV",  0x8B, 2, types.ot_reg_big, types.ot_reg_big, true, nil, nil, nil)
+    push_instruction("MOV",  0x8A, 2, types.ot_reg_small, types.ot_reg_small, 2, nil, nil, nil)
+    push_instruction("MOV",  0x8B, 2, types.ot_reg_big, types.ot_reg_big, 2, nil, nil, nil)
 
-    push_instruction("ADC",  0x12, 2, types.ot_reg_small, types.ot_mem_small, true, nil, nil, nil)
-    push_instruction("ADC",  0x13, 2, types.ot_reg_big, types.ot_mem_big, true, nil, nil, nil)
+    push_instruction("ADC",  0x12, 2, types.ot_reg_small, types.ot_mem_small, 2, nil, nil, nil)
+    push_instruction("ADC",  0x13, 2, types.ot_reg_big, types.ot_mem_big, 2, nil, nil, nil)
 
-    push_instruction("SUB",  0x28, 2, types.ot_mem_small, types.ot_reg_small, true, nil, nil, nil)
-    push_instruction("SUB",  0x29, 2, types.ot_mem_big, types.ot_reg_big, true, nil, nil, nil)
+    push_instruction("SUB",  0x28, 2, types.ot_mem_small, types.ot_reg_small, 1, nil, nil, nil)
+    push_instruction("SUB",  0x29, 2, types.ot_mem_big, types.ot_reg_big, 1, nil, nil, nil)
 
-    push_instruction("CMP",  0x80, 2, types.ot_reg_small, types.ot_imm_small, true, 1, 7, nil)
-    push_instruction("CMP",  0x83, 2, types.ot_reg_big, types.ot_imm_small, true, 1, 7, nil)
-    push_instruction("CMP",  0x81, 2, types.ot_reg_big, types.ot_imm_big, true, 4, 7, nil)
+    push_instruction("CMP",  0x80, 2, types.ot_reg_small, types.ot_imm_small, 1, 1, 7, nil)
+    push_instruction("CMP",  0x83, 2, types.ot_reg_big, types.ot_imm_small, 1, 1, 7, nil)
+    push_instruction("CMP",  0x81, 2, types.ot_reg_big, types.ot_imm_big, 1, 4, 7, nil)
     
-    push_instruction("XOR",  0x80, 2, types.ot_mem_small, types.ot_imm_small, true, 1, 6, nil)
-    push_instruction("XOR",  0x81, 2, types.ot_mem_big, types.ot_imm_big, true, 4, 6, nil)
+    push_instruction("XOR",  0x80, 2, types.ot_mem_small, types.ot_imm_small, 1, 1, 6, nil)
+    push_instruction("XOR",  0x81, 2, types.ot_mem_big, types.ot_imm_big, 1, 4, 6, nil)
    
     push_instruction("JC",   0x00, 1, types.ot_label_f)
     push_instruction("JC",   0x00, 1, types.ot_label_b)
@@ -560,7 +573,7 @@ local function get_data_size(storage, tokens, token_types, i)
     if tokens[2] == "DW" then return 2; end
 
     if token_types[3] == types.tt_string then 
-        return #tokens[3];
+        return #tokens[3] - 1;
     end
 
     return 1;
@@ -630,7 +643,7 @@ function first_pass.do_first_pass(fn, i, line, tokens, token_types, structure, s
                 return;
             end
         else 
-            local imm = token_to_number(tokens[3], token_types[3])
+            local imm = first_pass.token_to_number(tokens[3], token_types[3])
             local too_big = false
             if tokens[2] == "DB" then
                 if imm > 0xFF then too_big = true; end
@@ -735,6 +748,7 @@ function first_pass.do_first_pass(fn, i, line, tokens, token_types, structure, s
         storage.offsets[i] = { size, current_seg.size } 
         current_seg.size = current_seg.size + size
     end
+    return type
 end
 
 return first_pass

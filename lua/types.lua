@@ -10,6 +10,42 @@ local registers_32 = { "EAX", "EBX", "EDX", "ECX", "ESI", "EDI", "ESP", "EBP" }
 local registers_seg = { "CS", "DS", "ES", "FS", "GS", "SS" }
 local symbols = { ":", ",", "+", "-", "[", "]" }
 
+types.reg_codes = {
+    ["EAX"] = 0,
+    ["ECX"] = 1,
+    ["EDX"] = 2,
+    ["EBX"] = 3,
+    ["ESP"] = 4,
+    ["EBP"] = 5,
+    ["ESI"] = 6,
+    ["EDI"] = 7,
+    ["AX"] = 0,
+    ["CX"] = 1,
+    ["DX"] = 2,
+    ["BX"] = 3,
+    ["SP"] = 4,
+    ["BP"] = 5,
+    ["SI"] = 6,
+    ["DI"] = 7,
+    ["AL"] = 0,
+    ["CL"] = 1,
+    ["DL"] = 2,
+    ["BL"] = 3,
+    ["AH"] = 4,
+    ["CH"] = 5,
+    ["DH"] = 6,
+    ["BH"] = 7,
+}
+
+types.seg_prefixes = {
+    ["ES"] = 0x26,
+    ["CS"] = 0x2E,
+    ["SS"] = 0x36,
+    ["DS"] = 0x3E,
+    ["FS"] = 0x64,
+    ["GS"] = 0x65,
+}
+
 types.ot_imm_small = 0
 types.ot_imm_big = 1
 types.ot_reg_small = 2

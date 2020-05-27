@@ -1,5 +1,4 @@
 local table = require("table")
-local pretty = require("pl.pretty")
 
 local error = require("error")
 local asm_storage = require("asmstorage")

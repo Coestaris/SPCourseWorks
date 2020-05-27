@@ -1,7 +1,5 @@
 local tokenize = {}
 
-local pretty = require("pl.pretty")
-
 local types = require("types")
 local first_pass = require("first_pass")
 local common = require("common")
@@ -272,6 +270,7 @@ function tokenize.proceed(filename, storage, et1_print, et2_function, et2_print,
     local cached_tokens = {}
     local cached_token_types = {}
     local cached_structures = {}
+    local cached_lex_types = {}
     
     local lines = read_lines(filename)
     for i, line in pairs(lines) do
@@ -293,7 +292,8 @@ function tokenize.proceed(filename, storage, et1_print, et2_function, et2_print,
         end
         
         if not storage:has_error(i) then
-            et2_function(filename, i, line, tokens, token_types, structure, storage, et2_print)
+            lex_type = et2_function(filename, i, line, tokens, token_types, structure, storage, et2_print)
+            table.insert(cached_lex_types, lex_type)
         end        
         
         if et2_print then
@@ -306,9 +306,9 @@ function tokenize.proceed(filename, storage, et1_print, et2_function, et2_print,
             end
         end
 
-        table.insert(cached_tokens, { i = tokens })
-        table.insert(cached_token_types, { i = token_types })
-        table.insert(cached_structures, { i = structure })
+        table.insert(cached_tokens, tokens)
+        table.insert(cached_token_types, token_types)
+        table.insert(cached_structures, structure)
     end
 
     if et2_print then
@@ -326,17 +326,37 @@ function tokenize.proceed(filename, storage, et1_print, et2_function, et2_print,
     end
 
     for i, line in pairs(lines) do
-        if et3_print then 
-            print(string.format("line#%2i:| %s", i, line))
-        end
 
         tokens = cached_tokens[i]
         token_types = cached_token_types[i]
         structure = cached_structures[i]
+        lex_type = cached_lex_types[i]
 
         if not storage:has_error(i) then
-            et3_function(filename, i, line, tokens, token_types, structure, storage, et3_print)
+            local bytes = et3_function(filename, i, line, tokens, token_types, structure, storage, lex_type)
         end        
+
+        if et3_print then
+            if storage.offsets[i] ~= nil and not storage:has_error(i) then
+                if (lex_type == types.lt_instruction or lex_type == types.lt_var_def) then
+                    print(string.format("%2i:| %s | %s | %-20s | %s", i, 
+                        common.padleft(storage.offsets[i][2], 4, '0'), 
+                        common.padleft(storage.offsets[i][1], 4, '0'), 
+                        bytes:get_string(), line))
+                    if bytes:get_size() ~= storage.offsets[i][1] then
+                        print(string.format("Wrong sizes. Expected %i got %i",
+                            storage.offsets[i][1], bytes:get_size()))
+                    end
+                else
+                    print(string.format("%2i:| %s | %s | %-20s | %s", i, 
+                    common.padleft(storage.offsets[i][2], 4, '0'), 
+                    common.padleft(storage.offsets[i][1], 4, '0'), 
+                    "--", line))
+                end
+            else
+                print(string.format("%2i:|  --  |  --  | --                   | %s", i, line))
+            end
+        end
     end
 end
 
